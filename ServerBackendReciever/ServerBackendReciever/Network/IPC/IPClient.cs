@@ -29,6 +29,7 @@ namespace Network.IPC
     {
         private int DataBufferSize;
         private byte[] ReceiveBuffer;
+        private Packet ReceivedData = new Packet();
 
         public NamedPipeClientStream PipeOut;
         public NamedPipeClientStream PipeIn;
@@ -69,7 +70,9 @@ namespace Network.IPC
             PipeConnected(new NamedPipeClientWrapper(PipeIn, ReceiveCallback, ReceiveBuffer));
             PipeConnected(new NamedPipeClientWrapper(PipeOut));
 
-            SendMessage();
+            Packet Test = new Packet();
+            Test.Write("Hello From Server");
+            SendMessage(Test);
         }
 
         protected virtual void OnStart()
@@ -77,16 +80,19 @@ namespace Network.IPC
         }
 
         //Needs to use Packet class to do so
-        public virtual void SendMessage()
+        public virtual void SendMessage(Packet Packet)
         {
             try
             {
-                byte[] Message = Encoding.ASCII.GetBytes("Hello World");
-                PipeOut.BeginWrite(Message, 0, Message.Length, null, null);
+                //Check if packet bytes are available, if not convert bytes
+                if (Packet.ReadableBuffer == null)
+                    Packet.ConvertBufferToArray();
+
+                PipeOut.BeginWrite(Packet.ReadableBuffer, 0, Packet.ReadableBuffer.Length, null, null);
             }
             catch (Exception E)
             {
-                Console.WriteLine("IPCNamedClient.SendMessage => " + E);
+                Console.WriteLine("IPCNamedServer.SendMessage => " + E);
             }
         }
 
@@ -94,21 +100,65 @@ namespace Network.IPC
         {
             try
             {
-                Console.WriteLine("Recieved");
-                using (StreamReader sr = new StreamReader(PipeIn))
+                //Get Current Time => for ping calculation
+                long Epoch = (DateTime.Now - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).Ticks / 10000;
+
+                int ByteLength = PipeIn.EndRead(Result);
+                if (ByteLength <= 0)
                 {
-                    // Display the read text to the console
-                    string temp;
-                    while ((temp = sr.ReadLine()) != null)
-                    {
-                        Console.WriteLine("Received from server: {0}", temp);
-                    }
+                    return;
                 }
+
+                byte[] Data = new byte[ByteLength];
+                Array.Copy(ReceiveBuffer, 0, Data, 0, ByteLength);
+
+                //Handle data as NamedPipes are streambased
+                ReceivedData.Reset(HandleData(Data, Epoch));
+
+                //Start read for next packet
+                PipeIn.BeginRead(ReceiveBuffer, 0, DataBufferSize, ReceiveCallback, null);
             }
             catch (Exception E)
             {
                 Console.WriteLine("IPCNamedClient.ReceiveCallback => " + E);
             }
+        }
+
+        /// <summary>
+        /// Handles received data and cases of missing bytes
+        /// </summary>
+        private bool HandleData(byte[] Data, long Epoch)
+        {
+            int PacketLength = 0;
+            ReceivedData.WriteRange(Data);
+
+            //Check for packet header existing
+            if (ReceivedData.UnreadLength() >= sizeof(int))
+            {
+                PacketLength = ReceivedData.ReadInt();
+                if (PacketLength < 1) //If the header states the length, check if the length is 0, if so return true and reset packet reciever
+                    return true;
+            }
+
+            //Process the packet fully
+            while (PacketLength > 0 && PacketLength <= ReceivedData.UnreadLength())
+            {
+                ServerHandle.ProcessPacket(new Packet(ReceivedData.ReadableBuffer), Epoch);
+
+                PacketLength = 0;
+
+                if (ReceivedData.UnreadLength() >= sizeof(int))
+                {
+                    PacketLength = ReceivedData.ReadInt();
+                    if (PacketLength < 1)
+                        return true;
+                }
+            }
+
+            if (PacketLength <= 1)
+                return true;
+
+            return false; //packet is over multiple deliveries, dont reset buffer
         }
 
         private void PipeConnected(NamedPipeClientWrapper Pipe)

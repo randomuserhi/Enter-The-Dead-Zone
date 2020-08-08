@@ -21,6 +21,12 @@ namespace ServerBackendReciever
                 try
                 {
                     ServerTask.Wait();
+
+                    while (true)
+                    {
+                        Network.ServerHandle.FixedUpdate();
+                    }
+
                 }
                 catch (AggregateException ae)
                 {
@@ -28,10 +34,9 @@ namespace ServerBackendReciever
                     {
                         Console.WriteLine(innerException);
                     }
+                    Console.ReadLine();
                 }
             }
-
-            Console.ReadLine();
         }
     }
 }

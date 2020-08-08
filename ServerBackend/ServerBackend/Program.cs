@@ -22,6 +22,11 @@ namespace ServerBackend
                 try
                 {
                     ServerTask.Wait();
+                    
+                    while(true)
+                    {
+                        Network.ServerHandle.FixedUpdate();
+                    }
                 }
                 catch (AggregateException ae)
                 {
@@ -29,10 +34,9 @@ namespace ServerBackend
                     {
                         Console.WriteLine(innerException);
                     }
+                    Console.ReadLine();
                 }
             }
-
-            Console.ReadLine();
         }
     }
 }
