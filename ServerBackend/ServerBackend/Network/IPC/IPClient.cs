@@ -48,10 +48,8 @@ namespace Network.IPC
             Dispose(false);
         }
 
-        public async Task Connect()
+        public async Task Connect(int Timeout = -1)
         {
-            int Timeout = 5000;
-
             //Wait for connection
             Task ConnectOut = PipeOut.ConnectAsync();
             Task ConnectIn = PipeIn.ConnectAsync();
@@ -60,11 +58,14 @@ namespace Network.IPC
             OnStart();
 
             //Wait for connection to complete
-            bool Result = Task.WaitAll(new[] { ConnectIn, ConnectOut }, Timeout);
-            if (Result == false)
+            if (Timeout > 0)
             {
-                throw new TimeoutException();
-                //TODO:: handle timeout exception => dispose and close client
+                bool Result = Task.WaitAll(new[] { ConnectIn, ConnectOut }, Timeout);
+                if (Result == false)
+                {
+                    throw new TimeoutException();
+                    //TODO:: handle timeout exception => dispose and close client
+                }
             }
 
             PipeConnected(new NamedPipeClientWrapper(PipeIn, ReceiveCallback, ReceiveBuffer));
@@ -80,7 +81,7 @@ namespace Network.IPC
         }
 
         //Needs to use Packet class to do so
-        public virtual void SendMessage(Packet Packet)
+        public void SendMessage(Packet Packet)
         {
             try
             {
@@ -96,7 +97,7 @@ namespace Network.IPC
             }
         }
 
-        public virtual void ReceiveCallback(IAsyncResult Result)
+        private void ReceiveCallback(IAsyncResult Result)
         {
             try
             {

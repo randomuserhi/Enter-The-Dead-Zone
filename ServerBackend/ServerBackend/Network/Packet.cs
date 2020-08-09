@@ -8,6 +8,7 @@ namespace Network
 {
     public class Packet
     {
+        public int ClientIndex = -1; //The index of the client sender
         public const int HeaderSize = sizeof(int) + sizeof(long);
 
         private List<byte> Buffer;
@@ -17,8 +18,9 @@ namespace Network
         /// <summary>
         /// Generates a blank packet
         /// </summary>
-        public Packet()
+        public Packet(int ClientIndex = -1)
         {
+            this.ClientIndex = ClientIndex;
             Buffer = new List<byte>();
         }
 
@@ -51,18 +53,22 @@ namespace Network
         /// This automatically adds a header including information such as packet size and time sent (epoch)
         /// </summary>
         /// <returns></returns>
-        public byte[] ConvertBufferToArray()
+        public byte[] ConvertBufferToArray(int ClientIndex = -1)
         {
-            long Epoch = (DateTime.Now - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).Ticks / 10000; 
+            this.ClientIndex = this.ClientIndex == -1 ? ClientIndex : this.ClientIndex;
+
+            long Epoch = (DateTime.Now - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).Ticks / 10000;
 
             //Insert Header
-            byte[] Header = new byte[sizeof(int) + sizeof(long)];
+            int HeaderSize = sizeof(int) + sizeof(long) + sizeof(int);
+            byte[] Header = new byte[HeaderSize];
             Array.Copy(BitConverter.GetBytes(Buffer.Count()), 0, Header, 0, sizeof(int));
             Array.Copy(BitConverter.GetBytes(Epoch), 0, Header, sizeof(int), sizeof(long));
+            Array.Copy(BitConverter.GetBytes(this.ClientIndex), 0, Header, sizeof(int) + sizeof(long), sizeof(int));
 
-            ReadableBuffer = new byte[sizeof(int) + sizeof(long) + Buffer.Count()];
-            Array.Copy(Header, 0, ReadableBuffer, 0, sizeof(int) + sizeof(long));
-            Array.Copy(Buffer.ToArray(), 0, ReadableBuffer, sizeof(int) + sizeof(long), Buffer.Count());
+            ReadableBuffer = new byte[HeaderSize + Buffer.Count()];
+            Array.Copy(Header, 0, ReadableBuffer, 0, HeaderSize);
+            Array.Copy(Buffer.ToArray(), 0, ReadableBuffer, HeaderSize, Buffer.Count());
             return ReadableBuffer;
         }
 

@@ -30,7 +30,8 @@ namespace Network
             Console.WriteLine("1: " + Packet.Packet.ReadInt());
             long Epoch = Packet.Packet.ReadLong();
             Console.WriteLine("2: " + Epoch);
-            Console.WriteLine("3: " + Packet.Packet.ReadString());
+            Console.WriteLine("3: " + Packet.Packet.ReadInt());
+            Console.WriteLine("4: " + Packet.Packet.ReadString());
             Console.WriteLine("Ping = " + (Packet.Epoch - Epoch));
 
         };

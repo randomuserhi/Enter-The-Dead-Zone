@@ -56,10 +56,8 @@ namespace Network.IPC
         /// Asynchronously attempt connecting to client
         /// </summary>
         /// <returns></returns>
-        public async Task Connect()
+        public async Task Connect(int Timeout = -1)
         {
-            int Timeout = 5000;
-
             //Wait for connection
             IAsyncResult ConnectionResultOut = PipeOut.BeginWaitForConnection(PipeConnected, new NamedPipeServerWrapper(PipeOut));
             IAsyncResult ConnectionResultIn = PipeIn.BeginWaitForConnection(PipeConnected, new NamedPipeServerWrapper(PipeIn, ReceiveCallback, ReceiveBuffer));
@@ -67,12 +65,15 @@ namespace Network.IPC
             //Do additional server startup code
             OnStart();
 
-            //Wait for connection to complete
-            bool Result = WaitHandle.WaitAll(new[] { ConnectionResultIn.AsyncWaitHandle, ConnectionResultOut.AsyncWaitHandle }, Timeout);
-            if (Result == false)
+            if (Timeout > 0)
             {
-                throw new TimeoutException();
-                //TODO:: handle timeout exception => dispose and close server
+                //Wait for connection to complete
+                bool Result = WaitHandle.WaitAll(new[] { ConnectionResultIn.AsyncWaitHandle, ConnectionResultOut.AsyncWaitHandle }, Timeout);
+                if (Result == false)
+                {
+                    throw new TimeoutException();
+                    //TODO:: handle timeout exception => dispose and close server
+                }
             }
 
             Packet Test = new Packet();
@@ -90,7 +91,7 @@ namespace Network.IPC
         /// <summary>
         /// Sends a given Packet to the client
         /// </summary>
-        public virtual void SendMessage(Packet Packet)
+        public void SendMessage(Packet Packet)
         {
             try
             {
@@ -110,7 +111,7 @@ namespace Network.IPC
         /// Handles message recieved by the server
         /// </summary>
         /// <param name="Result"></param>
-        public virtual void ReceiveCallback(IAsyncResult Result)
+        private void ReceiveCallback(IAsyncResult Result)
         {
             try
             {
