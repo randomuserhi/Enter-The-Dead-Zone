@@ -20,9 +20,9 @@ namespace ServerBackend
         {
             using (IPCNamedServer Server = new IPCNamedServer("Test", NamedPipeServerStream.MaxAllowedServerInstances, 4096))
             {
-                using (TCPUDPServer NetServer = new TCPUDPServer(26950, 1, 4096))
+                using (TCPUDPServer NetServer = new TCPUDPServer(26950, 50, 4096))
                 {
-                    var ServerTask = Task.Run(async () => await Server.Connect(5000));
+                    /*var ServerTask = Task.Run(async () => await Server.Connect(5000));
                     try
                     {
                         ServerTask.Wait();
@@ -34,7 +34,7 @@ namespace ServerBackend
                             Console.WriteLine(innerException);
                         }
                         Console.ReadLine();
-                    }
+                    }*/
 
                     var NetServerTask1 = Task.Run(async () => await NetServer.Connect(5000));
                     try

@@ -21,7 +21,7 @@ namespace ServerBackendReciever
             {
                 using (TCPUDPClient NetClient = new TCPUDPClient(4096))
                 {
-                    var ServerTask = Task.Run(async () => await Client.Connect(5000));
+                    /*var ServerTask = Task.Run(async () => await Client.Connect(5000));
                     try
                     {
                         ServerTask.Wait();
@@ -33,7 +33,7 @@ namespace ServerBackendReciever
                             Console.WriteLine(innerException);
                         }
                         Console.ReadLine();
-                    }
+                    }*/
 
                     var NetServerTask1 = Task.Run(async () => await NetClient.TCPConnect("192.168.2.26", 26950));
                     try

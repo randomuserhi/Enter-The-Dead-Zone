@@ -80,6 +80,7 @@ namespace Network.TCPUDP
             catch(Exception E)
             {
                 Console.WriteLine("TCPUDPClient.UDPReceiveCallback => " + E);
+                DisconnectAll();
             }
         }
 
@@ -116,8 +117,6 @@ namespace Network.TCPUDP
 
             TCPStream = TCPSocket.GetStream();
             TCPStream.BeginRead(TCPReceiveBuffer, 0, TCPDataBufferSize, TCPReceiveCallback, null);
-
-            
         }
 
         /// <summary>
@@ -191,6 +190,7 @@ namespace Network.TCPUDP
             catch (Exception E)
             {
                 Console.WriteLine("TCPUDPClient.ReceiveCallback => " + E);
+                DisconnectAll();
             }
         }
 
@@ -231,6 +231,47 @@ namespace Network.TCPUDP
             return false; //packet is over multiple deliveries, dont reset buffer
         }
 
+        public void TCPDisconnect()
+        {
+            try
+            {
+                TCPSocket.Close();
+                TCPStream = null;
+                TCPReceiveBuffer = new byte[TCPDataBufferSize];
+                TCPReceivedData = new Packet();
+                TCPSocket = null;
+            }
+            catch(Exception E)
+            {
+                Console.WriteLine("TCPUDPClient.TCPDisconnect => " + E);
+            }
+        }
+
+        public void UDPDisconnect()
+        {
+            try
+            {
+                EndPoint = null;
+
+                if (UDPSocket != null)
+                {
+                    UDPSocket.Close();
+                    UDPSocket = null;
+                }
+            }
+            catch (Exception E)
+            {
+                Console.WriteLine("TCPUDPClient.UDPDisconnect => " + E);
+            }
+        }
+
+        public void DisconnectAll()
+        {
+            Console.WriteLine("Disconnecting...");
+            TCPDisconnect();
+            UDPDisconnect();
+        }
+
         ~TCPUDPClient()
         {
             Dispose(false);
@@ -252,6 +293,8 @@ namespace Network.TCPUDP
                     TCPSocket.Dispose();
                 if (TCPStream != null)
                     TCPStream.Dispose();
+                if (UDPSocket != null)
+                    UDPSocket.Dispose();
             }
 
             //Disposed unmannaged resources

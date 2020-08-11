@@ -118,6 +118,10 @@ namespace Network.TCPUDP
 
                 Clients[ClientIndex].UDPHandleData(Data, Epoch); //Might be nicer to just pass ReceivedData rather than creating a new packet
             }
+            catch (System.Net.Sockets.SocketException)
+            {
+                Console.WriteLine("Not implemented handle");
+            }
             catch (Exception E)
             {
                 Console.WriteLine("TCPUDPServer.UDPReceiveCallback => " + E);
