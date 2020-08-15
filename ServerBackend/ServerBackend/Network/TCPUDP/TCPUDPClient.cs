@@ -23,13 +23,8 @@ namespace Network.TCPUDP
 
         public TCPUDPClient(int DataBufferSize)
         {
-            this.TCPDataBufferSize = DataBufferSize;
+            TCPDataBufferSize = DataBufferSize;
             TCPReceiveBuffer = new byte[DataBufferSize];
-        }
-
-        public void UDPConnect(IPEndPoint EndPoint)
-        {
-            this.EndPoint = EndPoint;
         }
 
         public void UDPConnect(int LocalPort, string ServerIP, int ServerPort)
@@ -107,16 +102,6 @@ namespace Network.TCPUDP
                     //TODO:: handle timeout exception => dispose and close server
                 }
             }
-        }
-
-        public void TCPConnect(TcpClient IncomingSocket)
-        {
-            TCPSocket = IncomingSocket;
-            TCPSocket.ReceiveBufferSize = TCPDataBufferSize;
-            TCPSocket.SendBufferSize = TCPDataBufferSize;
-
-            TCPStream = TCPSocket.GetStream();
-            TCPStream.BeginRead(TCPReceiveBuffer, 0, TCPDataBufferSize, TCPReceiveCallback, null);
         }
 
         /// <summary>
