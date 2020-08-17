@@ -203,6 +203,9 @@ namespace Network.TCPUDP
 
         private _TCPUDPClient[] Clients;
 
+        public Action OnStart;
+        public Action<int> OnClientConnection;
+
         public TCPUDPServer(int Port, int MaxNumberConnections, int DataBufferSize)
         {
             this.MaxNumberConnections = MaxNumberConnections;
@@ -247,11 +250,6 @@ namespace Network.TCPUDP
                     //TODO:: handle timeout exception => dispose and close server
                 }
             }
-        }
-
-        public virtual void OnStart()
-        {
-
         }
 
         /// <summary>
@@ -341,9 +339,7 @@ namespace Network.TCPUDP
                 {
                     Clients[i].TCPConnect(Client);
 
-                    Packet Test = new Packet();
-                    Test.Write("TCP Hello From Server");
-                    TCPSendMessage(Test, 0);
+                    OnClientConnection(i);
 
                     return;
                 }
@@ -370,6 +366,7 @@ namespace Network.TCPUDP
             if (Disposing)
             {
                 TCPListener.Stop();
+                UDPListener.Close();
             }
 
             //Disposed unmannaged resources
