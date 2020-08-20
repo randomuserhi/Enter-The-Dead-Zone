@@ -50,6 +50,11 @@ namespace InternalEngine.Colliders
 
     public class Manifold
     {
+        public static Action<Int_ContactPoint[], Int_ContactPoint[]>[] ManifoldUpdateMatrix = new Action<Int_ContactPoint[], Int_ContactPoint[]>[]
+        {
+            CircleCircle
+        };
+
         public ManifoldType Type;
 
         public EntityObject A;
@@ -67,7 +72,14 @@ namespace InternalEngine.Colliders
 
         public void Update(Int_ContactPoint[] NewContactPoints)
         {
+            ManifoldUpdateMatrix[(int)Type](ContactPoints, NewContactPoints);   
+        }
 
+        public static void CircleCircle(Int_ContactPoint[] ContactPoints, Int_ContactPoint[] NewContactPoints)
+        {
+            NewContactPoints[0].AccumulatedNormalImpulse = ContactPoints[0].AccumulatedNormalImpulse;
+            NewContactPoints[0].AccumulatedTangentImpulse = ContactPoints[0].AccumulatedTangentImpulse;
+            ContactPoints[0] = NewContactPoints[0];
         }
     }
 
