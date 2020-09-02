@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 using InternalEngine.Entity;
 using InternalEngine.Entity.Interactions;
-using InternalEngine.Colliders;
+using InternalEngine.Physics;
 
 using UnityEngine;
 
@@ -14,11 +14,8 @@ namespace InternalEngine
 {
     public class IntEngine
     {
-        public const float DeltaTime = 1f / 30f;
-        public const float InvDeltaTime = 30f;
-        public const int NumIterations = 4;
-
-        public const float AllowedPenetration = 0.01f;
+        public static float InvDeltaTime = 90f;
+        public const int NumIterations = 10;
 
         public static void Initialise()
         {
@@ -32,35 +29,26 @@ namespace InternalEngine
                 Entities.Add(Obj);
                 Obj.Position = new Vector2(0, 2 * (i + 1));
 
-                EntityJoint Joint = new EntityJoint();
+                DistanceJoint Joint = new DistanceJoint();
                 Joint.Set(Entities[i], Entities[i + 1], 2, new Vector2(0, 0));
                 EntityJoints.Add(Joint);
             }
         }
 
-        private static List<Manifold> Manifolds = new List<Manifold>();
         public static List<EntityObject> Entities = new List<EntityObject>();
         public static List<EntityJoint> EntityJoints = new List<EntityJoint>();
         public static void PerformTimeStep()
         {
-            Int_Collision.CalculateManifolds(Manifolds, Entities);
+            InvDeltaTime = 1 / Time.deltaTime; //Update InvDeltaTime
 
             //Force updates / velocity updates should be performed before here
             for (int i = 1; i < Entities.Count; i++)
             {
-                Entities[i].Velocity -= new Vector2(0, 5f) * DeltaTime; //Gravity should be moved to late update or some kind of Action<> function => TODO:: programming damping and friction etc
+                Entities[i].PhysicsUpdate?.Invoke(Entities[i]);
             }
 
-            CollisionResolver.PreStep(Manifolds, EntityJoints);
-            CollisionResolver.ApplyImpulses(Manifolds, EntityJoints, NumIterations);
-
-            for (int i = 0; i < Entities.Count; i++)
-            {
-                if (Entities[i].InvMass == 0) continue;
-
-                Entities[i].Position += Entities[i].Velocity * DeltaTime;
-                Entities[i].Rotation += Entities[i].AngularVelocity * DeltaTime;
-            }
+            Resolver.PreStep(EntityJoints);
+            Resolver.ApplyImpulses(EntityJoints, NumIterations);
         }
     }
 }

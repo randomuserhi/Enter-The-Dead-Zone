@@ -5,20 +5,22 @@ using System.Text;
 using System.Threading.Tasks;
 
 using UnityEngine;
-using InternalEngine.Colliders;
+using InternalEngine.Physics;
 
 namespace InternalEngine.Entity
 {
     //Represents a point entity => acts with a circle collider
     public class PointEntity : EntityObject
     {
+        CircleCollider2D Collider;
+
         public PointEntity()
         {
-            Collider = new Int_CircleCollider(this);
-            ((Int_CircleCollider)Collider).Radius = 0.5f;
-
             InvMass = 1;
             InvInertia = 1;
+
+            Collider = Self.AddComponent<CircleCollider2D>();
+            Collider.radius = 0.5f;
         }
     }
 }
