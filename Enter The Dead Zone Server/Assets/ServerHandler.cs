@@ -47,6 +47,7 @@ public class ServerHandler : MonoBehaviour
         switch(Job)
         {
             case ServerCode.EstablishUPDConnection:
+                Debug.Log("ServerHandle.EstablishUDPConnection");
                 break;
             case ServerCode.UDPConnectionEstablished:
                 Debug.Log("Client " + ClientIndex + " succesfully connected.");

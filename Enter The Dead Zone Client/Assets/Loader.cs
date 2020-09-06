@@ -13,7 +13,7 @@ public class Loader
     public static TCPUDPClient TCPUDPClient;
     public static int ClientIndex;
 
-    public static string ServerIP = "192.168.2.26";
+    public static string ServerIP = "192.168.2.51"; //"192.168.2.26";
     public static int ServerPort = 26950;
 
     [RuntimeInitializeOnLoadMethod]
