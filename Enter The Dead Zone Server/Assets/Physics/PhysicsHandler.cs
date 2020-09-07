@@ -9,7 +9,7 @@ public class PhysicsHandler : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        
+        IntEngine.Initialise();
     }
 
     // Update is called once per frame
