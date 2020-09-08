@@ -9,7 +9,7 @@ using InternalEngine.Physics;
 
 namespace InternalEngine.Entity
 {
-    public abstract class EntityObject
+    public abstract class EntityBehaviour
     {
         /*public static string ByteDebug(uint num)
         {
@@ -78,34 +78,53 @@ namespace InternalEngine.Entity
             return ((1u << SubIndex) & Segment) != 0u; //returns true if the index exists
         }
 
-        public EntityObject()
+        public readonly uint EntityID;
+
+        public EntityBehaviour()
         {
             EntityID = GetID();
             Debug.Log(EntityID);
-
-            Initialize();
-
-            //SpriteRenderer for debugging
-            Self.AddComponent<SpriteRenderer>().sprite = Resources.Load<Sprite>("Sprites/Circle");
         }
 
-        public EntityObject(uint EntityID)
+        public EntityBehaviour(uint EntityID)
         {
             if (CheckEntityID(EntityID))
                 Debug.LogError("EntityID: " + EntityID + "Already Exists. This should not ever happen!");
             this.EntityID = EntityID;
+        }
 
+        public virtual void OnDestroy() { }
+
+        private void Destroy()
+        {
+            RemoveID(EntityID);
+            OnDestroy();
+        }
+
+        /*~EntityBehaviour()
+        {
+            Debug.Log(EntityID + " has been destroyed");
+            Destroy();
+        }*/
+    }
+
+    public abstract class EntityObject : EntityBehaviour
+    {
+        public EntityObject() : base()
+        {
             Initialize();
 
             //SpriteRenderer for debugging
             Self.AddComponent<SpriteRenderer>().sprite = Resources.Load<Sprite>("Sprites/Circle");
         }
 
-        /*~EntityObject()
+        public EntityObject(uint EntityID)  : base(EntityID)
         {
-            Debug.Log(EntityID + " has been destroyed");
-            Destroy();
-        }*/
+            Initialize();
+
+            //SpriteRenderer for debugging
+            Self.AddComponent<SpriteRenderer>().sprite = Resources.Load<Sprite>("Sprites/Circle");
+        }
 
         private void Initialize()
         {
@@ -113,13 +132,10 @@ namespace InternalEngine.Entity
             RB = Self.AddComponent<Rigidbody2D>();
         }
 
-        public void Destroy()
+        public override void OnDestroy()
         {
             GameObject.Destroy(Self);
-            RemoveID(EntityID);
         }
-
-        public readonly uint EntityID;
 
         public float InvMass { get { return _InvMass; }  set { _InvMass = value; if (value != 0) { RB.mass = 1 / value; RB.isKinematic = false; } else { RB.isKinematic = true; } } }
         private float _InvMass;
