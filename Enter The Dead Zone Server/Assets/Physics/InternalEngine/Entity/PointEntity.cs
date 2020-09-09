@@ -16,6 +16,16 @@ namespace InternalEngine.Entity
 
         public PointEntity()
         {
+            Initialize();
+        }
+
+        public PointEntity(uint EntityID) : base(EntityID)
+        {
+            Initialize();
+        }
+
+        public void Initialize()
+        {
             InvMass = 1;
             InvInertia = 1;
 

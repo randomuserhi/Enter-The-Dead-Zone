@@ -33,6 +33,8 @@ namespace InternalEngine
                 Joint.Set(Entities[i], Entities[i + 1], 2, new Vector2(0, 0));
                 EntityJoints.Add(Joint);
             }
+
+            Entities.Add(new PointEntity(2000));
         }
 
         public static List<EntityObject> Entities = new List<EntityObject>();

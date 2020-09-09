@@ -67,15 +67,26 @@ namespace InternalEngine.Entity
             int SubIndex = Convert.ToInt32(EntityID % SizeOfUIntInBits);
             AssignedID[Index] &= ~(1u << SubIndex);
         }
+        //TODO:: change to be more memory efficient on client side (if an entity of ID 1000 is added, a long mostly empty array is generated)
+        //TODO:: cleanup this code it looks shite
         public static bool CheckEntityID(uint EntityID)
         {
-            //TODO:: index check, outofrange error etc
             int Index = Convert.ToInt32(EntityID / SizeOfUIntInBits);
-            if (Index >= AssignedID.Count) return false;
-
             int SubIndex = Convert.ToInt32(EntityID % SizeOfUIntInBits);
+            if (Index >= AssignedID.Count)
+            {
+                //Expand ID tracking to include missing index
+                while (AssignedID.Count <= Index)
+                    AssignedID.Add(0u);
+                //Set the ID in the list
+                AssignedID[Index] |= 1u << SubIndex;
+                return false;
+            }
             uint Segment = AssignedID[Index];
-            return ((1u << SubIndex) & Segment) != 0u; //returns true if the index exists
+            bool Exists = ((1u << SubIndex) & Segment) != 0u;
+            if (!Exists) //Add the ID if it doesnt exist
+                AssignedID[Index] |= 1u << SubIndex;
+            return Exists; //returns true if the index exists
         }
 
         public EntityObject()
@@ -92,7 +103,7 @@ namespace InternalEngine.Entity
         public EntityObject(uint EntityID)
         {
             if (CheckEntityID(EntityID))
-                Debug.LogError("EntityID: " + EntityID + "Already Exists. This should not ever happen!");
+                Debug.LogError("EntityID: " + EntityID + " already Exists. This should not ever happen! Too bad!");
             this.EntityID = EntityID;
 
             Initialize();
