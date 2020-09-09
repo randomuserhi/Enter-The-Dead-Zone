@@ -9,10 +9,18 @@ using InternalEngine.Entity;
 
 namespace InternalEngine.Entity.Interactions
 {
-    public abstract class EntityJoint
+    public abstract class EntityJoint : EntityBehaviour
     {
         protected EntityObject A;
         protected EntityObject B;
+
+        public EntityJoint() : base()
+        {
+        }
+
+        public EntityJoint(ulong EntityID) : base(EntityID)
+        {
+        }
 
         public abstract void PreStep();
         public abstract void ApplyImpulse();

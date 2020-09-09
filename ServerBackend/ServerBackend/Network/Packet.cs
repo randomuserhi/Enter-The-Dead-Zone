@@ -82,6 +82,15 @@ namespace Network
             ReadableBuffer = Buffer.ToArray();
         }
 
+        /// <summary>
+        /// Writes a range of bytes without setting ReadableBuffer
+        /// </summary>
+        /// <param name="Data"></param>
+        public void Write(byte[] Data)
+        {
+            Buffer.AddRange(Data);
+        }
+
         public void Write(string Value)
         {
             Write(Value.Length); //Add length of string
@@ -135,6 +144,21 @@ namespace Network
                 long Value = BitConverter.ToInt64(ReadableBuffer, ReadPosition);
                 if (MoveRead)
                     ReadPosition += sizeof(long);
+                return Value;
+            }
+            else
+            {
+                throw new Exception("Could not read Long value");
+            }
+        }
+
+        public ulong ReadULong(bool MoveRead = true)
+        {
+            if (UnreadLength() >= sizeof(ulong))
+            {
+                ulong Value = BitConverter.ToUInt64(ReadableBuffer, ReadPosition);
+                if (MoveRead)
+                    ReadPosition += sizeof(ulong);
                 return Value;
             }
             else

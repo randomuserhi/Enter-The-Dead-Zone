@@ -4,10 +4,12 @@ using UnityEngine;
 
 using Network;
 
-public enum ServerCode
+public enum ServerCode //TODO somehow implement / catch disconnection => its not a packet so not sure how to do this
 {
     EstablishUPDConnection,
-    UDPConnectionEstablished
+    UDPConnectionEstablished,
+
+    SnapshotData
 }
 
 public class ServerHandler : MonoBehaviour
@@ -51,6 +53,7 @@ public class ServerHandler : MonoBehaviour
                 break;
             case ServerCode.UDPConnectionEstablished:
                 Debug.Log("Client " + ClientIndex + " succesfully connected.");
+                Game.AddClient(ClientIndex);
                 break;
 
             default:
@@ -63,5 +66,6 @@ public class ServerHandler : MonoBehaviour
     void FixedUpdate()
     {
         ServerHandle.FixedUpdate();
+        Game.FixedUpdate();
     }
 }

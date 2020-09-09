@@ -238,7 +238,7 @@ namespace Network.TCPUDP
             Console.WriteLine("Server started on Port: " + Port);
 
             //Do additional server startup code
-            OnStart();
+            OnStart?.Invoke();
 
             if (Timeout > 0)
             {
@@ -339,7 +339,7 @@ namespace Network.TCPUDP
                 {
                     Clients[i].TCPConnect(Client);
 
-                    OnClientConnection(i);
+                    OnClientConnection?.Invoke(i);
 
                     return;
                 }

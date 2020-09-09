@@ -203,6 +203,9 @@ namespace Network.TCPUDP
 
         private _TCPUDPClient[] Clients;
 
+        public Action OnStart;
+        public Action<int> OnClientConnection;
+
         public TCPUDPServer(int Port, int MaxNumberConnections, int DataBufferSize)
         {
             this.MaxNumberConnections = MaxNumberConnections;
@@ -213,6 +216,13 @@ namespace Network.TCPUDP
             this.Port = Port;
             TCPListener = new TcpListener(IPAddress.Any, Port);
             UDPListener = new UdpClient(Port);
+
+            //https://stackoverflow.com/questions/38191968/c-sharp-udp-an-existing-connection-was-forcibly-closed-by-the-remote-host
+            UDPListener.Client.IOControl(
+                (IOControlCode)(-1744830452),
+                new byte[] { 0, 0, 0, 0 },
+                null
+            ); //Currently ignores all UDP exceptions => might want to check this
         }
 
         /// <summary>
@@ -228,7 +238,7 @@ namespace Network.TCPUDP
             Console.WriteLine("Server started on Port: " + Port);
 
             //Do additional server startup code
-            OnStart();
+            OnStart?.Invoke();
 
             if (Timeout > 0)
             {
@@ -242,24 +252,20 @@ namespace Network.TCPUDP
             }
         }
 
-        public virtual void OnStart()
-        {
-
-        }
-
         /// <summary>
         /// Sends a given Packet to a selected client
         /// </summary>
-        public void UDPSendMessage(Packet Packet, int ClientIndex)
+        public void UDPSendMessage(Packet Packet, int ClientIndex = -1)
         {
             try
             {
+                //Console.WriteLine(Clients[ClientIndex].EndPoint == null);
                 if (Clients[ClientIndex].EndPoint == null)
                     return;
 
                 //Check if packet bytes are available, if not convert bytes
                 if (Packet.ReadableBuffer == null)
-                    Packet.ConvertBufferToArray();
+                    Packet.ConvertBufferToArray(ClientIndex);
 
                 UDPListener.BeginSend(Packet.ReadableBuffer, Packet.ReadableBuffer.Length, Clients[ClientIndex].EndPoint, null, null);
             }
@@ -301,10 +307,6 @@ namespace Network.TCPUDP
 
                 Clients[ClientIndex].UDPHandleData(Data, Epoch); //Might be nicer to just pass ReceivedData rather than creating a new packet
             }
-            catch (System.Net.Sockets.SocketException)
-            {
-                Console.WriteLine("Not implemented handle");
-            }
             catch (Exception E)
             {
                 Console.WriteLine("TCPUDPServer.UDPReceiveCallback => " + E);
@@ -337,9 +339,7 @@ namespace Network.TCPUDP
                 {
                     Clients[i].TCPConnect(Client);
 
-                    Packet Test = new Packet();
-                    Test.Write("TCP Hello From Server");
-                    TCPSendMessage(Test, 0);
+                    OnClientConnection?.Invoke(i);
 
                     return;
                 }

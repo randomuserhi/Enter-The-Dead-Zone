@@ -9,6 +9,12 @@ using InternalEngine.Physics;
 
 namespace InternalEngine.Entity
 {
+    public enum EntityBehaviourType
+    {
+        PointEntity,
+        DistanceJoint
+    }
+
     public abstract class EntityBehaviour
     {
         /*public static string ByteDebug(uint num)
@@ -37,6 +43,7 @@ namespace InternalEngine.Entity
 
         //Collection of EntityID objects created for fast easy access
         public static readonly Dictionary<ulong, EntityBehaviour> EntityIDMap = new Dictionary<ulong, EntityBehaviour>();
+        public static readonly Dictionary<EntityBehaviour, ulong> EntityIDMapReversed = new Dictionary<EntityBehaviour, ulong>();
 
         #region Old ID system => uses old IDs but not very efficient
 
@@ -107,6 +114,7 @@ namespace InternalEngine.Entity
         }
         public static void RemoveID(ulong EntityID)
         {
+            EntityIDMapReversed.Remove(EntityIDMap[EntityID]);
             EntityIDMap.Remove(EntityID);
         }
         public static bool CheckEntityID(ulong EntityID)
@@ -120,6 +128,7 @@ namespace InternalEngine.Entity
         {
             EntityID = GetID();
             EntityIDMap.Add(EntityID, this);
+            EntityIDMapReversed.Add(this, EntityID);
             Debug.Log(EntityID);
         }
 
@@ -128,7 +137,10 @@ namespace InternalEngine.Entity
             if (CheckEntityID(EntityID))
                 Debug.LogError("EntityID: " + EntityID + " already Exists. This should not ever happen! Too bad!");
             else
+            {
                 EntityIDMap.Add(EntityID, this);
+                EntityIDMapReversed.Add(this, EntityID);
+            }
             this.EntityID = EntityID;
         }
 
@@ -139,6 +151,8 @@ namespace InternalEngine.Entity
             RemoveID(EntityID);
             OnDestroy();
         }
+
+        public abstract byte[] GetPacketBytes();
 
         /*~EntityBehaviour()
         {
@@ -157,7 +171,7 @@ namespace InternalEngine.Entity
             Self.AddComponent<SpriteRenderer>().sprite = Resources.Load<Sprite>("Sprites/Circle");
         }
 
-        public EntityObject(uint EntityID)  : base(EntityID)
+        public EntityObject(uint EntityID) : base(EntityID)
         {
             Initialize();
 
@@ -176,7 +190,7 @@ namespace InternalEngine.Entity
             GameObject.Destroy(Self);
         }
 
-        public float InvMass { get { return _InvMass; }  set { _InvMass = value; if (value != 0) { RB.mass = 1 / value; RB.isKinematic = false; } else { RB.isKinematic = true; } } }
+        public float InvMass { get { return _InvMass; } set { _InvMass = value; if (value != 0) { RB.mass = 1 / value; RB.isKinematic = false; } else { RB.isKinematic = true; } } }
         private float _InvMass;
         public float InvInertia { get { return _InvInertia; } set { _InvInertia = value; if (value != 0) { RB.inertia = 1 / value; RB.freezeRotation = false; } else { RB.freezeRotation = true; } } }
         private float _InvInertia;

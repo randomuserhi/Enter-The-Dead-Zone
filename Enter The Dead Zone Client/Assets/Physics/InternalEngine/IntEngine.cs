@@ -19,22 +19,7 @@ namespace InternalEngine
 
         public static void Initialise()
         {
-            Entities.Add(new PointEntity());
-            Entities[0].InvMass = 0;
-            Entities[0].InvInertia = 0;
-
-            for (int i = 0; i < 10; i++)
-            {
-                PointEntity Obj = new PointEntity();
-                Entities.Add(Obj);
-                Obj.Position = new Vector2(0, 2 * (i + 1));
-
-                DistanceJoint Joint = new DistanceJoint();
-                Joint.Set(Entities[i], Entities[i + 1], 2, new Vector2(0, 0));
-                EntityJoints.Add(Joint);
-            }
-
-            Entities.Add(new PointEntity(2000));
+            
         }
 
         public static List<EntityObject> Entities = new List<EntityObject>();

@@ -19,9 +19,13 @@ namespace InternalEngine.Entity.Interactions
         Vector2 AccumulatedImpulse; //stores accumulated Impulse
 
         float Relaxation = 1; //Effectively the damping of the joint
+        float Distance;
+        Vector2 Anchor;
 
         public void Set(EntityObject A, EntityObject B, float Distance, Vector2 Anchor)
         {
+            this.Distance = Distance;
+            this.Anchor = Anchor;
             this.A = A;
             this.B = B;
 
@@ -89,6 +93,21 @@ namespace InternalEngine.Entity.Interactions
             B.AngularVelocity += B.InvInertia * Math2D.Cross(RB, Impulse);
 
             AccumulatedImpulse += Impulse;
+        }
+
+        public override byte[] GetPacketBytes()
+        {
+            //EntityType + ulong EntityID + ulong EntityID + float Distance, Vector2 Anchor
+            //TODO:: might be worth optimizing this to use arrays or something if performance is hit hard
+            List<byte> Data = new List<byte>();
+            Data.AddRange(BitConverter.GetBytes((int)EntityBehaviourType.DistanceJoint));
+            Data.AddRange(BitConverter.GetBytes(EntityID));
+            Data.AddRange(BitConverter.GetBytes(EntityIDMapReversed[A]));
+            Data.AddRange(BitConverter.GetBytes(EntityIDMapReversed[B]));
+            Data.AddRange(BitConverter.GetBytes(Distance));
+            Data.AddRange(BitConverter.GetBytes(Anchor.x));
+            Data.AddRange(BitConverter.GetBytes(Anchor.y));
+            return Data.ToArray();
         }
 
         /*public void DebugPrint()

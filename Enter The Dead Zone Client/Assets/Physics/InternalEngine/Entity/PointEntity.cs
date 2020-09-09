@@ -14,12 +14,12 @@ namespace InternalEngine.Entity
     {
         CircleCollider2D Collider;
 
-        public PointEntity()
+        public PointEntity() : base()
         {
             Initialize();
         }
 
-        public PointEntity(uint EntityID) : base(EntityID)
+        public PointEntity(ulong EntityID) : base(EntityID)
         {
             Initialize();
         }
@@ -31,6 +31,21 @@ namespace InternalEngine.Entity
 
             Collider = Self.AddComponent<CircleCollider2D>();
             Collider.radius = 0.5f;
+        }
+
+        public override byte[] GetPacketBytes()
+        {
+            //EntityType + Vector3 Position + float InvMass + float InvInertia + float Radius
+            //TODO:: might be worth optimizing this to use arrays or something if performance is hit hard
+            List<byte> Data = new List<byte>();
+            Data.AddRange(BitConverter.GetBytes((int)EntityBehaviourType.PointEntity));
+            Data.AddRange(BitConverter.GetBytes(Self.transform.position.x));
+            Data.AddRange(BitConverter.GetBytes(Self.transform.position.y));
+            Data.AddRange(BitConverter.GetBytes(Self.transform.position.z));
+            Data.AddRange(BitConverter.GetBytes(InvMass));
+            Data.AddRange(BitConverter.GetBytes(InvInertia));
+            Data.AddRange(BitConverter.GetBytes(0.5f));
+            return Data.ToArray();
         }
     }
 }

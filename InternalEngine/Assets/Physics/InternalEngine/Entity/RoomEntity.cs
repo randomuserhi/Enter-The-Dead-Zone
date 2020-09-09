@@ -17,5 +17,10 @@ namespace InternalEngine.Entity
         {
 
         }
+
+        public override byte[] GetPacketBytes()
+        {
+            throw new NotImplementedException();
+        }
     }
 }
