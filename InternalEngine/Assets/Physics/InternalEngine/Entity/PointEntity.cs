@@ -14,7 +14,7 @@ namespace InternalEngine.Entity
     {
         CircleCollider2D Collider;
 
-        public PointEntity()
+        public PointEntity() : base()
         {
             Initialize();
         }

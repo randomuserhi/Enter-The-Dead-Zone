@@ -13,7 +13,7 @@ namespace InternalEngine.Entity
     {
         List<EntityObject> Segments;
 
-        public RoomEntity()
+        public RoomEntity() : base()
         {
 
         }
