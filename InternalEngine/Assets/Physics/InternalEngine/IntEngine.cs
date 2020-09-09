@@ -34,7 +34,7 @@ namespace InternalEngine
                 EntityJoints.Add(Joint);
             }
 
-            Entities.Add(new PointEntity(2000));
+            Entities.Add(new PointEntity(20000));
         }
 
         public static List<EntityObject> Entities = new List<EntityObject>();

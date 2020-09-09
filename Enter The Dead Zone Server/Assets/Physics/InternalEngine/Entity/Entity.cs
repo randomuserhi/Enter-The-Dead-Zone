@@ -78,6 +78,7 @@ namespace InternalEngine.Entity
                 //Expand ID tracking to include missing index
                 while (AssignedID.Count <= Index)
                     AssignedID.Add(0u);
+                Debug.Log(AssignedID.Count);
                 //Set the ID in the list
                 AssignedID[Index] |= 1u << SubIndex;
                 return false;

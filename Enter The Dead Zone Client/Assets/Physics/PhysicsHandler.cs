@@ -2,17 +2,19 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class EntityBodyPhysics : MonoBehaviour
+using InternalEngine;
+
+public class PhysicsHandler : MonoBehaviour
 {
     // Start is called before the first frame update
-    private void Start()
+    void Start()
     {
-        
+        IntEngine.Initialise();
     }
 
     // Update is called once per frame
-    private void Update()
+    void FixedUpdate()
     {
-        
+        IntEngine.PerformTimeStep();
     }
 }
