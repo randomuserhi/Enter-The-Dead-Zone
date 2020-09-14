@@ -32,14 +32,17 @@ public class Game
                         if (EntityBehaviour.EntityIDMap.ContainsKey(EntityID))
                             E = (PointEntity)EntityBehaviour.EntityIDMap[EntityID];
                         else
+                        {
                             E = new PointEntity(EntityID);
+                            IntEngine.Add(E);
+                        }
                         E.Position = new Vector3(P.ReadFloat(), P.ReadFloat());
-                        E.RB.velocity = new Vector3(P.ReadFloat(), P.ReadFloat());
-                        E.RB.angularVelocity = P.ReadFloat();
+                        E.Rotation = P.ReadFloat();
+                        E.Velocity = new Vector3(P.ReadFloat(), P.ReadFloat());
+                        E.AngularVelocity = P.ReadFloat();
                         E.InvMass = P.ReadFloat();
                         E.InvInertia = P.ReadFloat();
                         P.ReadFloat(); //radius => but didnt implement
-                        IntEngine.Entities.Add(E);
                     }
                     break;
 
@@ -50,10 +53,11 @@ public class Game
                         if (EntityBehaviour.EntityIDMap.ContainsKey(EntityID))
                             E = (DistanceJoint)EntityBehaviour.EntityIDMap[EntityID];
                         else
+                        {
                             E = new DistanceJoint(EntityID);
+                            IntEngine.Add(E);
+                        }
                         E.Set((PointEntity)EntityBehaviour.EntityIDMap[P.ReadULong()], (PointEntity)EntityBehaviour.EntityIDMap[P.ReadULong()], P.ReadFloat(), new Vector2(P.ReadFloat(), P.ReadFloat()));
-                        IntEngine.EntityJoints.Add(E);
-
                         //TODO:: somehow need to handle when points used in the joint where not sent with snapshot
                     }
                     break;

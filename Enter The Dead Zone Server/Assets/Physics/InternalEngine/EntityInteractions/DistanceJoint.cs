@@ -19,8 +19,12 @@ namespace InternalEngine.Entity.Interactions
         Vector2 AccumulatedImpulse; //stores accumulated Impulse
 
         float Relaxation = 1; //Effectively the damping of the joint
+
         float Distance;
         Vector2 Anchor;
+
+        public DistanceJoint() { }
+        public DistanceJoint(ulong EntityID) : base(EntityID) { }
 
         public void Set(EntityObject A, EntityObject B, float Distance, Vector2 Anchor)
         {

@@ -38,7 +38,7 @@ public class ServerHandler : MonoBehaviour
     }
 
     private void PerformServerAction(int SizeOfPacket, int ClientIndex, PacketWrapper Packet, ServerCode Job)
-    {
+    { 
         switch (Job)
         {
             case ServerCode.EstablishUPDConnection:

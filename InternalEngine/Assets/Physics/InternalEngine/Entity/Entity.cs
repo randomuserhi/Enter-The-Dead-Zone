@@ -132,7 +132,7 @@ namespace InternalEngine.Entity
             Debug.Log(EntityID);
         }
 
-        public EntityBehaviour(uint EntityID)
+        public EntityBehaviour(ulong EntityID)
         {
             if (CheckEntityID(EntityID))
                 Debug.LogError("EntityID: " + EntityID + " already Exists. This should not ever happen! Too bad!");
@@ -146,7 +146,7 @@ namespace InternalEngine.Entity
 
         public virtual void OnDestroy() { }
 
-        private void Destroy()
+        public void Destroy()
         {
             RemoveID(EntityID);
             OnDestroy();
@@ -171,7 +171,7 @@ namespace InternalEngine.Entity
             Self.AddComponent<SpriteRenderer>().sprite = Resources.Load<Sprite>("Sprites/Circle");
         }
 
-        public EntityObject(uint EntityID) : base(EntityID)
+        public EntityObject(ulong EntityID) : base(EntityID)
         {
             Initialize();
 

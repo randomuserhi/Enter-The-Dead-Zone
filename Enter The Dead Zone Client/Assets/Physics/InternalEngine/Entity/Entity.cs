@@ -146,7 +146,7 @@ namespace InternalEngine.Entity
 
         public virtual void OnDestroy() { }
 
-        private void Destroy()
+        public void Destroy()
         {
             RemoveID(EntityID);
             OnDestroy();

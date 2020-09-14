@@ -19,9 +19,11 @@ namespace InternalEngine.Entity.Interactions
         Vector2 AccumulatedImpulse; //stores accumulated Impulse
 
         float Relaxation = 1; //Effectively the damping of the joint
+
         float Distance;
         Vector2 Anchor;
 
+        public DistanceJoint() { }
         public DistanceJoint(ulong EntityID) : base(EntityID) { }
 
         public void Set(EntityObject A, EntityObject B, float Distance, Vector2 Anchor)
@@ -103,6 +105,7 @@ namespace InternalEngine.Entity.Interactions
             //TODO:: might be worth optimizing this to use arrays or something if performance is hit hard
             List<byte> Data = new List<byte>();
             Data.AddRange(BitConverter.GetBytes((int)EntityBehaviourType.DistanceJoint));
+            Data.AddRange(BitConverter.GetBytes(EntityID));
             Data.AddRange(BitConverter.GetBytes(EntityIDMapReversed[A]));
             Data.AddRange(BitConverter.GetBytes(EntityIDMapReversed[B]));
             Data.AddRange(BitConverter.GetBytes(Distance));

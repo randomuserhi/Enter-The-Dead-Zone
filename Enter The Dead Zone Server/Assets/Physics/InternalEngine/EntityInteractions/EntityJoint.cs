@@ -18,7 +18,7 @@ namespace InternalEngine.Entity.Interactions
         {
         }
 
-        public EntityJoint(uint EntityID) : base(EntityID)
+        public EntityJoint(ulong EntityID) : base(EntityID)
         {
         }
 

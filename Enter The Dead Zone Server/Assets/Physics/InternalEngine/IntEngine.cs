@@ -19,23 +19,50 @@ namespace InternalEngine
 
         public static void Initialise()
         {
-            Entities.Add(new PointEntity());
+            Add(new PointEntity());
             Entities[0].InvMass = 0;
             Entities[0].InvInertia = 0;
 
             for (int i = 0; i < 10; i++)
             {
                 PointEntity Obj = new PointEntity();
-                Entities.Add(Obj);
+                Add(Obj);
                 Obj.Position = new Vector2(0, 2 * (i + 1));
 
                 DistanceJoint Joint = new DistanceJoint();
                 Joint.Set(Entities[i], Entities[i + 1], 2, new Vector2(0, 0));
-                EntityJoints.Add(Joint);
+                Add(Joint);
             }
 
-            Entities.Add(new PointEntity(20000));
+            Add(new PointEntity(20000));
         }
+
+        #region Instantiation
+
+        public static void Remove(EntityObject E)
+        {
+            E.Destroy();
+            Entities.Remove(E);
+        }
+
+        public static void Add(EntityObject E)
+        {
+            //MAYBE ADD A CHECK FOR MULTIPLE ENTITIES OF SAME ID => THO TANKS PERFORMANCE
+            Entities.Add(E);
+        }
+        public static void Remove(EntityJoint E)
+        {
+            E.Destroy();
+            EntityJoints.Remove(E);
+        }
+
+        public static void Add(EntityJoint E)
+        {
+            //MAYBE ADD A CHECK FOR MULTIPLE ENTITIES OF SAME ID => THO TANKS PERFORMANCE
+            EntityJoints.Add(E);
+        }
+
+        #endregion
 
         public static List<EntityObject> Entities = new List<EntityObject>();
         public static List<EntityJoint> EntityJoints = new List<EntityJoint>();

@@ -19,7 +19,7 @@ namespace InternalEngine.Entity
             Initialize();
         }
 
-        public PointEntity(uint EntityID) : base(EntityID)
+        public PointEntity(ulong EntityID) : base(EntityID)
         {
             Initialize();
         }
@@ -42,9 +42,10 @@ namespace InternalEngine.Entity
             Data.AddRange(BitConverter.GetBytes(EntityID));
             Data.AddRange(BitConverter.GetBytes(Self.transform.position.x));
             Data.AddRange(BitConverter.GetBytes(Self.transform.position.y));
+            Data.AddRange(BitConverter.GetBytes(Rotation));
             Data.AddRange(BitConverter.GetBytes(RB.velocity.x));
             Data.AddRange(BitConverter.GetBytes(RB.velocity.y));
-            Data.AddRange(BitConverter.GetBytes(RB.angularVelocity));
+            Data.AddRange(BitConverter.GetBytes(AngularVelocity));
             Data.AddRange(BitConverter.GetBytes(InvMass));
             Data.AddRange(BitConverter.GetBytes(InvInertia));
             Data.AddRange(BitConverter.GetBytes(0.5f));

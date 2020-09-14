@@ -15,6 +15,6 @@ public class PhysicsHandler : MonoBehaviour
     // Update is called once per frame
     void FixedUpdate()
     {
-        //IntEngine.PerformTimeStep(); => interpolation needs to be fixed, cant run whilst unwrapping snapshots
+        IntEngine.PerformTimeStep(); //=> interpolation needs to be fixed, cant run whilst unwrapping snapshots
     }
 }
