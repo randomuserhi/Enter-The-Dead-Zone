@@ -19,7 +19,7 @@ namespace InternalEngine
 
         public static void Initialise()
         {
-            Add(new PointEntity());
+            /*Add(new PointEntity());
             Entities[0].InvMass = 0;
             Entities[0].InvInertia = 0;
 
@@ -34,7 +34,7 @@ namespace InternalEngine
                 Add(Joint);
             }
 
-            Add(new PointEntity(20000));
+            Add(new PointEntity(20000));*/
         }
 
         #region Instantiation
