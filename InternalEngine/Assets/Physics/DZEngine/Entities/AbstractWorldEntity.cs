@@ -67,15 +67,12 @@ namespace DeadZoneEngine.Entities
     {
         public EntityID ID;
         public EntityType Type;
-        public object Child;
-        public AbstractWorldEntity(object Child)
+        public AbstractWorldEntity()
         {
-            this.Child = Child;
             ID = new EntityID(this);
         }
-        public AbstractWorldEntity(object Child, ulong ID)
+        public AbstractWorldEntity(ulong ID)
         {
-            this.Child = Child;
             this.ID = new EntityID(this, ID);
         }
 

@@ -16,7 +16,6 @@ namespace DeadZoneEngine.Entities
         public PhysicalObject(AbstractWorldEntity Owner)
         {
             this.Owner = Owner;
-            Owner.Child = this;
             Self = new GameObject();
             RB = Self.AddComponent<Rigidbody2D>();
 

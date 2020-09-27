@@ -11,7 +11,6 @@ namespace DeadZoneEngine.Entities
         public PhysicalJoint(AbstractWorldEntity Owner)
         {
             this.Owner = Owner;
-            Owner.Child = this;
             SetEntityType();
         }
 
