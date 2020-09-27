@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 using UnityEngine;
-using InternalEngine;
+using DeadZoneEngine;
 using Templates;
 using Network;
 
@@ -30,14 +30,10 @@ public class Game
         SnapshotPacket.Write((int)ServerCode.SnapshotData);
 
         //for time being just send everything
-        SnapshotPacket.Write(IntEngine.Entities.Count + IntEngine.EntityJoints.Count);
-        for (int i = 0; i < IntEngine.Entities.Count; i++)
+        SnapshotPacket.Write(DZEngine.UpdatableDeletableObjects.Count);
+        for (int i = 0; i < DZEngine.UpdatableDeletableObjects.Count; i++)
         {
-            SnapshotPacket.Write(IntEngine.Entities[i].GetPacketBytes());
-        }
-        for (int i = 0; i < IntEngine.EntityJoints.Count; i++)
-        {
-            SnapshotPacket.Write(IntEngine.EntityJoints[i].GetPacketBytes());
+            SnapshotPacket.Write(DZEngine.UpdatableDeletableObjects[i].GetBytes());
         }
 
         Debug.Log("SnapShotSent");

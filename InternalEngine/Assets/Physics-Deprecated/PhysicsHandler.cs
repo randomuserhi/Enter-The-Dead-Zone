@@ -2,19 +2,19 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-using DeadZoneEngine;
+using InternalEngine;
 
-public class PhysicsHandler : MonoBehaviour
+/*public class PhysicsHandler : MonoBehaviour
 {
     // Start is called before the first frame update
     void Start()
     {
-        DZEngine.Initialize();
+        IntEngine.Initialise();
     }
 
     // Update is called once per frame
     void FixedUpdate()
     {
-        DZEngine.FixedUpdate();
+        IntEngine.PerformTimeStep();
     }
-}
+}*/

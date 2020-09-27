@@ -5,9 +5,9 @@ using System.Text;
 using System.Threading.Tasks;
 
 using UnityEngine;
-using InternalEngine;
-using InternalEngine.Entity;
-using InternalEngine.Entity.Interactions;
+using DeadZoneEngine;
+using DeadZoneEngine.Entities;
+using DeadZoneEngine.Entities.Components;
 using Network;
 
 public class Game
@@ -22,19 +22,19 @@ public class Game
         int NumEntities = P.ReadInt();
         for (int i = 0; i < NumEntities; i ++)
         {
-            EntityBehaviourType ET = (EntityBehaviourType)P.ReadInt();
+            AbstractWorldEntity.EntityType ET = (AbstractWorldEntity.EntityType)P.ReadInt();
             switch (ET)
             {
-                case EntityBehaviourType.PointEntity:
+                case AbstractWorldEntity.EntityType.BodyChunk:
                     {
-                        ulong EntityID = P.ReadULong();
-                        PointEntity E;
-                        if (EntityBehaviour.EntityIDMap.ContainsKey(EntityID))
-                            E = (PointEntity)EntityBehaviour.EntityIDMap[EntityID];
+                        ulong ID = P.ReadULong();
+                        BodyChunk E;
+                        if (EntityID.Exists(ID))
+                            E = (BodyChunk)EntityID.IDToObject[ID].Child;
                         else
                         {
-                            E = new PointEntity(EntityID);
-                            IntEngine.Add(E);
+                            E = new BodyChunk(new AbstractWorldEntity(ID));
+                            DZEngine.UpdatableDeletableObjects.Add(E);
                         }
                         E.Position = new Vector3(P.ReadFloat(), P.ReadFloat());
                         E.Rotation = P.ReadFloat();
@@ -46,18 +46,20 @@ public class Game
                     }
                     break;
 
-                case EntityBehaviourType.DistanceJoint:
+                case AbstractWorldEntity.EntityType.DistanceJoint:
                     {
-                        ulong EntityID = P.ReadULong();
+                        ulong ID = P.ReadULong();
                         DistanceJoint E;
-                        if (EntityBehaviour.EntityIDMap.ContainsKey(EntityID))
-                            E = (DistanceJoint)EntityBehaviour.EntityIDMap[EntityID];
+                        if (EntityID.Exists(ID))
+                        {
+                            E = (DistanceJoint)EntityID.IDToObject[ID].Child;
+                        }
                         else
                         {
-                            E = new DistanceJoint(EntityID);
-                            IntEngine.Add(E);
+                            E = new DistanceJoint(new AbstractWorldEntity(ID));
+                            DZEngine.UpdatableDeletableObjects.Add(E);
                         }
-                        E.Set((PointEntity)EntityBehaviour.EntityIDMap[P.ReadULong()], (PointEntity)EntityBehaviour.EntityIDMap[P.ReadULong()], P.ReadFloat(), new Vector2(P.ReadFloat(), P.ReadFloat()));
+                        E.Set((BodyChunk)EntityID.IDToObject[P.ReadULong()].Child, (BodyChunk)EntityID.IDToObject[P.ReadULong()].Child, P.ReadFloat(), new Vector2(P.ReadFloat(), P.ReadFloat()));
                         //TODO:: somehow need to handle when points used in the joint where not sent with snapshot
                     }
                     break;
