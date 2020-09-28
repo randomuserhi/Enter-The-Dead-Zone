@@ -30,10 +30,10 @@ public class Game
                         ulong ID = P.ReadULong();
                         BodyChunk E;
                         if (EntityID.Exists(ID))
-                            E = (BodyChunk)EntityID.IDToObject[ID].Child;
+                            E = (BodyChunk)EntityID.IDToObject[ID];
                         else
                         {
-                            E = new BodyChunk(new AbstractWorldEntity(ID));
+                            E = new BodyChunk(ID);
                             DZEngine.UpdatableDeletableObjects.Add(E);
                         }
                         E.Position = new Vector3(P.ReadFloat(), P.ReadFloat());
@@ -52,14 +52,14 @@ public class Game
                         DistanceJoint E;
                         if (EntityID.Exists(ID))
                         {
-                            E = (DistanceJoint)EntityID.IDToObject[ID].Child;
+                            E = (DistanceJoint)EntityID.IDToObject[ID];
                         }
                         else
                         {
-                            E = new DistanceJoint(new AbstractWorldEntity(ID));
+                            E = new DistanceJoint(ID);
                             DZEngine.UpdatableDeletableObjects.Add(E);
                         }
-                        E.Set((BodyChunk)EntityID.IDToObject[P.ReadULong()].Child, (BodyChunk)EntityID.IDToObject[P.ReadULong()].Child, P.ReadFloat(), new Vector2(P.ReadFloat(), P.ReadFloat()));
+                        E.Set((PhysicalObject)EntityID.IDToObject[P.ReadULong()], (PhysicalObject)EntityID.IDToObject[P.ReadULong()], P.ReadFloat(), new Vector2(P.ReadFloat(), P.ReadFloat()));
                         //TODO:: somehow need to handle when points used in the joint where not sent with snapshot
                     }
                     break;

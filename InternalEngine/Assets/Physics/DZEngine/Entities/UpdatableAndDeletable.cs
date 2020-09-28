@@ -6,34 +6,18 @@ using System.Threading.Tasks;
 
 namespace DeadZoneEngine.Entities
 {
-    public class UpdatableAndDeletable
+    public interface IUpdatableAndDeletable
     {
-        public bool FlaggedForDeletion = false;
-        public AbstractWorldEntity Owner;
+        bool FlaggedToDelete { get; set; }
 
-        public virtual void PreUpdate()
-        {
+        void PreUpdate();
 
-        }
+        void Update();
 
-        public virtual void Update()
-        {
+        void IteratedUpdate();
 
-        }
+        void Destroy();
 
-        public virtual void IteratedUpdate()
-        {
-
-        }
-
-        public void Destroy()
-        {
-            FlaggedForDeletion = true;
-        }
-
-        public virtual void Delete()
-        {
-
-        }
+        void Delete();
     }
 }

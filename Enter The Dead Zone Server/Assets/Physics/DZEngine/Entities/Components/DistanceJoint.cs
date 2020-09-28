@@ -26,24 +26,18 @@ namespace DeadZoneEngine.Entities.Components
         float Distance;
         Vector2 Anchor;
 
-        public DistanceJoint(AbstractWorldEntity Owner) : base(Owner)
+        public DistanceJoint()
         {
             
+        }
+        public DistanceJoint(ulong ID) : base(ID)
+        {
+
         }
 
         protected override void SetEntityType()
         {
-            Owner.Type = AbstractWorldEntity.EntityType.DistanceJoint;
-        }
-
-        public override void PreUpdate()
-        {
-            PreStep();
-        }
-
-        public override void IteratedUpdate()
-        {
-            ApplyImpulse();
+            Type = AbstractWorldEntity.EntityType.DistanceJoint;
         }
 
         public void Set(PhysicalObject A, PhysicalObject B, float Distance, Vector2 Anchor)
@@ -60,7 +54,7 @@ namespace DeadZoneEngine.Entities.Components
             Mat22 RotBT = RotB.Transpose();
 
             LocalAnchorA = RotAT * (Anchor);
-            LocalAnchorB = RotBT * (Anchor - new Vector2(0, Distance));
+            LocalAnchorB = RotBT * (Anchor - new Vector2(Distance, 0));
 
             Relaxation = 1.0f;
         }
@@ -69,11 +63,9 @@ namespace DeadZoneEngine.Entities.Components
         {
             //Pre-compute anchors, mass matrix, and bias => http://twvideo01.ubm-us.net/o1/vault/gdc09/slides/04-GDC09_Catto_Erin_Solver.pdf
 
-            //Same as using atan2(A.Position - B.Position) - Math.PI/2 however faster as skips atan2 math => this is just getting the current angle between the two objects A and B
-            Vector2 ARot = (A.Position - B.Position).normalized;
-            Vector2 BRot = (B.Position - A.Position).normalized;
-            Mat22 RotA = new Mat22(new Vector2(ARot.y, -ARot.x));
-            Mat22 RotB = new Mat22(new Vector2(BRot.y, -BRot.x));
+            //Same as using atan2(A.Position - B.Position) however faster as skips atan2 math => this is just getting the current angle between the two objects A and B
+            Mat22 RotA = new Mat22((A.Position - B.Position).normalized);
+            Mat22 RotB = new Mat22((B.Position - A.Position).normalized);
 
             RA = RotA * LocalAnchorA;
             RB = RotB * LocalAnchorB;
@@ -128,10 +120,10 @@ namespace DeadZoneEngine.Entities.Components
             //EntityType + ulong EntityID + ulong EntityID + float Distance, Vector2 Anchor
             //TODO:: might be worth optimizing this to use arrays or something if performance is hit hard
             List<byte> Data = new List<byte>();
-            Data.AddRange(BitConverter.GetBytes((int)Owner.Type));
-            Data.AddRange(BitConverter.GetBytes(Owner.ID));
-            Data.AddRange(BitConverter.GetBytes(A.Owner.ID));
-            Data.AddRange(BitConverter.GetBytes(B.Owner.ID));
+            Data.AddRange(BitConverter.GetBytes((int)Type));
+            Data.AddRange(BitConverter.GetBytes(ID));
+            Data.AddRange(BitConverter.GetBytes(A.ID));
+            Data.AddRange(BitConverter.GetBytes(B.ID));
             Data.AddRange(BitConverter.GetBytes(Distance));
             Data.AddRange(BitConverter.GetBytes(Anchor.x));
             Data.AddRange(BitConverter.GetBytes(Anchor.y));

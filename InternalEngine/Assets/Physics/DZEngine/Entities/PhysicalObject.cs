@@ -8,28 +8,38 @@ using UnityEngine;
 
 namespace DeadZoneEngine.Entities
 {
-    public abstract class PhysicalObject : UpdatableAndDeletable
+    public abstract class PhysicalObject : AbstractWorldEntity, IUpdatableAndDeletable
     {
         protected GameObject Self;
         protected Rigidbody2D RB;
 
-        public PhysicalObject(AbstractWorldEntity Owner)
+        public PhysicalObject()
         {
-            this.Owner = Owner;
             Self = new GameObject();
             RB = Self.AddComponent<Rigidbody2D>();
 
             SetEntityType();
         }
 
-        protected abstract void SetEntityType();
+        public PhysicalObject(ulong ID) : base(ID)
+        {
+            Self = new GameObject();
+            RB = Self.AddComponent<Rigidbody2D>();
 
-        public override void Delete()
+            SetEntityType();
+        }
+
+        public bool _FlaggedToDelete;
+        bool IUpdatableAndDeletable.FlaggedToDelete { get { return _FlaggedToDelete; } set { _FlaggedToDelete = value; } }
+        void IUpdatableAndDeletable.PreUpdate() { }
+        void IUpdatableAndDeletable.Update() { }
+        void IUpdatableAndDeletable.IteratedUpdate() { }
+        void IUpdatableAndDeletable.Delete()
         {
             GameObject.Destroy(Self);
         }
 
-        public abstract byte[] GetBytes();
+        protected abstract void SetEntityType();
 
         public Vector2 Position { get { return RB.position; } set { RB.position = value; } }
         public Vector2 Velocity { get { return RB.velocity; } set { RB.velocity = value; } }

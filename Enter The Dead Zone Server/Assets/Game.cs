@@ -8,6 +8,7 @@ using UnityEngine;
 using DeadZoneEngine;
 using Templates;
 using Network;
+using DeadZoneEngine.Entities;
 
 public class Game
 {
@@ -33,7 +34,7 @@ public class Game
         SnapshotPacket.Write(DZEngine.UpdatableDeletableObjects.Count);
         for (int i = 0; i < DZEngine.UpdatableDeletableObjects.Count; i++)
         {
-            SnapshotPacket.Write(DZEngine.UpdatableDeletableObjects[i].GetBytes());
+            SnapshotPacket.Write(((AbstractWorldEntity)DZEngine.UpdatableDeletableObjects[i]).GetBytes());
         }
 
         Debug.Log("SnapShotSent");

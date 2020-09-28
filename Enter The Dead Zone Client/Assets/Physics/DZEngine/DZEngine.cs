@@ -15,28 +15,29 @@ namespace DeadZoneEngine
 
         public static void Initialize()
         {
-            /*UpdatableDeletableObjects.Add(new BodyChunk(new AbstractWorldEntity()));
+            /*UpdatableDeletableObjects.Add(new BodyChunk());
             ((BodyChunk)UpdatableDeletableObjects[0]).InvMass = 0;
             ((BodyChunk)UpdatableDeletableObjects[0]).InvInertia = 0;
 
             List<DistanceJoint> D = new List<DistanceJoint>();
             for (int i = 0; i < 10; i++)
             {
-                BodyChunk Obj = new BodyChunk(new AbstractWorldEntity());
+                BodyChunk Obj = new BodyChunk();
                 UpdatableDeletableObjects.Add(Obj);
                 Obj.Position = new Vector2(0, 2 * (i + 1));
 
-                DistanceJoint Joint = new DistanceJoint(new AbstractWorldEntity());
+                DistanceJoint Joint = new DistanceJoint();
                 Joint.Set((BodyChunk)UpdatableDeletableObjects[i], (BodyChunk)UpdatableDeletableObjects[i + 1], 2, new Vector2(0, 0));
                 D.Add(Joint);
             }
             UpdatableDeletableObjects.AddRange(D);
 
-            UpdatableDeletableObjects.Add(new BodyChunk(new AbstractWorldEntity(2000)));*/
+            UpdatableDeletableObjects.Add(new BodyChunk());*/
         }
 
-        private static List<UpdatableAndDeletable> LastUpdatableDeletableObjects = new List<UpdatableAndDeletable>();
-        public static List<UpdatableAndDeletable> UpdatableDeletableObjects = new List<UpdatableAndDeletable>();
+        public static List<AbstractWorldEntity> WorldEntities = new List<AbstractWorldEntity>(); //TODO:: this needs implementing
+        private static List<IUpdatableAndDeletable> LastUpdatableDeletableObjects = new List<IUpdatableAndDeletable>();
+        public static List<IUpdatableAndDeletable> UpdatableDeletableObjects = new List<IUpdatableAndDeletable>();
         public static void FixedUpdate()
         {
             InvDeltaTime = 1 / Time.deltaTime;
@@ -48,12 +49,12 @@ namespace DeadZoneEngine
             {
                 LastUpdatableDeletableObjects[i].Update();
 
-                if (!LastUpdatableDeletableObjects[i].FlaggedForDeletion)
+                if (!LastUpdatableDeletableObjects[i].FlaggedToDelete)
                     UpdatableDeletableObjects.Add(LastUpdatableDeletableObjects[i]);
                 else
                 {
-                    LastUpdatableDeletableObjects[i].Delete();
-                    LastUpdatableDeletableObjects[i].Owner.Destroy();
+                    LastUpdatableDeletableObjects[i].Delete(); //Destroy Interface
+                    ((AbstractWorldEntity)LastUpdatableDeletableObjects[i]).Destroy(); //Destroy Entity
                 }
             }
 

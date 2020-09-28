@@ -12,7 +12,17 @@ namespace DeadZoneEngine.Entities.Components
     {
         private CircleCollider2D Collider;
 
-        public BodyChunk(AbstractWorldEntity Owner) : base(Owner)
+        public BodyChunk()
+        {
+            Init();
+        }
+
+        public BodyChunk(ulong ID) : base(ID)
+        {
+            Init();
+        }
+
+        private void Init()
         {
             Collider = Self.AddComponent<CircleCollider2D>();
             Collider.radius = 0.5f;
@@ -26,7 +36,7 @@ namespace DeadZoneEngine.Entities.Components
 
         protected override void SetEntityType()
         {
-            Owner.Type = AbstractWorldEntity.EntityType.BodyChunk;
+            Type = AbstractWorldEntity.EntityType.BodyChunk;
         }
 
         public override byte[] GetBytes()
@@ -34,8 +44,8 @@ namespace DeadZoneEngine.Entities.Components
             //EntityType + Vector3 Position + float InvMass + float InvInertia + float Radius
             //TODO:: might be worth optimizing this to use arrays or something if performance is hit hard
             List<byte> Data = new List<byte>();
-            Data.AddRange(BitConverter.GetBytes((int)Owner.Type));
-            Data.AddRange(BitConverter.GetBytes(Owner.ID));
+            Data.AddRange(BitConverter.GetBytes((int)Type));
+            Data.AddRange(BitConverter.GetBytes(ID));
             Data.AddRange(BitConverter.GetBytes(Position.x));
             Data.AddRange(BitConverter.GetBytes(Position.y));
             Data.AddRange(BitConverter.GetBytes(Rotation));

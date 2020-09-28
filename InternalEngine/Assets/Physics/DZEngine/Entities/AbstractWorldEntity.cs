@@ -63,7 +63,7 @@ namespace DeadZoneEngine.Entities
         }
     }
 
-    public class AbstractWorldEntity
+    public abstract class AbstractWorldEntity
     {
         public EntityID ID;
         public EntityType Type;
@@ -75,6 +75,8 @@ namespace DeadZoneEngine.Entities
         {
             this.ID = new EntityID(this, ID);
         }
+
+        public abstract byte[] GetBytes();
 
         public void Destroy()
         {

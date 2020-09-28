@@ -6,19 +6,35 @@ using System.Threading.Tasks;
 
 namespace DeadZoneEngine.Entities
 {
-    public abstract class PhysicalJoint : UpdatableAndDeletable
+    public abstract class PhysicalJoint : AbstractWorldEntity, IUpdatableAndDeletable
     {
-        public PhysicalJoint(AbstractWorldEntity Owner)
+        public PhysicalJoint()
         {
-            this.Owner = Owner;
-            Owner.Child = this;
             SetEntityType();
         }
+
+        public PhysicalJoint(ulong ID) : base(ID)
+        {
+            SetEntityType();
+        }
+
+        public bool _FlaggedToDelete;
+        bool IUpdatableAndDeletable.FlaggedToDelete { get { return _FlaggedToDelete; } set { _FlaggedToDelete = value; } }
+        void IUpdatableAndDeletable.PreUpdate()
+        {
+            PreStep();
+        }
+
+        void IUpdatableAndDeletable.Update() { }
+        void IUpdatableAndDeletable.IteratedUpdate()
+        {
+            ApplyImpulse();
+        }
+        void IUpdatableAndDeletable.Delete() { }
 
         protected abstract void SetEntityType();
 
         public abstract void PreStep();
         public abstract void ApplyImpulse();
-        public abstract byte[] GetBytes();
     }
 }

@@ -26,24 +26,18 @@ namespace DeadZoneEngine.Entities.Components
         float Distance;
         Vector2 Anchor;
 
-        public DistanceJoint(AbstractWorldEntity Owner) : base(Owner)
+        public DistanceJoint()
         {
             
+        }
+        public DistanceJoint(ulong ID) : base(ID)
+        {
+
         }
 
         protected override void SetEntityType()
         {
-            Owner.Type = AbstractWorldEntity.EntityType.DistanceJoint;
-        }
-
-        public override void PreUpdate()
-        {
-            PreStep();
-        }
-
-        public override void IteratedUpdate()
-        {
-            ApplyImpulse();
+            Type = AbstractWorldEntity.EntityType.DistanceJoint;
         }
 
         public void Set(PhysicalObject A, PhysicalObject B, float Distance, Vector2 Anchor)
@@ -126,10 +120,10 @@ namespace DeadZoneEngine.Entities.Components
             //EntityType + ulong EntityID + ulong EntityID + float Distance, Vector2 Anchor
             //TODO:: might be worth optimizing this to use arrays or something if performance is hit hard
             List<byte> Data = new List<byte>();
-            Data.AddRange(BitConverter.GetBytes((int)Owner.Type));
-            Data.AddRange(BitConverter.GetBytes(Owner.ID));
-            Data.AddRange(BitConverter.GetBytes(A.Owner.ID));
-            Data.AddRange(BitConverter.GetBytes(B.Owner.ID));
+            Data.AddRange(BitConverter.GetBytes((int)Type));
+            Data.AddRange(BitConverter.GetBytes(ID));
+            Data.AddRange(BitConverter.GetBytes(A.ID));
+            Data.AddRange(BitConverter.GetBytes(B.ID));
             Data.AddRange(BitConverter.GetBytes(Distance));
             Data.AddRange(BitConverter.GetBytes(Anchor.x));
             Data.AddRange(BitConverter.GetBytes(Anchor.y));
