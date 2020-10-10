@@ -18,23 +18,15 @@ namespace DeadZoneEngine.Entities
             SetEntityType();
         }
 
-        public bool _FlaggedToDelete;
-        bool IUpdatableAndDeletable.FlaggedToDelete { get { return _FlaggedToDelete; } set { _FlaggedToDelete = value; } }
-        void IUpdatableAndDeletable.PreUpdate()
+        private bool _FlaggedToDelete;
+        public bool FlaggedToDelete { get { return _FlaggedToDelete; } set { _FlaggedToDelete = value; } }
+        public void Instantiate()
         {
-            PreStep();
+            DZEngine.UpdatableDeletableObjects.Add(this);
         }
-
-        void IUpdatableAndDeletable.Update() { }
-        void IUpdatableAndDeletable.IteratedUpdate()
-        {
-            ApplyImpulse();
-        }
-        void IUpdatableAndDeletable.Delete() { }
-
-        protected abstract void SetEntityType();
-
-        public abstract void PreStep();
-        public abstract void ApplyImpulse();
+        public virtual void PreUpdate() { }
+        public virtual void Update() { }
+        public virtual void IteratedUpdate() { }
+        public virtual void Delete() { FlaggedToDelete = true; }
     }
 }

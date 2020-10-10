@@ -59,7 +59,7 @@ namespace DeadZoneEngine.Entities.Components
             Relaxation = 1.0f;
         }
 
-        public override void PreStep()
+        public override void PreUpdate()
         {
             //Pre-compute anchors, mass matrix, and bias => http://twvideo01.ubm-us.net/o1/vault/gdc09/slides/04-GDC09_Catto_Erin_Solver.pdf
 
@@ -101,7 +101,7 @@ namespace DeadZoneEngine.Entities.Components
             B.AngularVelocity += B.InvInertia * Math2D.Cross(RB, AccumulatedImpulse);
         }
 
-        public override void ApplyImpulse()
+        public override void IteratedUpdate()
         {
             Vector2 RelativeDeltaVelocity = B.Velocity + Math2D.Cross(B.AngularVelocity, RB) - A.Velocity - Math2D.Cross(A.AngularVelocity, RA);
             Vector2 Impulse = M * (-RelativeDeltaVelocity + Bias);

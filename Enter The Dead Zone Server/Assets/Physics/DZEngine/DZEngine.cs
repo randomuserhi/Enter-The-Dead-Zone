@@ -15,7 +15,7 @@ namespace DeadZoneEngine
 
         public static void Initialize()
         {
-            UpdatableDeletableObjects.Add(new BodyChunk());
+            /*new BodyChunk().Instantiate();
             ((BodyChunk)UpdatableDeletableObjects[0]).InvMass = 0;
             ((BodyChunk)UpdatableDeletableObjects[0]).InvInertia = 0;
 
@@ -23,7 +23,7 @@ namespace DeadZoneEngine
             for (int i = 0; i < 10; i++)
             {
                 BodyChunk Obj = new BodyChunk();
-                UpdatableDeletableObjects.Add(Obj);
+                Obj.Instantiate();
                 Obj.Position = new Vector2(0, 2 * (i + 1));
 
                 DistanceJoint Joint = new DistanceJoint();
@@ -32,7 +32,8 @@ namespace DeadZoneEngine
             }
             UpdatableDeletableObjects.AddRange(D);
 
-            UpdatableDeletableObjects.Add(new BodyChunk());
+            new BodyChunk(2000).Instantiate();*/
+            new PlayerCreature().Instantiate();
         }
 
         public static List<AbstractWorldEntity> WorldEntities = new List<AbstractWorldEntity>(); //TODO:: this needs implementing

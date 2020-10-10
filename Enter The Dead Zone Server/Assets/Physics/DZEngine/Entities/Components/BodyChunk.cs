@@ -16,6 +16,11 @@ namespace DeadZoneEngine.Entities.Components
         {
             Init();
         }
+        public BodyChunk(AbstractWorldEntity Parent)
+        {
+            this.Parent = Parent;
+            Init();
+        }
 
         public BodyChunk(ulong ID) : base(ID)
         {

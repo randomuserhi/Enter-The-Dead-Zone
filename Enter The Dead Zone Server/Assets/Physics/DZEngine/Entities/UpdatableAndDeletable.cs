@@ -10,6 +10,8 @@ namespace DeadZoneEngine.Entities
     {
         bool FlaggedToDelete { get; set; }
 
+        void Instantiate();
+
         void PreUpdate();
 
         void Update();
