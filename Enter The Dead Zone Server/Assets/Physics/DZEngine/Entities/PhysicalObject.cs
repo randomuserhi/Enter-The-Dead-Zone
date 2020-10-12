@@ -55,5 +55,7 @@ namespace DeadZoneEngine.Entities
 
         public float _InvInertia = 0;
         public float InvInertia { get { return _InvInertia; } set { _InvInertia = value; if (_InvInertia == 0) RB.constraints |= RigidbodyConstraints2D.FreezeRotation; else { RB.inertia = 1 / _InvInertia; RB.constraints &= ~RigidbodyConstraints2D.FreezeRotation; } } }
+        
+        public float Gravity { get { return RB.gravityScale; } set { RB.gravityScale = value; } }
     }
 }
