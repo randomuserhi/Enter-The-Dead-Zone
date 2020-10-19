@@ -9,10 +9,16 @@ using DeadZoneEngine;
 using DeadZoneEngine.Entities;
 using DeadZoneEngine.Entities.Components;
 
+public class PlayerController
+{
+    public Vector2 Direction;
+}
+
 public class PlayerCreature : AbstractCreature
 {
-    private BodyChunk MainBodyChunk;
+    private BodyChunk LowerBodyChunk;
     private Vector3 LockedFeetPos;
+    private PlayerController Controller;
 
     public PlayerCreature()
     {
@@ -23,7 +29,7 @@ public class PlayerCreature : AbstractCreature
         BodyChunkConnections[0] = new DistanceJoint();
         BodyChunkConnections[0].Set(BodyChunks[0], BodyChunks[1], 1.5f, Vector2.zero);
 
-        MainBodyChunk = BodyChunks[0]; //body part that will be locked to the ground (feet)
+        LowerBodyChunk = BodyChunks[0]; //body part that will be locked to the ground (feet)
     }
     
     protected override void SetEntityType()
@@ -33,7 +39,19 @@ public class PlayerCreature : AbstractCreature
 
     public override void Update()
     {
+        UpdatePhysics();
         UpdateBodyPosture();
+    }
+
+    private void UpdatePhysics()
+    {
+        int NumContactPoints = LowerBodyChunk.GetContacts();
+        Vector2 ContactPoint = NumContactPoints != 0 ? LowerBodyChunk.Contacts[0].point - LowerBodyChunk.Position : Vector2.zero;
+        if (ContactPoint.y < 0)
+        {
+            //is grounded, apply friction
+            LowerBodyChunk.Velocity = new Vector2(BodyChunks[0].Velocity.x * 0.9f, BodyChunks[0].Velocity.y);
+        }
     }
 
     private void UpdateBodyPosture()
