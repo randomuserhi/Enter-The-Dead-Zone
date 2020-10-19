@@ -38,13 +38,13 @@ public class PlayerCreature : AbstractCreature
 
     private void UpdateBodyPosture()
     {
-        //0.375 and 1.125 is for Lifting legs over ledges, otherwise use 1 and 1
+        //0.375 and 1.125 is for Lifting legs over ledges, otherwise use 1 and 1, 0.8f indicates the friction
         BodyChunks[1].Velocity += new Vector2(0, 1f * BodyChunks[0].Gravity);
         BodyChunks[0].Velocity -= new Vector2(0, 1f * BodyChunks[1].Gravity);
         BodyChunks[1].Velocity = new Vector2(BodyChunks[1].Velocity.x * 0.8f, BodyChunks[1].Velocity.y);
         BodyChunks[0].Velocity = new Vector2(BodyChunks[0].Velocity.x * 0.8f, BodyChunks[0].Velocity.y);
 
-        //Due to friction feet will automatically lage behind the head creating the leaning forward into movement we want => if not accelerate the head faster than the feet or something
+        //Due to friction feet will automatically lage behind the head creating the leaning forward into movement we want (Friction will need to be hard coded if its not in a physics material) => if not accelerate the head faster than the feet or something
         // => change this later to lock feet to the ground etc
         BodyChunks[0].Velocity += new Vector2(0.5f * Input.GetAxis("Horizontal"), 0);
         BodyChunks[1].Velocity += new Vector2(0.5f * Input.GetAxis("Horizontal"), 0);

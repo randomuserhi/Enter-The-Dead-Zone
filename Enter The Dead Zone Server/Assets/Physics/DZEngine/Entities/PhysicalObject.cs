@@ -18,6 +18,7 @@ namespace DeadZoneEngine.Entities
         {
             Self = new GameObject();
             RB = Self.AddComponent<Rigidbody2D>();
+            RB.sharedMaterial = Resources.Load<PhysicsMaterial2D>("PhysicsMaterial/Zero");
 
             SetEntityType();
         }
@@ -26,6 +27,7 @@ namespace DeadZoneEngine.Entities
         {
             Self = new GameObject();
             RB = Self.AddComponent<Rigidbody2D>();
+            RB.sharedMaterial = Resources.Load<PhysicsMaterial2D>("PhysicsMaterial/Zero");
 
             SetEntityType();
         }
