@@ -11,9 +11,15 @@ namespace DeadZoneEngine.Entities.Components
     public class BodyChunk : PhysicalObject
     {
         private CircleCollider2D Collider;
+        public ContactPoint2D[] Contacts = new ContactPoint2D[1];
 
         public BodyChunk()
         {
+            Init();
+        }
+        public BodyChunk(AbstractWorldEntity Parent)
+        {
+            this.Parent = Parent;
             Init();
         }
 
@@ -37,6 +43,15 @@ namespace DeadZoneEngine.Entities.Components
         protected override void SetEntityType()
         {
             Type = AbstractWorldEntity.EntityType.BodyChunk;
+        }
+
+        /// <summary>
+        /// Update Contacts Array => If no contacts are found, the array will not be updated (past values will persist)
+        /// </summary>
+        /// <returns>Number of contacts recieved</returns>
+        public int GetContacts()
+        {
+            return Collider.GetContacts(Contacts);
         }
 
         public override byte[] GetBytes()

@@ -60,6 +60,8 @@ public class Game
                             DZEngine.UpdatableDeletableObjects.Add(E);
                         }
                         E.Set((PhysicalObject)EntityID.IDToObject[P.ReadULong()], (PhysicalObject)EntityID.IDToObject[P.ReadULong()], P.ReadFloat(), new Vector2(P.ReadFloat(), P.ReadFloat()));
+                        E.ARatio = P.ReadFloat();
+                        E.BRatio = P.ReadFloat();
                         //TODO:: somehow need to handle when points used in the joint where not sent with snapshot
                     }
                     break;

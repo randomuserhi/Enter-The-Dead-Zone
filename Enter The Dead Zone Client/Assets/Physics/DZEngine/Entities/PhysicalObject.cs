@@ -12,11 +12,13 @@ namespace DeadZoneEngine.Entities
     {
         protected GameObject Self;
         protected Rigidbody2D RB;
+        public AbstractWorldEntity Parent;
 
         public PhysicalObject()
         {
             Self = new GameObject();
             RB = Self.AddComponent<Rigidbody2D>();
+            RB.sharedMaterial = Resources.Load<PhysicsMaterial2D>("PhysicsMaterial/Zero");
 
             SetEntityType();
         }
@@ -25,21 +27,25 @@ namespace DeadZoneEngine.Entities
         {
             Self = new GameObject();
             RB = Self.AddComponent<Rigidbody2D>();
+            RB.sharedMaterial = Resources.Load<PhysicsMaterial2D>("PhysicsMaterial/Zero");
 
             SetEntityType();
         }
 
-        public bool _FlaggedToDelete;
-        bool IUpdatableAndDeletable.FlaggedToDelete { get { return _FlaggedToDelete; } set { _FlaggedToDelete = value; } }
-        void IUpdatableAndDeletable.PreUpdate() { }
-        void IUpdatableAndDeletable.Update() { }
-        void IUpdatableAndDeletable.IteratedUpdate() { }
-        void IUpdatableAndDeletable.Delete()
+        private bool _FlaggedToDelete;
+        public bool FlaggedToDelete { get { return _FlaggedToDelete; } set { _FlaggedToDelete = value; } }
+        public void Instantiate()
         {
+            DZEngine.UpdatableDeletableObjects.Add(this);
+        }
+        public virtual void PreUpdate() { }
+        public virtual void Update() { }
+        public virtual void IteratedUpdate() { }
+        public void Delete()
+        {
+            FlaggedToDelete = true;
             GameObject.Destroy(Self);
         }
-
-        protected abstract void SetEntityType();
 
         public Vector2 Position { get { return RB.position; } set { RB.position = value; } }
         public Vector2 Velocity { get { return RB.velocity; } set { RB.velocity = value; } }
@@ -51,5 +57,7 @@ namespace DeadZoneEngine.Entities
 
         public float _InvInertia = 0;
         public float InvInertia { get { return _InvInertia; } set { _InvInertia = value; if (_InvInertia == 0) RB.constraints |= RigidbodyConstraints2D.FreezeRotation; else { RB.inertia = 1 / _InvInertia; RB.constraints &= ~RigidbodyConstraints2D.FreezeRotation; } } }
+        
+        public float Gravity { get { return RB.gravityScale; } set { RB.gravityScale = value; } }
     }
 }

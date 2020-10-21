@@ -70,11 +70,15 @@ namespace DeadZoneEngine.Entities
         public AbstractWorldEntity()
         {
             ID = new EntityID(this);
+            SetEntityType();
         }
         public AbstractWorldEntity(ulong ID)
         {
             this.ID = new EntityID(this, ID);
+            SetEntityType();
         }
+
+        protected abstract void SetEntityType();
 
         public abstract byte[] GetBytes();
 
@@ -86,7 +90,8 @@ namespace DeadZoneEngine.Entities
         public enum EntityType
         {
             DistanceJoint,
-            BodyChunk
+            BodyChunk,
+            PlayerCreature
         }
     }
 }

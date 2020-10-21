@@ -17,11 +17,12 @@ public class PlayerController
 public class PlayerCreature : AbstractCreature
 {
     private BodyChunk LowerBodyChunk;
-    private Vector3 LockedFeetPos;
     private PlayerController Controller;
 
     public PlayerCreature()
     {
+        Controller = new PlayerController();
+
         BodyChunks = new BodyChunk[2];
         BodyChunks[0] = new BodyChunk(this);
         BodyChunks[1] = new BodyChunk(this);
@@ -49,14 +50,19 @@ public class PlayerCreature : AbstractCreature
         Vector2 ContactPoint = NumContactPoints != 0 ? LowerBodyChunk.Contacts[0].point - LowerBodyChunk.Position : Vector2.zero;
         if (ContactPoint.y < 0)
         {
-            //is grounded, apply friction
+            //is grounded, apply friction, lock feet etc..
             LowerBodyChunk.Velocity = new Vector2(BodyChunks[0].Velocity.x * 0.9f, BodyChunks[0].Velocity.y);
+            BodyChunkConnections[0].ARatio = 0; //Lock the feet
+        }
+        else
+        {
+            BodyChunkConnections[0].ARatio = 1; //Unlock feet
         }
     }
 
     private void UpdateBodyPosture()
     {
-        //0.375 and 1.125 is for Lifting legs over ledges, otherwise use 1 and 1, 0.8f indicates the friction
+        //0.375 and 1.125 is for Lifting legs over ledges, otherwise use 1 and 1, 0.8f indicates the dampening
         BodyChunks[1].Velocity += new Vector2(0, 1f * BodyChunks[0].Gravity);
         BodyChunks[0].Velocity -= new Vector2(0, 1f * BodyChunks[1].Gravity);
         BodyChunks[1].Velocity = new Vector2(BodyChunks[1].Velocity.x * 0.8f, BodyChunks[1].Velocity.y);
@@ -64,8 +70,9 @@ public class PlayerCreature : AbstractCreature
 
         //Due to friction feet will automatically lage behind the head creating the leaning forward into movement we want (Friction will need to be hard coded if its not in a physics material) => if not accelerate the head faster than the feet or something
         // => change this later to lock feet to the ground etc
-        BodyChunks[0].Velocity += new Vector2(0.5f * Input.GetAxis("Horizontal"), 0);
-        BodyChunks[1].Velocity += new Vector2(0.5f * Input.GetAxis("Horizontal"), 0);
+        Vector2 Horizontal = new Vector2(0.5f * Controller.Direction.x, 0);
+        BodyChunks[0].Velocity += Horizontal;
+        BodyChunks[1].Velocity += Horizontal;
     }
 
     public override void Instantiate()
