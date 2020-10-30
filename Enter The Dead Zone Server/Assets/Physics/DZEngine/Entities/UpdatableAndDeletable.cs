@@ -8,6 +8,7 @@ namespace DeadZoneEngine.Entities
 {
     public interface IUpdatableAndDeletable
     {
+        bool Active { get; set; }
         bool FlaggedToDelete { get; set; }
 
         void Instantiate();
@@ -15,6 +16,7 @@ namespace DeadZoneEngine.Entities
         void PreUpdate();
 
         void Update();
+        void BodyPhysicsUpdate();
 
         void IteratedUpdate();
 

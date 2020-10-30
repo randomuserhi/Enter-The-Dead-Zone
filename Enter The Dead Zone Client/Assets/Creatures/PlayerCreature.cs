@@ -62,7 +62,7 @@ public class PlayerCreature : AbstractCreature
 
         DynamicRunSpeed = new float[2];
     }
-    
+
     protected override void SetEntityType()
     {
         Type = EntityType.PlayerCreature;

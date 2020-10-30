@@ -18,6 +18,9 @@ namespace DeadZoneEngine.Entities
         {
             Self = new GameObject();
             RB = Self.AddComponent<Rigidbody2D>();
+            RB.drag = 0;
+            RB.angularDrag = 0;
+            RB.gravityScale = 0;
             RB.sharedMaterial = Resources.Load<PhysicsMaterial2D>("PhysicsMaterial/Zero");
 
             SetEntityType();
@@ -27,11 +30,16 @@ namespace DeadZoneEngine.Entities
         {
             Self = new GameObject();
             RB = Self.AddComponent<Rigidbody2D>();
+            RB.drag = 0;
+            RB.angularDrag = 0;
+            RB.gravityScale = 0;
             RB.sharedMaterial = Resources.Load<PhysicsMaterial2D>("PhysicsMaterial/Zero");
 
             SetEntityType();
         }
 
+        private bool _Active = true;
+        public bool Active { get { return _Active; } set { _Active = value; } }
         private bool _FlaggedToDelete;
         public bool FlaggedToDelete { get { return _FlaggedToDelete; } set { _FlaggedToDelete = value; } }
         public void Instantiate()
@@ -40,6 +48,7 @@ namespace DeadZoneEngine.Entities
         }
         public virtual void PreUpdate() { }
         public virtual void Update() { }
+        public virtual void BodyPhysicsUpdate() { }
         public virtual void IteratedUpdate() { }
         public void Delete()
         {
@@ -47,6 +56,20 @@ namespace DeadZoneEngine.Entities
             GameObject.Destroy(Self);
         }
 
+        private Vector2 PreVelocity;
+
+        public void IsolateVelocity()
+        {
+            PreVelocity = Velocity;
+            Velocity = Vector2.zero;
+        }
+
+        public void RestoreVelocity()
+        {
+            Velocity = PreVelocity;
+        }
+
+        public int CollisionLayer { get { return Self.layer; } set { Self.layer = value; } }
         public Vector2 Position { get { return RB.position; } set { RB.position = value; } }
         public Vector2 Velocity { get { return RB.velocity; } set { RB.velocity = value; } }
         public float Rotation { get { return RB.rotation * Mathf.Deg2Rad; } set { RB.rotation = value * Mathf.Rad2Deg; } }
@@ -57,7 +80,7 @@ namespace DeadZoneEngine.Entities
 
         public float _InvInertia = 0;
         public float InvInertia { get { return _InvInertia; } set { _InvInertia = value; if (_InvInertia == 0) RB.constraints |= RigidbodyConstraints2D.FreezeRotation; else { RB.inertia = 1 / _InvInertia; RB.constraints &= ~RigidbodyConstraints2D.FreezeRotation; } } }
-        
-        public float Gravity { get { return RB.gravityScale; } set { RB.gravityScale = value; } }
+
+        public float Gravity = 1;
     }
 }

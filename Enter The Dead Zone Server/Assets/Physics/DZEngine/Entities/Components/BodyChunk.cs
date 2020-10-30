@@ -10,8 +10,8 @@ namespace DeadZoneEngine.Entities.Components
 {
     public class BodyChunk : PhysicalObject
     {
-        private CircleCollider2D Collider;
-        public ContactPoint2D[] Contacts = new ContactPoint2D[1];
+        public CircleCollider2D Collider { get; private set; }
+        public ContactPoint2D[] Contacts = new ContactPoint2D[10];
 
         public BodyChunk()
         {
@@ -61,6 +61,7 @@ namespace DeadZoneEngine.Entities.Components
             List<byte> Data = new List<byte>();
             Data.AddRange(BitConverter.GetBytes((int)Type));
             Data.AddRange(BitConverter.GetBytes(ID));
+            Data.AddRange(BitConverter.GetBytes(Active));
             Data.AddRange(BitConverter.GetBytes(Position.x));
             Data.AddRange(BitConverter.GetBytes(Position.y));
             Data.AddRange(BitConverter.GetBytes(Rotation));

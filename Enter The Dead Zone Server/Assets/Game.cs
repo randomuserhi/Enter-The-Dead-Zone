@@ -31,10 +31,11 @@ public class Game
         SnapshotPacket.Write((int)ServerCode.SnapshotData);
 
         //for time being just send everything
-        SnapshotPacket.Write(DZEngine.UpdatableDeletableObjects.Count);
-        for (int i = 0; i < DZEngine.UpdatableDeletableObjects.Count; i++)
+        SnapshotPacket.Write(DZEngine.SnapShotObjects.Count);
+        for (int i = 0; i < DZEngine.SnapShotObjects.Count; i++)
         {
-            SnapshotPacket.Write(((AbstractWorldEntity)DZEngine.UpdatableDeletableObjects[i]).GetBytes());
+            AbstractWorldEntity Entity = (AbstractWorldEntity)DZEngine.SnapShotObjects[i];
+            SnapshotPacket.Write(Entity.GetBytes());
         }
 
         Debug.Log("SnapShotSent");

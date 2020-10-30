@@ -21,7 +21,7 @@ namespace DeadZoneEngine.Entities.Components
         Vector2 Bias; //Bias in Impulse equation
         Vector2 AccumulatedImpulse; //stores accumulated Impulse
 
-        public float Relaxation = 1; //Effectively the damping of the joint
+        public float Relaxation = 1f;
 
         //Strength of pull on object A and B
         public float ARatio = 1;
@@ -63,16 +63,35 @@ namespace DeadZoneEngine.Entities.Components
             Relaxation = 1.0f;
         }
 
+        public void SetDistance(float Distance)
+        {
+            this.Distance = Distance;
+            Mat22 RotA = new Mat22(0);
+            Mat22 RotB = new Mat22(0);
+            Mat22 RotAT = RotA.Transpose();
+            Mat22 RotBT = RotB.Transpose();
+
+            LocalAnchorA = RotAT * (Anchor);
+            LocalAnchorB = RotBT * (Anchor - new Vector2(Distance, 0));
+        }
+
         public override void PreUpdate()
         {
             //Pre-compute anchors, mass matrix, and bias => http://twvideo01.ubm-us.net/o1/vault/gdc09/slides/04-GDC09_Catto_Erin_Solver.pdf
 
+            if (A.Position == B.Position && A.Velocity == Vector2.zero && B.Velocity == Vector2.zero)
+                A.Position += new Vector2(0.01f, 0);
+
             //Same as using atan2(A.Position - B.Position) however faster as skips atan2 math => this is just getting the current angle between the two objects A and B
             Mat22 RotA = new Mat22((A.Position - B.Position).normalized);
             Mat22 RotB = new Mat22((B.Position - A.Position).normalized);
+            /*Mat22 RotA = new Mat22(A.Rotation); // This is for conserving rotation of connected blocks
+            Mat22 RotB = new Mat22(B.Rotation);*/
 
             float AInvMass = A.InvMass * ARatio;
             float BInvMass = B.InvMass * BRatio;
+            float AInvInertia = A.InvInertia * ARatio;
+            float BInvInertia = B.InvInertia * BRatio;
 
             RA = RotA * LocalAnchorA;
             RB = RotB * LocalAnchorB;
@@ -82,12 +101,12 @@ namespace DeadZoneEngine.Entities.Components
             K1.Col1.y = 0.0f; K1.Col2.y = AInvMass + BInvMass;
 
             Mat22 K2;
-            K2.Col1.x = A.InvInertia * RA.y * RA.y; K2.Col2.x = -A.InvInertia * RA.x * RA.y;
-            K2.Col1.y = -A.InvInertia * RA.x * RA.y; K2.Col2.y = A.InvInertia * RA.x * RA.x;
+            K2.Col1.x = AInvInertia * RA.y * RA.y; K2.Col2.x = -AInvInertia * RA.x * RA.y;
+            K2.Col1.y = -AInvInertia * RA.x * RA.y; K2.Col2.y = AInvInertia * RA.x * RA.x;
 
             Mat22 K3;
-            K3.Col1.x = B.InvInertia * RB.y * RB.y; K3.Col2.x = -B.InvInertia * RB.x * RB.y;
-            K3.Col1.y = -B.InvInertia * RB.x * RB.y; K3.Col2.y = B.InvInertia * RB.x * RB.x;
+            K3.Col1.x = BInvInertia * RB.y * RB.y; K3.Col2.x = -BInvInertia * RB.x * RB.y;
+            K3.Col1.y = -BInvInertia * RB.x * RB.y; K3.Col2.y = BInvInertia * RB.x * RB.x;
 
             Mat22 K = K1 + K2 + K3;
             M = K.Invert();
@@ -97,15 +116,14 @@ namespace DeadZoneEngine.Entities.Components
             Vector2 dp = p2 - p1;
             Bias = -0.1f * DZEngine.InvDeltaTime * dp;
 
-
             //Apply accumulated impulse
             AccumulatedImpulse *= Relaxation;
 
             A.Velocity -= AInvMass * AccumulatedImpulse;
-            A.AngularVelocity -= A.InvInertia * Math2D.Cross(RA, AccumulatedImpulse);
+            A.AngularVelocity -= AInvInertia * Math2D.Cross(RA, AccumulatedImpulse);
 
             B.Velocity += BInvMass * AccumulatedImpulse;
-            B.AngularVelocity += B.InvInertia * Math2D.Cross(RB, AccumulatedImpulse);
+            B.AngularVelocity += BInvInertia * Math2D.Cross(RB, AccumulatedImpulse);
         }
 
         public override void IteratedUpdate()
@@ -114,10 +132,10 @@ namespace DeadZoneEngine.Entities.Components
             Vector2 Impulse = M * (-RelativeDeltaVelocity + Bias);
 
             A.Velocity -= A.InvMass * ARatio * Impulse;
-            A.AngularVelocity -= A.InvInertia * Math2D.Cross(RA, Impulse);
+            A.AngularVelocity -= A.InvInertia * ARatio * Math2D.Cross(RA, Impulse);
 
             B.Velocity += B.InvMass * BRatio * Impulse;
-            B.AngularVelocity += B.InvInertia * Math2D.Cross(RB, Impulse);
+            B.AngularVelocity += B.InvInertia * BRatio * Math2D.Cross(RB, Impulse);
 
             AccumulatedImpulse += Impulse;
         }
@@ -129,6 +147,7 @@ namespace DeadZoneEngine.Entities.Components
             List<byte> Data = new List<byte>();
             Data.AddRange(BitConverter.GetBytes((int)Type));
             Data.AddRange(BitConverter.GetBytes(ID));
+            Data.AddRange(BitConverter.GetBytes(Active));
             Data.AddRange(BitConverter.GetBytes(A.ID));
             Data.AddRange(BitConverter.GetBytes(B.ID));
             Data.AddRange(BitConverter.GetBytes(Distance));

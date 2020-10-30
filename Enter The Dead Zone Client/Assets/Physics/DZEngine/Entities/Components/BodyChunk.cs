@@ -10,8 +10,8 @@ namespace DeadZoneEngine.Entities.Components
 {
     public class BodyChunk : PhysicalObject
     {
-        private CircleCollider2D Collider;
-        public ContactPoint2D[] Contacts = new ContactPoint2D[1];
+        public CircleCollider2D Collider { get; private set; }
+        public ContactPoint2D[] Contacts = new ContactPoint2D[10];
 
         public BodyChunk()
         {

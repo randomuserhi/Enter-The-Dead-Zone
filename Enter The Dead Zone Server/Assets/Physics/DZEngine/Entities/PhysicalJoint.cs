@@ -18,6 +18,8 @@ namespace DeadZoneEngine.Entities
             SetEntityType();
         }
 
+        private bool _Active = true;
+        public bool Active { get { return _Active; } set { _Active = value; } }
         private bool _FlaggedToDelete;
         public bool FlaggedToDelete { get { return _FlaggedToDelete; } set { _FlaggedToDelete = value; } }
         public void Instantiate()
@@ -26,6 +28,7 @@ namespace DeadZoneEngine.Entities
         }
         public virtual void PreUpdate() { }
         public virtual void Update() { }
+        public virtual void BodyPhysicsUpdate() { }
         public virtual void IteratedUpdate() { }
         public virtual void Delete() { FlaggedToDelete = true; }
     }

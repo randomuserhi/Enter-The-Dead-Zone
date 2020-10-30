@@ -20,6 +20,7 @@ public class Loader
         Application.quitting += Dispose;
         Application.targetFrameRate = 30; //Limit tick rate / frame rate
         QualitySettings.vSyncCount = 0; //Turn off vsync
+        Physics2D.simulationMode = SimulationMode2D.Script; //My program controls when unity updates
 
         //change such that max number of players etc is changable
         TCPUDPServer = new TCPUDPServer(26950, 4, 4096);
