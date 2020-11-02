@@ -12,6 +12,7 @@ namespace DeadZoneEngine.Entities.Components
     {
         public CircleCollider2D Collider { get; private set; }
         public ContactPoint2D[] Contacts = new ContactPoint2D[10];
+        public float Height;
 
         public BodyChunk()
         {
