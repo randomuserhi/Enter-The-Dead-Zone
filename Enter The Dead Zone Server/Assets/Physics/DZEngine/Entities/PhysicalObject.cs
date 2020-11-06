@@ -8,7 +8,7 @@ using UnityEngine;
 
 namespace DeadZoneEngine.Entities
 {
-    public abstract class PhysicalObject : AbstractWorldEntity, IUpdatableAndDeletable
+    public abstract class PhysicalObject : AbstractWorldEntity, IPhysicsUpdatable
     {
         protected GameObject Self;
         protected Rigidbody2D RB;
@@ -38,23 +38,18 @@ namespace DeadZoneEngine.Entities
             SetEntityType();
         }
 
-        private bool _Active = true;
-        public bool Active { get { return _Active; } set { _Active = value; } }
-        private bool _FlaggedToDelete;
-        public bool FlaggedToDelete { get { return _FlaggedToDelete; } set { _FlaggedToDelete = value; } }
-        public void Instantiate()
+        protected override void _Instantiate()
         {
-            DZEngine.UpdatableDeletableObjects.Add(this);
+            DZEngine.PhysicsUpdatableObjects.Add(this);
         }
-        public virtual void PreUpdate() { }
-        public virtual void Update() { }
-        public virtual void BodyPhysicsUpdate() { }
-        public virtual void IteratedUpdate() { }
-        public void Delete()
+        protected override void _Delete()
         {
-            FlaggedToDelete = true;
             GameObject.Destroy(Self);
         }
+
+        public virtual void Update() { }
+        public virtual void BodyPhysicsUpdate() { }
+
 
         private Vector2 PreVelocity;
 

@@ -78,8 +78,7 @@ namespace DeadZoneEngine.Entities.Components
         public override void PreUpdate()
         {
             //Pre-compute anchors, mass matrix, and bias => http://twvideo01.ubm-us.net/o1/vault/gdc09/slides/04-GDC09_Catto_Erin_Solver.pdf
-
-            if (A.Position == B.Position && A.Velocity == Vector2.zero && B.Velocity == Vector2.zero)
+            if (A.Position == B.Position)
                 A.Position += new Vector2(0.01f, 0);
 
             //Same as using atan2(A.Position - B.Position) however faster as skips atan2 math => this is just getting the current angle between the two objects A and B

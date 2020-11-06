@@ -63,7 +63,7 @@ namespace DeadZoneEngine.Entities
         }
     }
 
-    public abstract class AbstractWorldEntity
+    public abstract class AbstractWorldEntity : IInstantiatableAndDeletable
     {
         public EntityID ID;
         public EntityType Type;
@@ -86,6 +86,25 @@ namespace DeadZoneEngine.Entities
         {
             EntityID.Remove(ID);
         }
+
+        private bool _Active = true;
+        public bool Active { get { return _Active; } set { _Active = value; } }
+        private bool _FlaggedToDelete;
+        public bool FlaggedToDelete { get { return _FlaggedToDelete; } set { _FlaggedToDelete = value; } }
+
+        public void Instantiate()
+        {
+            DZEngine.InstantiatableDeletable.Add(this);
+            _Instantiate();
+        }
+        protected virtual void _Instantiate() { }
+
+        public void Delete()
+        {
+            FlaggedToDelete = true;
+            _Delete();
+        }
+        protected virtual void _Delete() { }
 
         public enum EntityType
         {

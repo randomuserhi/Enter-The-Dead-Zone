@@ -13,6 +13,9 @@ namespace DeadZoneEngine
         public static float InvDeltaTime = 0;
         public static int NumPhysicsIterations = 10;
 
+        //Test
+        static PlayerCreature P;
+
         public static void Initialize()
         {
             /*new BodyChunk().Instantiate();
@@ -33,98 +36,123 @@ namespace DeadZoneEngine
             UpdatableDeletableObjects.AddRange(D);
 
             new BodyChunk(2000).Instantiate();*/
-            new PlayerCreature().Instantiate();
+            P = new PlayerCreature();
+            P.Instantiate();
         }
 
-        public static List<IUpdatableAndDeletable> SnapShotObjects = new List<IUpdatableAndDeletable>(); 
+        private static List<AbstractWorldEntity> LastInstantiatableDeletable = new List<AbstractWorldEntity>();
+        public static List<AbstractWorldEntity> InstantiatableDeletable = new List<AbstractWorldEntity>();
 
-        public static List<AbstractWorldEntity> WorldEntities = new List<AbstractWorldEntity>(); //TODO:: this needs implementing
-        private static List<PhysicalObject> PhysicalObjects = new List<PhysicalObject>();
-        private static List<IUpdatableAndDeletable> LastUpdatableDeletableObjects = new List<IUpdatableAndDeletable>();
-        public static List<IUpdatableAndDeletable> UpdatableDeletableObjects = new List<IUpdatableAndDeletable>();
+        private static List<IPhysicsUpdatable> LastPhysicsUpdatableObjects = new List<IPhysicsUpdatable>();
+        public static List<IPhysicsUpdatable> PhysicsUpdatableObjects = new List<IPhysicsUpdatable>();
+
+        private static List<IUpdatable> LastUpdatableObjects = new List<IUpdatable>();
+        public static List<IUpdatable> UpdatableObjects = new List<IUpdatable>();
+
+        private static List<IIteratableUpdatable> LastIteratableUpdatableObjects = new List<IIteratableUpdatable>();
+        public static List<IIteratableUpdatable> IteratableUpdatableObjects = new List<IIteratableUpdatable>();
         public static void FixedUpdate()
         {
             InvDeltaTime = 1f / Time.deltaTime;
 
-            SnapShotObjects.Clear();
-            PhysicalObjects.Clear();
-            LastUpdatableDeletableObjects.Clear();
-            LastUpdatableDeletableObjects.AddRange(UpdatableDeletableObjects);
-            UpdatableDeletableObjects.Clear();
-            for (int i = 0; i < LastUpdatableDeletableObjects.Count; i++)
+            LastInstantiatableDeletable.Clear();
+            LastInstantiatableDeletable.AddRange(InstantiatableDeletable);
+            InstantiatableDeletable.Clear();
+            for (int i = 0; i < LastInstantiatableDeletable.Count; i++)
             {
-                if (LastUpdatableDeletableObjects[i].Active)
-                    LastUpdatableDeletableObjects[i].Update();
-                if (!LastUpdatableDeletableObjects[i].FlaggedToDelete)
+                if (!LastInstantiatableDeletable[i].FlaggedToDelete)
                 {
-                    UpdatableDeletableObjects.Add(LastUpdatableDeletableObjects[i]);
-                    PhysicalObject Object = LastUpdatableDeletableObjects[i] as PhysicalObject;
-                    if (Object != null && LastUpdatableDeletableObjects[i].Active)
-                        PhysicalObjects.Add(Object);
-
-                    AbstractWorldEntity E = LastUpdatableDeletableObjects[i] as AbstractWorldEntity;
-                    if (E != null && E.Type != AbstractWorldEntity.EntityType.BodyChunk || E.Type != AbstractWorldEntity.EntityType.DistanceJoint)
-                        SnapShotObjects.Add(LastUpdatableDeletableObjects[i]);
+                    InstantiatableDeletable.Add(LastInstantiatableDeletable[i]);
                 }
                 else
                 {
-                    LastUpdatableDeletableObjects[i].Delete(); //Destroy Interface
-                    ((AbstractWorldEntity)LastUpdatableDeletableObjects[i]).Destroy(); //Destroy Entity
+                    LastInstantiatableDeletable[i].Delete(); //Destroy Interface
+                    LastInstantiatableDeletable[i].Destroy(); //Destroy Entity
                 }
+            }
+
+            LastUpdatableObjects.Clear();
+            LastUpdatableObjects.AddRange(UpdatableObjects);
+            UpdatableObjects.Clear();
+            for (int i = 0; i < LastUpdatableObjects.Count; i++)
+            {
+                if (!LastUpdatableObjects[i].FlaggedToDelete)
+                {
+                    UpdatableObjects.Add(LastUpdatableObjects[i]);
+                    if (LastUpdatableObjects[i].Active)
+                        LastUpdatableObjects[i].Update();
+                }
+            }
+
+            //Check and resolve physics constraints (Joints etc) => Essentially update the isolated physics of just creature bodies
+            LastIteratableUpdatableObjects.Clear();
+            LastIteratableUpdatableObjects.AddRange(IteratableUpdatableObjects);
+            IteratableUpdatableObjects.Clear();
+            for (int i = 0; i < LastIteratableUpdatableObjects.Count; i++)
+            {
+                if (!LastIteratableUpdatableObjects[i].FlaggedToDelete)
+                {
+                    IteratableUpdatableObjects.Add(LastIteratableUpdatableObjects[i]);
+                    if (LastIteratableUpdatableObjects[i].Active)
+                        LastIteratableUpdatableObjects[i].PreUpdate();
+                }
+            }
+            for (int j = 0; j < NumPhysicsIterations; j++)
+            {
+                for (int i = 0; i < IteratableUpdatableObjects.Count; i++)
+                {
+                    if (IteratableUpdatableObjects[i].Active)
+                        IteratableUpdatableObjects[i].IteratedUpdate();
+                }
+
+                Physics2D.Simulate(1f / 60f / NumPhysicsIterations);
             }
 
             //Isolate the general physics updates from creature body physics -> this is specific for maintaining physic objects inside of creature bodies
             //(the creature body is updated relative to itself without the need to worry about countering general physics (its isolated from general physics))
-            for (int i = 0; i < PhysicalObjects.Count; i++)
+            LastPhysicsUpdatableObjects.Clear();
+            LastPhysicsUpdatableObjects.AddRange(PhysicsUpdatableObjects);
+            PhysicsUpdatableObjects.Clear();
+            for (int i = 0; i < LastPhysicsUpdatableObjects.Count; i++)
             {
-                PhysicalObjects[i].IsolateVelocity();
+                if (!LastPhysicsUpdatableObjects[i].FlaggedToDelete)
+                {
+                    PhysicsUpdatableObjects.Add(LastPhysicsUpdatableObjects[i]);
+                    if (LastPhysicsUpdatableObjects[i].Active)
+                        LastPhysicsUpdatableObjects[i].IsolateVelocity();
+                }
             }
 
-            for (int i = 0; i < UpdatableDeletableObjects.Count; i++)
+            for (int i = 0; i < UpdatableObjects.Count; i++)
             {
-                UpdatableDeletableObjects[i].BodyPhysicsUpdate(); //This is specific to creatures mainly to update self-righting bodies or other body animation specific physics
+                if (UpdatableObjects[i].Active)
+                    UpdatableObjects[i].BodyPhysicsUpdate(); //This is specific to creatures mainly to update self-righting bodies or other body animation specific physics
+                                                             //its seperated and run in a seperate physics operation to prevent self-righting body physics from being counteracted from normal physics (such as gravity).
+                                                             //In other words this simply isolates the body physics from the standard physics
             }
 
-            //Check and resolve physics constraints (Joints etc) => Essentially update the isolated physics of just creature bodies
-            for (int i = 0; i < UpdatableDeletableObjects.Count; i++)
+            //Check and resolve physics constraints (Joints etc) => Essentially update the general physics of all bodies
+            for (int i = 0; i < IteratableUpdatableObjects.Count; i++)
             {
-                if (UpdatableDeletableObjects[i].Active)
-                    UpdatableDeletableObjects[i].PreUpdate();
+                if (IteratableUpdatableObjects[i].Active)
+                    IteratableUpdatableObjects[i].PreUpdate();
             }
-
             for (int j = 0; j < NumPhysicsIterations; j++)
             {
-                for (int i = 0; i < UpdatableDeletableObjects.Count; i++)
+                for (int i = 0; i < IteratableUpdatableObjects.Count; i++)
                 {
-                    if (UpdatableDeletableObjects[i].Active)
-                        UpdatableDeletableObjects[i].IteratedUpdate();
+                    if (IteratableUpdatableObjects[i].Active)
+                        IteratableUpdatableObjects[i].IteratedUpdate();
                 }
 
                 Physics2D.Simulate(1f / 60f / NumPhysicsIterations);
             }
 
             //Restore the velocities back to normal, we are no longer considering the creature body in an isolated system
-            for (int i = 0; i < PhysicalObjects.Count; i++)
+            for (int i = 0; i < PhysicsUpdatableObjects.Count; i++)
             {
-                PhysicalObjects[i].RestoreVelocity();
-            }
-
-            //Check and resolve physics constraints (Joints etc) => Essentially update the general physics of all bodies
-            for (int i = 0; i < UpdatableDeletableObjects.Count; i++)
-            {
-                if (UpdatableDeletableObjects[i].Active)
-                    UpdatableDeletableObjects[i].PreUpdate();
-            }
-
-            for (int j = 0; j < NumPhysicsIterations; j++)
-            {
-                for (int i = 0; i < UpdatableDeletableObjects.Count; i++)
-                {
-                    if (UpdatableDeletableObjects[i].Active)
-                        UpdatableDeletableObjects[i].IteratedUpdate();
-                }
-
-                Physics2D.Simulate(1f / 60f / NumPhysicsIterations);
+                if (PhysicsUpdatableObjects[i].Active)
+                    PhysicsUpdatableObjects[i].RestoreVelocity();
             }
         }
     }

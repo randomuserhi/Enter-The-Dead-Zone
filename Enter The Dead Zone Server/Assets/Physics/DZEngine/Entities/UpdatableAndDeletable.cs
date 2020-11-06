@@ -6,22 +6,38 @@ using System.Threading.Tasks;
 
 namespace DeadZoneEngine.Entities
 {
-    public interface IUpdatableAndDeletable
+    public interface IInstantiatableAndDeletable
     {
-        bool Active { get; set; }
         bool FlaggedToDelete { get; set; }
 
         void Instantiate();
 
-        void PreUpdate();
-
-        void Update();
-        void BodyPhysicsUpdate();
-
-        void IteratedUpdate();
-
         void Destroy();
 
         void Delete();
+    }
+
+    public interface IUpdatable
+    {
+        bool Active { get; set; }
+        bool FlaggedToDelete { get; set; }
+        void Update();
+        void BodyPhysicsUpdate();
+    }
+
+    public interface IPhysicsUpdatable
+    {
+        bool Active { get; set; }
+        bool FlaggedToDelete { get; set; }
+        void IsolateVelocity();
+        void RestoreVelocity();
+    }
+
+    public interface IIteratableUpdatable
+    {
+        bool Active { get; set; }
+        bool FlaggedToDelete { get; set; }
+        void PreUpdate();
+        void IteratedUpdate();
     }
 }

@@ -24,8 +24,7 @@ public class PlayerCreature : AbstractCreature
     private enum BodyState
     {
         Limp,
-        Standing,
-        Crawling
+        Standing
     }
 
     private BodyState State;
@@ -42,7 +41,7 @@ public class PlayerCreature : AbstractCreature
     }
 
     //TODO implement INIT into abstractCreature template
-    public void Init(BodyChunk A, BodyChunk B, DistanceJoint Joint)
+    private void Init(BodyChunk A, BodyChunk B, DistanceJoint Joint)
     {
         Controller = new PlayerController();
         State = BodyState.Standing;
@@ -87,11 +86,15 @@ public class PlayerCreature : AbstractCreature
     {
         switch (State)
         {
+            case BodyState.Limp:
+                {
+                }
+                break;
             case BodyState.Standing:
                 {
                     //TODO:: implement friction of different surfaces (harder to accelerate on ice, feet cant gain traction (similar to ice in minecraft))
                     DynamicRunSpeed[0] = 1f;
-                    DynamicRunSpeed[1] = 3f;
+                    DynamicRunSpeed[1] = 10f;
                     BodyChunks[0].Velocity += new Vector2(Stats.RunSpeed * DynamicRunSpeed[0] * Controller.Direction.x, 0);
                     BodyChunks[0].Velocity += new Vector2(0, Stats.RunSpeed * DynamicRunSpeed[0] * Controller.Direction.y);
                     BodyChunks[1].Velocity += new Vector2(Stats.RunSpeed * DynamicRunSpeed[1] * Controller.Direction.x, 0);
