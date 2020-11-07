@@ -52,16 +52,18 @@ namespace DeadZoneEngine.Entities
 
 
         private Vector2 PreVelocity;
-
         public void IsolateVelocity()
         {
+            Vector2 Temp = PreVelocity;
             PreVelocity = Velocity;
-            Velocity = Vector2.zero;
+            Velocity = Temp;
         }
 
         public void RestoreVelocity()
         {
+            Vector2 Temp = Velocity;
             Velocity = PreVelocity;
+            PreVelocity = Temp;
         }
 
         public int CollisionLayer { get { return Self.layer; } set { Self.layer = value; } }

@@ -23,6 +23,7 @@ public class PlayerCreature : AbstractCreature
 
     private enum BodyState
     {
+        UprightTest, //For testing physics system
         Limp,
         Standing
     }
@@ -86,15 +87,38 @@ public class PlayerCreature : AbstractCreature
     {
         switch (State)
         {
+            case BodyState.UprightTest:
+                {
+                    BodyChunks[0].Velocity -= new Vector2(0, BodyChunks[0].Gravity);
+                    BodyChunks[1].Velocity -= new Vector2(0, BodyChunks[1].Gravity);
+
+                    int A = BodyChunks[0].GetContacts();
+                    BodyChunkConnections[0].ARatio = 1;
+                    for (int i = 0; i < A; i++)
+                    {
+                        if ((BodyChunks[0].Contacts[i].point - BodyChunks[0].Position).y < 0)
+                            BodyChunkConnections[0].ARatio = 0;
+                    }
+
+                    DynamicRunSpeed[0] = 1f;
+                    DynamicRunSpeed[1] = 3f;
+                    BodyChunks[0].Velocity += new Vector2(Stats.RunSpeed * DynamicRunSpeed[0] * Controller.Direction.x, 0);
+                    BodyChunks[1].Velocity += new Vector2(Stats.RunSpeed * DynamicRunSpeed[1] * Controller.Direction.x, 0);
+
+                    BodyChunks[0].Velocity *= new Vector2(0.8f, 1);
+                    BodyChunks[1].Velocity *= new Vector2(0.8f, 1);
+                }
+                break;
             case BodyState.Limp:
                 {
+
                 }
                 break;
             case BodyState.Standing:
                 {
                     //TODO:: implement friction of different surfaces (harder to accelerate on ice, feet cant gain traction (similar to ice in minecraft))
                     DynamicRunSpeed[0] = 1f;
-                    DynamicRunSpeed[1] = 10f;
+                    DynamicRunSpeed[1] = 3f;
                     BodyChunks[0].Velocity += new Vector2(Stats.RunSpeed * DynamicRunSpeed[0] * Controller.Direction.x, 0);
                     BodyChunks[0].Velocity += new Vector2(0, Stats.RunSpeed * DynamicRunSpeed[0] * Controller.Direction.y);
                     BodyChunks[1].Velocity += new Vector2(Stats.RunSpeed * DynamicRunSpeed[1] * Controller.Direction.x, 0);
@@ -111,19 +135,36 @@ public class PlayerCreature : AbstractCreature
     {
         switch (State)
         {
+            case BodyState.UprightTest:
+                {
+                    SetGravity(0.3f);
+                    BodyChunkConnections[0].Active = true;
+
+                    BodyChunks[0].Velocity -= new Vector2(0, BodyChunks[0].Gravity);
+                    BodyChunks[1].Velocity += new Vector2(0, BodyChunks[1].Gravity);
+
+                    BodyChunks[0].Velocity *= new Vector2(0.8f, 1);
+                    BodyChunks[1].Velocity *= new Vector2(0.8f, 1);
+                }
+                break;
             case BodyState.Limp:
                 {
+                    SetGravity(0f); //For upright test
                     BodyChunkConnections[0].Active = true;
                 }
                 break;
             case BodyState.Standing:
                 {
+                    SetGravity(0f); //For upright test
                     BodyChunkConnections[0].Active = false;
 
                     float Dist = Vector2.Distance(BodyChunks[0].Position, BodyChunks[1].Position);
-                    Vector2 Dir = (BodyChunks[1].Position - BodyChunks[0].Position).normalized;
-                    BodyChunks[1].Position += -Dist * Dir * 0.8f;
-                    BodyChunks[1].Velocity += -Dist * Dir * 0.8f;
+                    Vector2 Dir = (BodyChunks[0].Position - BodyChunks[1].Position).normalized;
+                    BodyChunks[1].Position += Dist * Dir * 0.8f;
+                    BodyChunks[1].Velocity += Dist * Dir * 0.8f;
+
+                    BodyChunks[0].Velocity *= 0.8f;
+                    BodyChunks[1].Velocity *= 0.8f;
                 }
                 break;
         }

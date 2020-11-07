@@ -51,6 +51,7 @@ namespace DeadZoneEngine
 
         private static List<IIteratableUpdatable> LastIteratableUpdatableObjects = new List<IIteratableUpdatable>();
         public static List<IIteratableUpdatable> IteratableUpdatableObjects = new List<IIteratableUpdatable>();
+
         public static void FixedUpdate()
         {
             InvDeltaTime = 1f / Time.deltaTime;
@@ -71,6 +72,21 @@ namespace DeadZoneEngine
                 }
             }
 
+            //Isolate the general physics updates from creature body physics -> this is specific for maintaining physic objects inside of creature bodies
+            //(the creature body is updated relative to itself without the need to worry about countering general physics (its isolated from general physics))
+            LastPhysicsUpdatableObjects.Clear();
+            LastPhysicsUpdatableObjects.AddRange(PhysicsUpdatableObjects);
+            PhysicsUpdatableObjects.Clear();
+            for (int i = 0; i < LastPhysicsUpdatableObjects.Count; i++)
+            {
+                if (!LastPhysicsUpdatableObjects[i].FlaggedToDelete)
+                {
+                    PhysicsUpdatableObjects.Add(LastPhysicsUpdatableObjects[i]);
+                    if (LastPhysicsUpdatableObjects[i].Active)
+                        LastPhysicsUpdatableObjects[i].IsolateVelocity();
+                }
+            }
+
             LastUpdatableObjects.Clear();
             LastUpdatableObjects.AddRange(UpdatableObjects);
             UpdatableObjects.Clear();
@@ -80,7 +96,9 @@ namespace DeadZoneEngine
                 {
                     UpdatableObjects.Add(LastUpdatableObjects[i]);
                     if (LastUpdatableObjects[i].Active)
-                        LastUpdatableObjects[i].Update();
+                        LastUpdatableObjects[i].BodyPhysicsUpdate(); //This is specific to creatures mainly to update self-righting bodies or other body animation specific physics
+                                                                     //its seperated and run in a seperate physics operation to prevent self-righting body physics from being counteracted from normal physics (such as gravity).
+                                                                     //In other words this simply isolates the body physics from the standard physics
                 }
             }
 
@@ -108,27 +126,17 @@ namespace DeadZoneEngine
                 Physics2D.Simulate(1f / 60f / NumPhysicsIterations);
             }
 
-            //Isolate the general physics updates from creature body physics -> this is specific for maintaining physic objects inside of creature bodies
-            //(the creature body is updated relative to itself without the need to worry about countering general physics (its isolated from general physics))
-            LastPhysicsUpdatableObjects.Clear();
-            LastPhysicsUpdatableObjects.AddRange(PhysicsUpdatableObjects);
-            PhysicsUpdatableObjects.Clear();
-            for (int i = 0; i < LastPhysicsUpdatableObjects.Count; i++)
+            //Restore the velocities back to normal, we are no longer considering the creature body in an isolated system
+            for (int i = 0; i < PhysicsUpdatableObjects.Count; i++)
             {
-                if (!LastPhysicsUpdatableObjects[i].FlaggedToDelete)
-                {
-                    PhysicsUpdatableObjects.Add(LastPhysicsUpdatableObjects[i]);
-                    if (LastPhysicsUpdatableObjects[i].Active)
-                        LastPhysicsUpdatableObjects[i].IsolateVelocity();
-                }
+                if (PhysicsUpdatableObjects[i].Active)
+                    PhysicsUpdatableObjects[i].RestoreVelocity();
             }
 
             for (int i = 0; i < UpdatableObjects.Count; i++)
             {
                 if (UpdatableObjects[i].Active)
-                    UpdatableObjects[i].BodyPhysicsUpdate(); //This is specific to creatures mainly to update self-righting bodies or other body animation specific physics
-                                                             //its seperated and run in a seperate physics operation to prevent self-righting body physics from being counteracted from normal physics (such as gravity).
-                                                             //In other words this simply isolates the body physics from the standard physics
+                    UpdatableObjects[i].Update(); 
             }
 
             //Check and resolve physics constraints (Joints etc) => Essentially update the general physics of all bodies
@@ -146,13 +154,6 @@ namespace DeadZoneEngine
                 }
 
                 Physics2D.Simulate(1f / 60f / NumPhysicsIterations);
-            }
-
-            //Restore the velocities back to normal, we are no longer considering the creature body in an isolated system
-            for (int i = 0; i < PhysicsUpdatableObjects.Count; i++)
-            {
-                if (PhysicsUpdatableObjects[i].Active)
-                    PhysicsUpdatableObjects[i].RestoreVelocity();
             }
         }
     }
