@@ -8,6 +8,22 @@ using UnityEngine;
 
 namespace DeadZoneEngine.Entities.Components
 {
+    public struct DistanceJointData
+    {
+        public PhysicalObject A;
+        public PhysicalObject B;
+        public float Distance;
+        public Vector2 Anchor;
+
+        public DistanceJointData(PhysicalObject A, PhysicalObject B, float Distance, Vector2 Anchor)
+        {
+            this.A = A;
+            this.B = B;
+            this.Distance = Distance;
+            this.Anchor = Anchor;
+        }
+    }
+
     public class DistanceJoint : PhysicalJoint
     {
         PhysicalObject A;
@@ -44,12 +60,13 @@ namespace DeadZoneEngine.Entities.Components
             Type = AbstractWorldEntity.EntityType.DistanceJoint;
         }
 
-        public void Set(PhysicalObject A, PhysicalObject B, float Distance, Vector2 Anchor)
+        public override void Set(object Data)
         {
-            this.Distance = Distance;
-            this.Anchor = Anchor;
-            this.A = A;
-            this.B = B;
+            DistanceJointData DistanceJointWrapper = (DistanceJointData)Data;
+            Distance = DistanceJointWrapper.Distance;
+            Anchor = DistanceJointWrapper.Anchor;
+            A = DistanceJointWrapper.A;
+            B = DistanceJointWrapper.B;
 
             //Compute Anchor information (rotation matrices)
             Mat22 RotA = new Mat22(0);

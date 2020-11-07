@@ -22,8 +22,6 @@ namespace DeadZoneEngine.Entities
             RB.angularDrag = 0;
             RB.gravityScale = 0;
             RB.sharedMaterial = Resources.Load<PhysicsMaterial2D>("PhysicsMaterial/Zero");
-
-            SetEntityType();
         }
 
         public PhysicalObject(ulong ID) : base(ID)
@@ -34,8 +32,6 @@ namespace DeadZoneEngine.Entities
             RB.angularDrag = 0;
             RB.gravityScale = 0;
             RB.sharedMaterial = Resources.Load<PhysicsMaterial2D>("PhysicsMaterial/Zero");
-
-            SetEntityType();
         }
 
         protected override void _Instantiate()

@@ -18,24 +18,6 @@ namespace DeadZoneEngine
 
         public static void Initialize()
         {
-            /*new BodyChunk().Instantiate();
-            ((BodyChunk)UpdatableDeletableObjects[0]).InvMass = 0;
-            ((BodyChunk)UpdatableDeletableObjects[0]).InvInertia = 0;
-
-            List<DistanceJoint> D = new List<DistanceJoint>();
-            for (int i = 0; i < 10; i++)
-            {
-                BodyChunk Obj = new BodyChunk();
-                Obj.Instantiate();
-                Obj.Position = new Vector2(0, 2 * (i + 1));
-
-                DistanceJoint Joint = new DistanceJoint();
-                Joint.Set((BodyChunk)UpdatableDeletableObjects[i], (BodyChunk)UpdatableDeletableObjects[i + 1], 2, new Vector2(0, 0));
-                D.Add(Joint);
-            }
-            UpdatableDeletableObjects.AddRange(D);
-
-            new BodyChunk(2000).Instantiate();*/
             P = new PlayerCreature();
             P.Instantiate();
         }

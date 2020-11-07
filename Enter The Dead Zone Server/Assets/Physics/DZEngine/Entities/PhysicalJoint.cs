@@ -8,15 +8,9 @@ namespace DeadZoneEngine.Entities
 {
     public abstract class PhysicalJoint : AbstractWorldEntity, IIteratableUpdatable
     {
-        public PhysicalJoint()
-        {
-            SetEntityType();
-        }
+        public PhysicalJoint() { }
 
-        public PhysicalJoint(ulong ID) : base(ID)
-        {
-            SetEntityType();
-        }
+        public PhysicalJoint(ulong ID) : base(ID) { }
 
         protected override void _Instantiate()
         {

@@ -14,8 +14,8 @@ public abstract class AbstractCreature : AbstractWorldEntity, IUpdatable
     public BodyChunk[] BodyChunks;
     public DistanceJoint[] BodyChunkConnections;
 
-    public AbstractCreature() : base() { SetEntityType(); }
-    public AbstractCreature(ulong ID) : base(ID) { SetEntityType(); }
+    public AbstractCreature() { }
+    public AbstractCreature(ulong ID) : base(ID) { }
 
     protected override void _Instantiate()
     {

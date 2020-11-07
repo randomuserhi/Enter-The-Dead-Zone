@@ -14,6 +14,21 @@ public class PlayerController
     public Vector2 Direction;
 }
 
+//Wrapper for player creature data for intialization
+public struct PlayerCreatureData
+{
+    public BodyChunk A;
+    public BodyChunk B;
+    public DistanceJoint J;
+
+    public PlayerCreatureData(BodyChunk A, BodyChunk B, DistanceJoint J)
+    {
+        this.A = A;
+        this.B = B;
+        this.J = J;
+    }
+}
+
 public class PlayerCreature : AbstractCreature
 {
     public struct PlayerStats
@@ -38,24 +53,25 @@ public class PlayerCreature : AbstractCreature
 
     public PlayerCreature()
     {
-        Init(new BodyChunk(this), new BodyChunk(this), new DistanceJoint());
+        Set(new PlayerCreatureData(new BodyChunk(this), new BodyChunk(this), new DistanceJoint()));
     }
 
-    //TODO implement INIT into abstractCreature template
-    private void Init(BodyChunk A, BodyChunk B, DistanceJoint Joint)
+    public override void Set(object Data)
     {
+        PlayerCreatureData Wrapper = (PlayerCreatureData)Data;
+
         Controller = new PlayerController();
         State = BodyState.Standing;
         Stats.RunSpeed = 1f;
 
         BodyChunks = new BodyChunk[2];
-        BodyChunks[0] = A;
-        BodyChunks[1] = B;
+        BodyChunks[0] = Wrapper.A;
+        BodyChunks[1] = Wrapper.B;
         SetGravity(0f);
 
         BodyChunkConnections = new DistanceJoint[1];
-        BodyChunkConnections[0] = Joint;
-        BodyChunkConnections[0].Set(BodyChunks[0], BodyChunks[1], 1.5f, Vector2.zero);
+        BodyChunkConnections[0] = Wrapper.J;
+        BodyChunkConnections[0].Set(new DistanceJointData(BodyChunks[0], BodyChunks[1], 1.5f, Vector2.zero));
         BodyChunkConnections[0].Active = false;
 
         Physics2D.IgnoreCollision(BodyChunks[0].Collider, BodyChunks[1].Collider, true); //Ignore collisions between body parts
