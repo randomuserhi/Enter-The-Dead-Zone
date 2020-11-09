@@ -22,81 +22,56 @@ namespace DeadZoneEngine
             P.Instantiate();
         }
 
-        private static List<AbstractWorldEntity> LastInstantiatableDeletable = new List<AbstractWorldEntity>();
         public static List<AbstractWorldEntity> InstantiatableDeletable = new List<AbstractWorldEntity>();
-
-        private static List<IPhysicsUpdatable> LastPhysicsUpdatableObjects = new List<IPhysicsUpdatable>();
         public static List<IPhysicsUpdatable> PhysicsUpdatableObjects = new List<IPhysicsUpdatable>();
-
-        private static List<IUpdatable> LastUpdatableObjects = new List<IUpdatable>();
         public static List<IUpdatable> UpdatableObjects = new List<IUpdatable>();
-
-        private static List<IIteratableUpdatable> LastIteratableUpdatableObjects = new List<IIteratableUpdatable>();
         public static List<IIteratableUpdatable> IteratableUpdatableObjects = new List<IIteratableUpdatable>();
 
         public static void FixedUpdate()
         {
             InvDeltaTime = 1f / Time.deltaTime;
 
-            LastInstantiatableDeletable.Clear();
-            LastInstantiatableDeletable.AddRange(InstantiatableDeletable);
-            InstantiatableDeletable.Clear();
-            for (int i = 0; i < LastInstantiatableDeletable.Count; i++)
+            InstantiatableDeletable.RemoveAll(I => 
             {
-                if (!LastInstantiatableDeletable[i].FlaggedToDelete)
+                if (I.FlaggedToDelete)
                 {
-                    InstantiatableDeletable.Add(LastInstantiatableDeletable[i]);
+                    I.Delete();
+                    I.Destroy();
                 }
-                else
-                {
-                    LastInstantiatableDeletable[i].Delete(); //Destroy Interface
-                    LastInstantiatableDeletable[i].Destroy(); //Destroy Entity
-                }
-            }
+                return I.FlaggedToDelete;
+            });
 
             //Isolate the general physics updates from creature body physics -> this is specific for maintaining physic objects inside of creature bodies
             //(the creature body is updated relative to itself without the need to worry about countering general physics (its isolated from general physics))
-            LastPhysicsUpdatableObjects.Clear();
-            LastPhysicsUpdatableObjects.AddRange(PhysicsUpdatableObjects);
-            PhysicsUpdatableObjects.Clear();
-            for (int i = 0; i < LastPhysicsUpdatableObjects.Count; i++)
+            PhysicsUpdatableObjects.RemoveAll(I =>
             {
-                if (!LastPhysicsUpdatableObjects[i].FlaggedToDelete)
+                if (!I.FlaggedToDelete && I.Active)
                 {
-                    PhysicsUpdatableObjects.Add(LastPhysicsUpdatableObjects[i]);
-                    if (LastPhysicsUpdatableObjects[i].Active)
-                        LastPhysicsUpdatableObjects[i].IsolateVelocity();
+                    I.IsolateVelocity();
                 }
-            }
+                return I.FlaggedToDelete;
+            });
 
-            LastUpdatableObjects.Clear();
-            LastUpdatableObjects.AddRange(UpdatableObjects);
-            UpdatableObjects.Clear();
-            for (int i = 0; i < LastUpdatableObjects.Count; i++)
+            UpdatableObjects.RemoveAll(I =>
             {
-                if (!LastUpdatableObjects[i].FlaggedToDelete)
+                if (!I.FlaggedToDelete && I.Active)
                 {
-                    UpdatableObjects.Add(LastUpdatableObjects[i]);
-                    if (LastUpdatableObjects[i].Active)
-                        LastUpdatableObjects[i].BodyPhysicsUpdate(); //This is specific to creatures mainly to update self-righting bodies or other body animation specific physics
-                                                                     //its seperated and run in a seperate physics operation to prevent self-righting body physics from being counteracted from normal physics (such as gravity).
-                                                                     //In other words this simply isolates the body physics from the standard physics
+                    I.BodyPhysicsUpdate(); //This is specific to creatures mainly to update self-righting bodies or other body animation specific physics
+                                           //its seperated and run in a seperate physics operation to prevent self-righting body physics from being counteracted from normal physics (such as gravity).
+                                           //In other words this simply isolates the body physics from the standard physics
                 }
-            }
+                return I.FlaggedToDelete;
+            });
 
             //Check and resolve physics constraints (Joints etc) => Essentially update the isolated physics of just creature bodies
-            LastIteratableUpdatableObjects.Clear();
-            LastIteratableUpdatableObjects.AddRange(IteratableUpdatableObjects);
-            IteratableUpdatableObjects.Clear();
-            for (int i = 0; i < LastIteratableUpdatableObjects.Count; i++)
+            IteratableUpdatableObjects.RemoveAll(I =>
             {
-                if (!LastIteratableUpdatableObjects[i].FlaggedToDelete)
+                if (!I.FlaggedToDelete && I.Active)
                 {
-                    IteratableUpdatableObjects.Add(LastIteratableUpdatableObjects[i]);
-                    if (LastIteratableUpdatableObjects[i].Active)
-                        LastIteratableUpdatableObjects[i].PreUpdate();
+                    I.PreUpdate();
                 }
-            }
+                return I.FlaggedToDelete;
+            });
             for (int j = 0; j < NumPhysicsIterations; j++)
             {
                 for (int i = 0; i < IteratableUpdatableObjects.Count; i++)
