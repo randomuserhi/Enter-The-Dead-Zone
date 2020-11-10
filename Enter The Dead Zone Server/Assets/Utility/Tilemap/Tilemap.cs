@@ -15,8 +15,16 @@ public struct Tile
 
 public class TilemapWrapper : PhysicalObject
 {
+    private static ComputeShader Compute = null;
+    private static int ComputeKernel;
+
     public Tile[] Map;
     public Vector2Int Size;
+
+    private RenderTexture Render;
+    public Texture2D Result;
+
+    private SpriteRenderer SpriteRender;
 
     public TilemapWrapper()
     {
@@ -29,6 +37,32 @@ public class TilemapWrapper : PhysicalObject
 
     private void Init()
     {
+        if (Compute == null)
+        {
+            Compute = Resources.Load<ComputeShader>("ComputeShaders/TilemapComputeShader");
+            ComputeKernel = Compute.FindKernel("TilemapRender");
+        }
+
+        Render = new RenderTexture(512, 512, 24);
+        Render.enableRandomWrite = true;
+        Render.Create();
+
+        Result = new Texture2D(512, 512);
+
+        SpriteRender = Self.AddComponent<SpriteRenderer>();
+    }
+
+    public void GetRender()
+    {
+        //TODO see if I can use a texture2D
+        Compute.SetTexture(ComputeKernel, "Result", Render);
+        Compute.Dispatch(ComputeKernel, 512/8, 512/8, 1);
+
+        RenderTexture.active = Render;
+        Result.ReadPixels(new Rect(0, 0, 512, 512), 0, 0);
+        RenderTexture.active = null; //Reset active render => seems to work without this line still, but not sure => need more research
+
+        SpriteRender.sprite = Sprite.Create(Result, new Rect(0, 0, 512, 512), Vector2.zero);
     }
 
     public override void Set(object Data)

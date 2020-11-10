@@ -20,6 +20,9 @@ namespace DeadZoneEngine
         {
             P = new PlayerCreature();
             P.Instantiate();
+
+            TilemapWrapper T = new TilemapWrapper();
+            T.GetRender();
         }
 
         public static List<AbstractWorldEntity> InstantiatableDeletable = new List<AbstractWorldEntity>();
