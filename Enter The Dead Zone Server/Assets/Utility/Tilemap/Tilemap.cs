@@ -60,13 +60,12 @@ public class Tile
     }
 }*/
 
-public class TilemapWrapper : PhysicalObject
+public class TilemapWrapper : AbstractWorldEntity
 {
     private static ComputeShader Compute;
     private static int ComputeKernel;
 
-    private static GameObject GlobalObject;
-    private static Canvas GlobalCanvas;
+    protected GameObject Self;
 
     public Tile[] Map;
     public Vector2Int Size;
@@ -85,27 +84,26 @@ public class TilemapWrapper : PhysicalObject
 
     private void Init()
     {
+        Self = new GameObject();
+
         if (Compute == null)
         {
             Compute = Resources.Load<ComputeShader>("ComputeShaders/TilemapComputeShader");
             ComputeKernel = Compute.FindKernel("TilemapRender");
         }
-        if (GlobalObject == null)
-        {
-            GlobalObject = new GameObject();
-            GlobalCanvas = GlobalObject.AddComponent<Canvas>();
-            GlobalCanvas.renderMode = RenderMode.WorldSpace;
-            GlobalObject.AddComponent<CanvasScaler>();
-            GlobalObject.AddComponent<GraphicRaycaster>();
-            GlobalObject.GetComponent<RectTransform>().sizeDelta = Vector2.zero;
-        }
 
+        Self = new GameObject();
+        Self.AddComponent<Canvas>().renderMode = RenderMode.WorldSpace;
+        Self.AddComponent<CanvasScaler>();
+        Self.AddComponent<GraphicRaycaster>();
+        Self.GetComponent<RectTransform>().sizeDelta = Vector2.zero;
+    
         Render = new RenderTexture(512, 512, 8, RenderTextureFormat.ARGB32);
         Render.enableRandomWrite = true;
         Render.filterMode = FilterMode.Point;
         Render.Create();
 
-        Self.transform.parent = GlobalObject.transform;
+        Self.transform.parent = Self.transform;
         Sprite = Self.AddComponent<RawImage>();
         Sprite.rectTransform.sizeDelta = new Vector2(1, 1);
         Sprite.texture = Render;
