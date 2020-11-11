@@ -4,11 +4,32 @@
 // Create a RenderTexture with enableRandomWrite flag and set it
 // with cs.SetTexture
 RWTexture2D<float4> Result;
+//TODO:: add a compute buffer for tlie placement
+Texture2D<float4> TilePallet
+uint TileDimension;
+uint NumTiles;
 
 [numthreads(1,1,1)]
 void TilemapRender(uint3 id : SV_DispatchThreadID)
 {
 	// TODO: insert actual code here!
 
-	Result[id.xy] = float4(id.x & id.y, (id.x & 15) / 15.0, (id.y & 15) / 15.0, 1.0);
+	//Result[id.xy] = float4(id.x & id.y, (id.x & 15) / 15.0, (id.y & 15) / 15.0, 1.0);
+	Result[id.xy] += float4(0.01, 0.02, 0.03, 0.04);
+	if (Result[id.xy].r >= 1)
+	{
+		Result[id.xy] *= float4(0, 1, 1, 1);
+	}
+	if (Result[id.xy].g >= 1)
+	{
+		Result[id.xy] *= float4(1, 0, 1, 1);
+	}
+	if (Result[id.xy].b >= 1)
+	{
+		Result[id.xy] *= float4(1, 1, 0, 1);
+	}
+	if (Result[id.xy].a >= 1)
+	{
+		Result[id.xy] *= float4(1, 1, 1, 0);
+	}
 }

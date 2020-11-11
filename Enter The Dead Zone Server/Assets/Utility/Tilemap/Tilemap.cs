@@ -10,14 +10,6 @@ using UnityEngine.UI;
 using DeadZoneEngine;
 using DeadZoneEngine.Entities;
 
-public class Tile
-{
-    public Tile()
-    {
-
-    }
-}
-
 /*public class TilemapWrapper : PhysicalObject
 {
     private Tilemap Map;
@@ -60,7 +52,20 @@ public class Tile
     }
 }*/
 
-public class TilemapWrapper : AbstractWorldEntity
+public struct Tile
+{
+    public int AnimationFrame;
+    public int TileIndex;
+}
+
+public struct TilePallet
+{
+    public int TileDimension;
+    public int NumTiles;
+    public Texture2D Pallet;
+}
+
+public class TilemapWrapper : AbstractWorldEntity, IUpdatable
 {
     private static ComputeShader Compute;
     private static int ComputeKernel;
@@ -72,6 +77,9 @@ public class TilemapWrapper : AbstractWorldEntity
 
     private RawImage Sprite;
     private RenderTexture Render;
+
+    public Texture2D TilePallet;
+    public TilePallet TilePalletData;
 
     public TilemapWrapper()
     {
@@ -98,7 +106,6 @@ public class TilemapWrapper : AbstractWorldEntity
     
         Render = new RenderTexture(512, 512, 8);
         Render.enableRandomWrite = true;
-        //Render.format = RenderTextureFormat.RFloat;
         Render.filterMode = FilterMode.Point;
         Render.anisoLevel = 1;
         Render.Create();
@@ -109,11 +116,26 @@ public class TilemapWrapper : AbstractWorldEntity
         Sprite.material = Resources.Load<Material>("Materials/LitMaterial");
     }
 
+    protected override void _Instantiate()
+    {
+        DZEngine.UpdatableObjects.Add(this);
+    }
+
     public void UpdateRender()
     {
         //TODO see if I can use a texture2D
         Compute.SetTexture(ComputeKernel, "Result", Render);
         Compute.Dispatch(ComputeKernel, 512, 512, 1);
+    }
+
+    public void Update()
+    {
+        UpdateRender();
+    }
+
+    public void BodyPhysicsUpdate()
+    {
+
     }
 
     public override void Set(object Data)
