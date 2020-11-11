@@ -84,8 +84,6 @@ public class TilemapWrapper : AbstractWorldEntity
 
     private void Init()
     {
-        Self = new GameObject();
-
         if (Compute == null)
         {
             Compute = Resources.Load<ComputeShader>("ComputeShaders/TilemapComputeShader");
@@ -98,12 +96,13 @@ public class TilemapWrapper : AbstractWorldEntity
         Self.AddComponent<GraphicRaycaster>();
         Self.GetComponent<RectTransform>().sizeDelta = Vector2.zero;
     
-        Render = new RenderTexture(512, 512, 8, RenderTextureFormat.ARGB32);
+        Render = new RenderTexture(512, 512, 8);
         Render.enableRandomWrite = true;
+        //Render.format = RenderTextureFormat.RFloat;
         Render.filterMode = FilterMode.Point;
+        Render.anisoLevel = 1;
         Render.Create();
 
-        Self.transform.parent = Self.transform;
         Sprite = Self.AddComponent<RawImage>();
         Sprite.rectTransform.sizeDelta = new Vector2(1, 1);
         Sprite.texture = Render;
@@ -114,7 +113,7 @@ public class TilemapWrapper : AbstractWorldEntity
     {
         //TODO see if I can use a texture2D
         Compute.SetTexture(ComputeKernel, "Result", Render);
-        Compute.Dispatch(ComputeKernel, 512/8, 512/8, 1);
+        Compute.Dispatch(ComputeKernel, 512, 512, 1);
     }
 
     public override void Set(object Data)
