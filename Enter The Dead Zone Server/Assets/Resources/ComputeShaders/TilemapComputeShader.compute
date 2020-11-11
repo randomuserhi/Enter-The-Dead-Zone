@@ -5,7 +5,7 @@
 // with cs.SetTexture
 RWTexture2D<float4> Result;
 //TODO:: add a compute buffer for tlie placement
-Texture2D<float4> TilePallet
+Texture2D<float4> TilePallet;
 uint TileDimension;
 uint NumTiles;
 
