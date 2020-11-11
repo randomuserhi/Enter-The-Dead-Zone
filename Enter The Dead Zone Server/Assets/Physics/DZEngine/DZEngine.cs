@@ -22,7 +22,7 @@ namespace DeadZoneEngine
             P.Instantiate();
 
             TilemapWrapper T = new TilemapWrapper();
-            T.GetRender();
+            T.UpdateRender();
         }
 
         public static List<AbstractWorldEntity> InstantiatableDeletable = new List<AbstractWorldEntity>();
