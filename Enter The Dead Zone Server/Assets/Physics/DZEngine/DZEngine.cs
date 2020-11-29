@@ -21,9 +21,9 @@ namespace DeadZoneEngine
             P = new PlayerCreature();
             P.Instantiate();
 
-            TilemapWrapper T1 = new TilemapWrapper();
+            TilemapWrapper T1 = new TilemapWrapper(32, new Vector2Int(2, 2));
             T1.Instantiate();
-            TilemapWrapper T2 = new TilemapWrapper();
+            TilemapWrapper T2 = new TilemapWrapper(32, new Vector2Int(2, 2));
             T2.Instantiate();
         }
 
@@ -34,6 +34,12 @@ namespace DeadZoneEngine
 
         public static void FixedUpdate()
         {
+            /*Debug.Log("---- PreEntityCounts ----");
+            Debug.Log(InstantiatableDeletable.Count);
+            Debug.Log(PhysicsUpdatableObjects.Count);
+            Debug.Log(UpdatableObjects.Count);
+            Debug.Log(IteratableUpdatableObjects.Count);*/
+
             InvDeltaTime = 1f / Time.deltaTime;
 
             InstantiatableDeletable.RemoveAll(I => 
@@ -117,6 +123,12 @@ namespace DeadZoneEngine
 
                 Physics2D.Simulate(1f / 60f / NumPhysicsIterations);
             }
+
+            /*Debug.Log("---- PostEntityCounts ----");
+            Debug.Log(InstantiatableDeletable.Count);
+            Debug.Log(PhysicsUpdatableObjects.Count);
+            Debug.Log(UpdatableObjects.Count);
+            Debug.Log(IteratableUpdatableObjects.Count);*/
         }
     }
 }

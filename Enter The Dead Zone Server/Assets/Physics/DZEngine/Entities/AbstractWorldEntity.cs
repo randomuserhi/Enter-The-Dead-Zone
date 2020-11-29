@@ -88,7 +88,11 @@ namespace DeadZoneEngine.Entities
 
         public void Destroy()
         {
-            EntityID.Remove(ID);
+            if (FlaggedToDelete)
+                EntityID.Remove(ID);
+            else
+                Debug.LogWarning("Call Delete() rather than Destroy()!");
+            FlaggedToDelete = true;
         }
 
         private bool _Active = true;

@@ -1,35 +1,36 @@
 ﻿// Each #kernel tells which function to compile; you can have many kernels
 #pragma kernel TilemapRender
 
-// Create a RenderTexture with enableRandomWrite flag and set it
-// with cs.SetTexture
+struct Tile
+{
+	int NumFrames;
+	int AnimationFrame;
+	int TileIndex;
+};
+
 RWTexture2D<float4> Result;
-//TODO:: add a compute buffer for tlie placement
 Texture2D<float4> TilePallet;
-uint TileDimension;
-uint NumTiles;
+RWStructuredBuffer<Tile> Map;
+int TileStride;
+int MapHeight;
+int TileDimension;
+//TODO:: maybe implement some type of transparency colour
 
 [numthreads(1,1,1)]
 void TilemapRender(uint3 id : SV_DispatchThreadID)
 {
-	// TODO: insert actual code here!
-
-	//Result[id.xy] = float4(id.x & id.y, (id.x & 15) / 15.0, (id.y & 15) / 15.0, 1.0);
-	Result[id.xy] += float4(0.01, 0.02, 0.03, 0.04);
-	if (Result[id.xy].r >= 1)
+	for (int i = MapHeight - 1; i >= 0; i--) //Loop from top of texture to the bottom
 	{
-		Result[id.xy] *= float4(0, 1, 1, 1);
-	}
-	if (Result[id.xy].g >= 1)
-	{
-		Result[id.xy] *= float4(1, 0, 1, 1);
-	}
-	if (Result[id.xy].b >= 1)
-	{
-		Result[id.xy] *= float4(1, 1, 0, 1);
-	}
-	if (Result[id.xy].a >= 1)
-	{
-		Result[id.xy] *= float4(1, 1, 1, 0);
+		Tile T = Map[id.x * MapHeight + i];
+		for (int x = 0; x < TileDimension; x++)
+		{
+			for (int y = TileStride - 1; y >= 0; y--)
+			{
+				int RenderYIndex = i * TileDimension + y;
+				uint2 TilePalletIndex = uint2(x, T.TileIndex * TileStride + y);
+				uint2 RenderIndex = uint2(id.x * TileDimension + x, RenderYIndex);
+				Result[RenderIndex] = TilePallet[TilePalletIndex];
+			}
+		}
 	}
 }
