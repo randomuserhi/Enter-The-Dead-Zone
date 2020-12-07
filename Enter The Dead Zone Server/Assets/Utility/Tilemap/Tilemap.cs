@@ -190,7 +190,7 @@ public class TilemapWrapper : AbstractWorldEntity, IUpdatable
             Canvas CRow = Row.AddComponent<Canvas>();
             CRow.renderMode = RenderMode.WorldSpace;
             CRow.overrideSorting = true;
-            CRow.sortingOrder = i;
+            CRow.sortingOrder = i * 2 + 1;
             RectTransform RT = Row.GetComponent<RectTransform>();
             RT.sizeDelta = Vector2.zero;
             RT.position = new Vector3(0, -i + 0.75f);
@@ -274,7 +274,7 @@ public class TilemapWrapper : AbstractWorldEntity, IUpdatable
             if (YOffset >= 0 && XOffset >= 0 &&
                 YOffset <= TilemapSize.y && XOffset <= TilemapSize.x)
             {
-                AppliedRenderers[i].sortingOrder = Mathf.RoundToInt(YOffset);
+                AppliedRenderers[i].sortingOrder = Mathf.RoundToInt(YOffset) * 2;
             }
         }
     }
