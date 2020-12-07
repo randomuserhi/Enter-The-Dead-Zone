@@ -10,7 +10,7 @@ namespace DeadZoneEngine.Entities
 {
     public abstract class PhysicalObject : AbstractWorldEntity, IPhysicsUpdatable
     {
-        protected GameObject Self;
+        public GameObject Self;
         protected Rigidbody2D RB;
         public AbstractWorldEntity Parent;
 

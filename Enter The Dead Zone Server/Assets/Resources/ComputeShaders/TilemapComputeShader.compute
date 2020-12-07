@@ -3,12 +3,13 @@
 
 struct Tile
 {
+	int Blank;
 	int NumFrames;
 	int AnimationFrame;
 	int TileIndex;
 };
 
-RWTexture2D<float4> Result;
+RWTexture2D<float4>Result;
 Texture2D<float4> TilePallet;
 RWStructuredBuffer<Tile> Map;
 int TileStride;
@@ -19,16 +20,15 @@ int TileDimension;
 [numthreads(1,1,1)]
 void TilemapRender(uint3 id : SV_DispatchThreadID)
 {
-	for (int i = MapHeight - 1; i >= 0; i--) //Loop from top of texture to the bottom
+	Tile T = Map[id.y * MapHeight + id.x];
+	if (T.Blank == 1)
 	{
-		Tile T = Map[id.x * MapHeight + i];
 		for (int x = 0; x < TileDimension; x++)
 		{
-			for (int y = TileStride - 1; y >= 0; y--)
+			for (int y = 0; y < TileStride; y++)
 			{
-				int RenderYIndex = i * TileDimension + y;
-				uint2 TilePalletIndex = uint2(x, T.TileIndex * TileStride + y);
-				uint2 RenderIndex = uint2(id.x * TileDimension + x, RenderYIndex);
+				uint2 TilePalletIndex = uint2(T.AnimationFrame * TileDimension + x, T.TileIndex * TileStride + y);
+				uint2 RenderIndex = uint2(id.x * TileDimension + x, id.y * TileStride + y);
 				Result[RenderIndex] = TilePallet[TilePalletIndex];
 			}
 		}
