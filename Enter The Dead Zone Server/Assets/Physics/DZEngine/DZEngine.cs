@@ -21,9 +21,9 @@ namespace DeadZoneEngine
             P = new PlayerCreature();
             P.Instantiate();
 
-            TilemapWrapper T1 = new TilemapWrapper(32, new Vector2Int(2, 2));
+            TilemapWrapper T1 = new TilemapWrapper(32, new Vector2Int(4, 2));
             T1.Instantiate();
-            TilemapWrapper T2 = new TilemapWrapper(32, new Vector2Int(2, 2));
+            TilemapWrapper T2 = new TilemapWrapper(32, new Vector2Int(4, 2));
             T2.Instantiate();
         }
 

@@ -6,6 +6,10 @@ using System.Threading.Tasks;
 
 namespace DeadZoneEngine.Entities
 {
+    public interface IRenderer
+    {
+    }
+
     public interface IInstantiatableAndDeletable
     {
         bool FlaggedToDelete { get; set; }

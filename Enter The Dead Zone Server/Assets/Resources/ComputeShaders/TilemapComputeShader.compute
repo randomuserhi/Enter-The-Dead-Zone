@@ -3,32 +3,33 @@
 
 struct Tile
 {
-	int Blank;
 	int NumFrames;
 	int AnimationFrame;
 	int TileIndex;
+	int Blank;
 };
 
 RWTexture2D<float4>Result;
 Texture2D<float4> TilePallet;
 RWStructuredBuffer<Tile> Map;
 int TileStride;
-int MapHeight;
-int TileDimension;
+int MapWidth;
+int TileWidth;
+int TileHeight;
 //TODO:: maybe implement some type of transparency colour
 
 [numthreads(1,1,1)]
 void TilemapRender(uint3 id : SV_DispatchThreadID)
 {
-	Tile T = Map[id.y * MapHeight + id.x];
+	Tile T = Map[id.y * MapWidth + id.x];
 	if (T.Blank == 1)
 	{
-		for (int x = 0; x < TileDimension; x++)
+		for (int x = 0; x < TileWidth; x++)
 		{
-			for (int y = 0; y < TileStride; y++)
+			for (int y = 0; y < TileHeight; y++)
 			{
-				uint2 TilePalletIndex = uint2(T.AnimationFrame * TileDimension + x, T.TileIndex * TileStride + y);
-				uint2 RenderIndex = uint2(id.x * TileDimension + x, id.y * TileStride + y);
+				uint2 TilePalletIndex = uint2(T.AnimationFrame * TileWidth + x, T.TileIndex * TileStride + y);
+				uint2 RenderIndex = uint2(id.x * TileWidth + x, id.y * TileHeight + y);
 				Result[RenderIndex] = TilePallet[TilePalletIndex];
 			}
 		}

@@ -54,10 +54,10 @@ using DeadZoneEngine.Entities;
 
 public struct Tile
 {
-    public int Blank;
     public int NumFrames;
     public int AnimationFrame;
     public int TileIndex;
+    public int Blank; //1 = true, 0 = false (not blank)
 
     public Tile(int TileIndex, int NumFrames, int AnimationFrame, int Blank)
     {
@@ -116,6 +116,11 @@ public class TilemapWrapper : AbstractWorldEntity, IUpdatable
     private Vector2Int TilemapSize;
     private Vector2 TilemapWorldSize;
 
+    private const float ColliderMargin = 0.02f;
+    private CompositeCollider2D CompositeCollider;
+    private BoxCollider2D[] ColliderMap;
+    private Rigidbody2D RB;
+
     public TilemapWrapper(int TileDimension, Vector2Int TilemapSize, float TilesPerUnit = 1)
     {
         this.TileDimension = TileDimension;
@@ -123,7 +128,7 @@ public class TilemapWrapper : AbstractWorldEntity, IUpdatable
         TilemapWorldSize = (Vector2)TilemapSize / TilesPerUnit;
         Init();
     }
-    public TilemapWrapper(ulong ID, int TileDimension, Vector2Int TilemapSize) : base(ID)
+    public TilemapWrapper(ulong ID, int TileDimension, Vector2Int TilemapSize, float TilesPerUnit = 1) : base(ID)
     {
         this.TileDimension = TileDimension;
         this.TilemapSize = TilemapSize;
@@ -139,7 +144,7 @@ public class TilemapWrapper : AbstractWorldEntity, IUpdatable
             GC.SuppressFinalize(WallBuffer); //Dont actually know if this is safe, probably need to check, without it unity throws a warning
                                             //See https://forum.unity.com/threads/computebuffer-warning-when-component-uses-executeineditmode.844648/
                                             //    https://stackoverflow.com/questions/151051/when-should-i-use-gc-suppressfinalize
-            WallBuffer.Release();
+            WallBuffer.Dispose();
         }
     }
 
@@ -161,6 +166,22 @@ public class TilemapWrapper : AbstractWorldEntity, IUpdatable
 
         GenerateDefaultTileData();
 
+        Render = new RenderTexture(TileDimension * TilemapSize.x, WallTilePalletData.TileStride * TilemapSize.y, 8)
+        {
+            enableRandomWrite = true,
+            filterMode = FilterMode.Point,
+            anisoLevel = 1
+        };
+        Render.Create();
+
+        FloorRenderTexture = new RenderTexture(TileDimension * TilemapSize.x, TileDimension * TilemapSize.y, 8)
+        {
+            enableRandomWrite = true,
+            filterMode = FilterMode.Point,
+            anisoLevel = 1
+        };
+        FloorRenderTexture.Create();
+
         Self = new GameObject();
         Self.name = "Tilemap";
         Canvas C = Self.AddComponent<Canvas>();
@@ -174,22 +195,7 @@ public class TilemapWrapper : AbstractWorldEntity, IUpdatable
         FloorRender.material = Resources.Load<Material>("Materials/LitMaterial");
         FloorRender.texture = FloorRenderTexture;
 
-        Render = new RenderTexture(TileDimension * TilemapSize.x, WallTilePalletData.TileStride * TilemapSize.y, 8)
-        {
-            enableRandomWrite = true,
-            filterMode = FilterMode.Point,
-            anisoLevel = 1
-        };
-        Render.Create();
-
-        FloorRenderTexture = new RenderTexture(TileDimension * TilemapSize.x, WallTilePalletData.TileStride * TilemapSize.y, 8)
-        {
-            enableRandomWrite = true,
-            filterMode = FilterMode.Point,
-            anisoLevel = 1
-        };
-        FloorRenderTexture.Create();
-
+        //Initialize row gameobjects
         Rows = new RawImage[TilemapSize.y];
         for (int i = 0; i < TilemapSize.y; i++)
         {
@@ -214,11 +220,13 @@ public class TilemapWrapper : AbstractWorldEntity, IUpdatable
         WallCompute.SetTexture(ComputeKernel, "Result", Render);
         FloorCompute.SetTexture(ComputeKernel, "Result", FloorRenderTexture);
         //Set Tile Dimensions
-        WallCompute.SetInt("TileDimension", TileDimension);
-        FloorCompute.SetInt("TileDimension", TileDimension);
+        WallCompute.SetInt("TileWidth", TileDimension);
+        WallCompute.SetInt("TileHeight", WallTilePalletData.TileStride);
+        FloorCompute.SetInt("TileWidth", TileDimension);
+        FloorCompute.SetInt("TileHeight", TileDimension);
         //Set Map Dimensions
-        WallCompute.SetInt("MapHeight", TilemapSize.y);
-        FloorCompute.SetInt("MapHeight", TilemapSize.y);
+        WallCompute.SetInt("MapWidth", TilemapSize.x);
+        FloorCompute.SetInt("MapWidth", TilemapSize.x);
 
         //Set TilePallet
         WallCompute.SetTexture(ComputeKernel, "TilePallet", WallTilePalletData.Pallet);
@@ -227,17 +235,42 @@ public class TilemapWrapper : AbstractWorldEntity, IUpdatable
         FloorCompute.SetInt("TileStride", FloorTilePalletData.TileStride);
 
         //Initialize map and buffer
-        //Map = new Tile[TilemapSize.x * TilemapSize.y];
-        Walls = new Tile[4] { new Tile(0, 2, 0, 0), new Tile(0, 2, 1, 1),
-                            new Tile(1, 2, 0, 1), new Tile(1, 2, 1, 0) }; //Testing
+        if (WallBuffer != null) WallBuffer.Dispose();
+        Walls = new Tile[8] { new Tile(0, 2, 0, 0), new Tile(0, 2, 1, 1),new Tile(0, 2, 0, 0), new Tile(0, 2, 1, 1),
+                            new Tile(1, 2, 0, 1), new Tile(1, 2, 1, 0),new Tile(1, 2, 0, 1), new Tile(1, 2, 1, 0) }; //Testing
         WallBuffer = new ComputeBuffer(Walls.Length, sizeof(int) * 4);
-        Floor = new Tile[4] { new Tile(0, 2, 0, 1), new Tile(0, 2, 1, 1),
-                            new Tile(1, 2, 0, 1), new Tile(1, 2, 1, 1) }; //Testing
+        if (FloorBuffer != null) FloorBuffer.Dispose();
+        Floor = new Tile[8] { new Tile(0, 2, 0, 1), new Tile(0, 2, 1, 1),new Tile(0, 2, 0, 1), new Tile(0, 2, 1, 1),
+                            new Tile(1, 2, 0, 1), new Tile(1, 2, 1, 1),new Tile(1, 2, 0, 1), new Tile(1, 2, 1, 1) }; //Testing
         FloorBuffer = new ComputeBuffer(Floor.Length, sizeof(int) * 4);
 
-        //Set the buffer
+        //Set the buffers
         WallCompute.SetBuffer(ComputeKernel, "Map", WallBuffer);
         FloorCompute.SetBuffer(ComputeKernel, "Map", FloorBuffer);
+
+        //Initialize colliders
+        ColliderMap = new BoxCollider2D[TilemapSize.x * TilemapSize.y];
+        //makes colliders based on wall map, perhaps create this into a virtual function for collider generation?
+        for (int i = 0; i < TilemapSize.y; i++)
+        {
+            for (int j = 0; j < TilemapSize.x; j++)
+            {
+                int Index = i * TilemapSize.x + j;
+                if (Walls[Index].Blank == 0)
+                {
+                    ColliderMap[Index] = Self.AddComponent<BoxCollider2D>();
+                    ColliderMap[Index].size = new Vector2(1 / TilesPerUnit - ColliderMargin, 1 / TilesPerUnit - ColliderMargin);
+                    ColliderMap[Index].offset = new Vector2(j / TilesPerUnit + ColliderMap[Index].size.x / 2 - TilemapSize.x / 2f / TilesPerUnit + ColliderMargin / 2, 
+                                                            i / TilesPerUnit + ColliderMap[Index].size.y / 2 - TilemapSize.y / 2f / TilesPerUnit + ColliderMargin / 2);
+                    ColliderMap[Index].usedByComposite = true;
+                }
+            }
+        }
+        RB = Self.AddComponent<Rigidbody2D>();
+        RB.isKinematic = true;
+        CompositeCollider = Self.AddComponent<CompositeCollider2D>();
+        CompositeCollider.generationType = CompositeCollider2D.GenerationType.Manual;
+        CompositeCollider.GenerateGeometry();
     }
 
     private void GenerateDefaultTileData()
@@ -258,7 +291,7 @@ public class TilemapWrapper : AbstractWorldEntity, IUpdatable
             {
                 Pallet = Resources.Load<Texture2D>("TilemapPallets/Default"),
                 NumTiles = 2,
-                TileStride = 32,
+                TileStride = 48, //32 + 16
                 FrameCount = new int[2] { 2, 2 }
             };
         }
