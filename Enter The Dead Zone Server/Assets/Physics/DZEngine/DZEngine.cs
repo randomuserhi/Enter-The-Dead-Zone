@@ -14,8 +14,6 @@ namespace DeadZoneEngine
     public static class DZEngine
     {
         public static float InvDeltaTime = 0;
-        public static int NumPhysicsIterations = 10;
-        public static bool ActiveRenderers = true;
 
         public static void Initialize()
         {
@@ -33,7 +31,7 @@ namespace DeadZoneEngine
             _IInstantiatableDeletable Instantiatable = Entity as _IInstantiatableDeletable;
             Instantiatable?.Instantiate();
 
-            if (ActiveRenderers)
+            if (DZSettings.ActiveRenderers)
             {
                 IRenderer Renderer = Entity as IRenderer;
                 Renderer?.InitializeRenderer();
@@ -44,6 +42,7 @@ namespace DeadZoneEngine
             _PhysicsUpdatableObjects.AddIfContainsInterface(Entity);
             _IteratableUpdatableObjects.AddIfContainsInterface(Entity);
             _RenderableObjects.AddIfContainsInterface(Entity);
+            _ServerSendableObjects.AddIfContainsInterface(Entity);
         }
 
         #region DZEngine.ManagedList
@@ -98,6 +97,7 @@ namespace DeadZoneEngine
                 GetInvokeFromType<IUpdatable>(T)(UpdateListMethod, _UpdatableObjects);
                 GetInvokeFromType<IIteratableUpdatable>(T)(UpdateListMethod, _IteratableUpdatableObjects);
                 GetInvokeFromType<IRenderer>(T)(UpdateListMethod, _RenderableObjects);
+                GetInvokeFromType<IServerSendable>(T)(UpdateListMethod, _ServerSendableObjects);
             }
         }
         public class ManagedList<T> : HashSet<T> where T : class
@@ -137,6 +137,7 @@ namespace DeadZoneEngine
         #endregion
 
         public static List<object> EntitesToPush = new List<object>();
+        private static List<IServerSendable> _ServerSendableObjects = new List<IServerSendable>();
         private static List<AbstractWorldEntity> _AbstractWorldEntities = new List<AbstractWorldEntity>();
         private static List<IPhysicsUpdatable> _PhysicsUpdatableObjects = new List<IPhysicsUpdatable>();
         private static List<IUpdatable> _UpdatableObjects = new List<IUpdatable>();
@@ -148,6 +149,7 @@ namespace DeadZoneEngine
             EntitesToPush.Add(Component);
         }
 
+        public static ReadOnlyCollection<IServerSendable> ServerSendableObjects { get { return _ServerSendableObjects.AsReadOnly(); } }
         public static ReadOnlyCollection<AbstractWorldEntity> AbstractWorldEntities { get { return _AbstractWorldEntities.AsReadOnly(); } }
         public static ReadOnlyCollection<IPhysicsUpdatable> PhysicsUpdatableObjects { get { return _PhysicsUpdatableObjects.AsReadOnly(); } }
         public static ReadOnlyCollection<IUpdatable> UpdatableObjects { get { return _UpdatableObjects.AsReadOnly(); } }
@@ -232,7 +234,7 @@ namespace DeadZoneEngine
                 }
                 return I.FlaggedToDelete;
             });
-            for (int j = 0; j < NumPhysicsIterations; j++)
+            for (int j = 0; j < DZSettings.NumPhysicsIterations; j++)
             {
                 for (int i = 0; i < _IteratableUpdatableObjects.Count; i++)
                 {
@@ -240,7 +242,7 @@ namespace DeadZoneEngine
                         _IteratableUpdatableObjects[i].IteratedUpdate();
                 }
 
-                Physics2D.Simulate(1f / 60f / NumPhysicsIterations);
+                Physics2D.Simulate(1f / 60f / DZSettings.NumPhysicsIterations);
             }
 
             //Restore the velocities back to normal, we are no longer considering the creature body in an isolated system
@@ -262,7 +264,7 @@ namespace DeadZoneEngine
                 if (_IteratableUpdatableObjects[i].Active)
                     _IteratableUpdatableObjects[i].PreUpdate();
             }
-            for (int j = 0; j < NumPhysicsIterations; j++)
+            for (int j = 0; j < DZSettings.NumPhysicsIterations; j++)
             {
                 for (int i = 0; i < _IteratableUpdatableObjects.Count; i++)
                 {
@@ -270,14 +272,14 @@ namespace DeadZoneEngine
                         _IteratableUpdatableObjects[i].IteratedUpdate();
                 }
 
-                Physics2D.Simulate(1f / 60f / NumPhysicsIterations);
+                Physics2D.Simulate(1f / 60f / DZSettings.NumPhysicsIterations);
             }
 
             _RenderableObjects.RemoveAll(I =>
             {
                 if (!I.FlaggedToDelete && I.Active)
                 {
-                    if (ActiveRenderers)
+                    if (DZSettings.ActiveRenderers)
                         I.Render();
                 }
                 return I.FlaggedToDelete;

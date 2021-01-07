@@ -29,8 +29,10 @@ public struct PlayerCreatureData
     }
 }
 
-public class PlayerCreature : AbstractCreature
+public class PlayerCreature : AbstractCreature, IServerSendable
 {
+    public int ServerObjectType { get; set; } = (int)DZSettings.EntityType.AbstractCreature;
+
     public struct PlayerStats
     {
         public float RunSpeed;
@@ -42,7 +44,7 @@ public class PlayerCreature : AbstractCreature
         Limp,
         Standing
     }
-
+    
     private BodyState State;
     private PlayerController Controller;
     public PlayerStats Stats;
@@ -77,11 +79,6 @@ public class PlayerCreature : AbstractCreature
         Physics2D.IgnoreCollision(BodyChunks[0].Collider, BodyChunks[1].Collider, true); //Ignore collisions between body parts
 
         DynamicRunSpeed = new float[2];
-    }
-    
-    protected override void SetEntityType()
-    {
-        Type = EntityType.PlayerCreature;
     }
 
     public override void Update()
@@ -197,12 +194,17 @@ public class PlayerCreature : AbstractCreature
         //EntityType + ulong EntityID + ulong EntityID + float Distance, Vector2 Anchor
         //TODO:: might be worth optimizing this to use arrays or something if performance is hit hard
         List<byte> Data = new List<byte>();
-        Data.AddRange(BitConverter.GetBytes((int)Type));
+        Data.AddRange(BitConverter.GetBytes(ServerObjectType));
         Data.AddRange(BitConverter.GetBytes(ID));
         Data.AddRange(BitConverter.GetBytes(Active));
         Data.AddRange(BodyChunks[0].GetBytes());
         Data.AddRange(BodyChunks[1].GetBytes());
         Data.AddRange(BodyChunkConnections[0].GetBytes());
         return Data.ToArray();
+    }
+
+    public override void ParseBytes(byte[] Data)
+    {
+        throw new NotImplementedException();
     }
 }

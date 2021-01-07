@@ -66,27 +66,20 @@ namespace DeadZoneEngine.Entities
     public abstract class AbstractWorldEntity : _IInstantiatableDeletable
     {
         public EntityID ID;
-        public EntityType Type = EntityType.Null;
         public AbstractWorldEntity()
         {
             ID = new EntityID(this);
-            SetEntityType();
             DZEngine.EntitesToPush.Add(this);
         }
         public AbstractWorldEntity(ulong ID)
         {
             this.ID = new EntityID(this, ID);
-            SetEntityType();
             DZEngine.EntitesToPush.Add(this);
         }
 
         public virtual void Set(object Data) { } //Used by some entities for initializing with given data, its used in cases where the client receives data and needs to set the data for the given object
                                                         // #TODO:: maybe implement a giant struct which contains 
                                                         //data for every object much like whats described in Randy's code video for revamping ECS
-
-        protected abstract void SetEntityType();
-
-        public abstract byte[] GetBytes();
 
         public bool Active { get; set; } = true;
         public bool FlaggedToDelete { get; set; } = false;
@@ -101,13 +94,7 @@ namespace DeadZoneEngine.Entities
         }
         protected virtual void OnDelete() { }
 
-        public enum EntityType
-        {
-            Null,
-            DistanceJoint,
-            BodyChunk,
-            PlayerCreature,
-            Tilemap
-        }
+        public abstract byte[] GetBytes();
+        public abstract void ParseBytes(byte[] Data);
     }
 }

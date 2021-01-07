@@ -13,6 +13,7 @@ using DeadZoneEngine.Entities;
 public class Game
 {
     public readonly static Dictionary<int, Player> Clients = new Dictionary<int, Player>();
+    public static DZEngine.ManagedList<IServerSendable> ServerItems = new DZEngine.ManagedList<IServerSendable>();
 
     public static void FixedUpdate()
     {
@@ -29,6 +30,8 @@ public class Game
 
         Packet SnapshotPacket = new Packet();
         SnapshotPacket.Write((int)ServerCode.SnapshotData);
+
+        Debug.Log(ServerItems.Count); //TODO IMPLEMENT THIS SYSTEM
 
         //for time being just send everything
         SnapshotPacket.Write(DZEngine.UpdatableObjects.Count);

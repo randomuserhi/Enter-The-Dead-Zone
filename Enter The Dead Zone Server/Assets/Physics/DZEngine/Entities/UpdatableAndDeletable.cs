@@ -6,6 +6,13 @@ using System.Threading.Tasks;
 
 namespace DeadZoneEngine.Entities
 {
+    public interface IServerSendable
+    {
+        int ServerObjectType { get; set; }
+        byte[] GetBytes();
+        void ParseBytes(byte[] Data);
+    }
+
     public interface _IInstantiatableDeletable
     {
         bool Active { get; set; }

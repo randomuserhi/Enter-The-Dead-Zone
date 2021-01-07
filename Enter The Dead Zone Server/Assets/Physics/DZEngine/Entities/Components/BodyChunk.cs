@@ -47,11 +47,6 @@ namespace DeadZoneEngine.Entities.Components
             InvMass = 1;
         }
 
-        protected override void SetEntityType()
-        {
-            Type = AbstractWorldEntity.EntityType.BodyChunk;
-        }
-
         /// <summary>
         /// Update Contacts Array => If no contacts are found, the array will not be updated (past values will persist)
         /// </summary>
@@ -63,10 +58,9 @@ namespace DeadZoneEngine.Entities.Components
 
         public override byte[] GetBytes()
         {
-            //EntityType + Vector3 Position + float InvMass + float InvInertia + float Radius
+            //Vector3 Position + float InvMass + float InvInertia + float Radius
             //TODO:: might be worth optimizing this to use arrays or something if performance is hit hard
             List<byte> Data = new List<byte>();
-            Data.AddRange(BitConverter.GetBytes((int)Type));
             Data.AddRange(BitConverter.GetBytes(ID));
             Data.AddRange(BitConverter.GetBytes(Active));
             Data.AddRange(BitConverter.GetBytes(Position.x));
@@ -79,6 +73,11 @@ namespace DeadZoneEngine.Entities.Components
             Data.AddRange(BitConverter.GetBytes(InvInertia));
             Data.AddRange(BitConverter.GetBytes(0.5f));
             return Data.ToArray();
+        }
+
+        public override void ParseBytes(byte[] Data)
+        {
+            throw new NotImplementedException();
         }
     }
 }

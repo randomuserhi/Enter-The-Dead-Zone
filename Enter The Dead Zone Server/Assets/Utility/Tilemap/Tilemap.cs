@@ -9,6 +9,7 @@ using UnityEngine.UI;
 
 using DeadZoneEngine;
 using DeadZoneEngine.Entities;
+
 public struct Tile
 {
     public int NumFrames;
@@ -79,15 +80,15 @@ public class Tilemap : AbstractWorldEntity, IUpdatable, IRenderer
     {
         this.TileDimension = TileDimension;
         this.TilemapSize = TilemapSize;
-        TilemapWorldSize = (Vector2)TilemapSize / TilesPerUnit;
-        Init();
+        this.TilesPerUnit = TilesPerUnit;
+        Initialize();
     }
     public Tilemap(ulong ID, int TileDimension, Vector2Int TilemapSize, float TilesPerUnit = 1) : base(ID)
     {
         this.TileDimension = TileDimension;
         this.TilemapSize = TilemapSize;
-        TilemapWorldSize = (Vector2)TilemapSize / TilesPerUnit;
-        Init();
+        this.TilesPerUnit = TilesPerUnit;
+        Initialize();
     }
 
     //Destructor to clear buffers
@@ -102,23 +103,32 @@ public class Tilemap : AbstractWorldEntity, IUpdatable, IRenderer
         }
     }
 
-    private void Init()
+    private void Initialize()
     {
-        //Initialize map
-        if (WallBuffer != null) WallBuffer.Dispose();
-        Walls = new Tile[8] { new Tile(0, 2, 0, 0), new Tile(0, 2, 1, 1),new Tile(0, 2, 0, 0), new Tile(0, 2, 1, 1),
-                            new Tile(1, 2, 0, 1), new Tile(1, 2, 1, 0),new Tile(1, 2, 0, 1), new Tile(1, 2, 1, 0) }; //Testing
-        if (FloorBuffer != null) FloorBuffer.Dispose();
-        Floor = new Tile[8] { new Tile(0, 2, 0, 1), new Tile(0, 2, 1, 1),new Tile(0, 2, 0, 1), new Tile(0, 2, 1, 1),
-                            new Tile(1, 2, 0, 1), new Tile(1, 2, 1, 1),new Tile(1, 2, 0, 1), new Tile(1, 2, 1, 1) }; //Testing
+        TilemapWorldSize = (Vector2)TilemapSize / TilesPerUnit;
+        Walls = new Tile[TilemapSize.x * TilemapSize.y];
+        Floor = new Tile[TilemapSize.x * TilemapSize.y];
+        ColliderMap = new BoxCollider2D[TilemapSize.x * TilemapSize.y];
 
         //Initialize GameObject
         Self = new GameObject();
         Self.name = "Tilemap";
 
-        //Initialize colliders
-        ColliderMap = new BoxCollider2D[TilemapSize.x * TilemapSize.y];
-        //makes colliders based on wall map, perhaps create this into a virtual function for collider generation?
+        //Initialize Collider objects
+        RB = Self.AddComponent<Rigidbody2D>();
+        RB.isKinematic = true;
+
+        CompositeCollider = Self.AddComponent<CompositeCollider2D>();
+        CompositeCollider.generationType = CompositeCollider2D.GenerationType.Manual;
+    }
+
+    public override void Instantiate()
+    {
+        GenerateColliders();
+    }
+
+    protected virtual void GenerateColliders()
+    {
         for (int i = 0; i < TilemapSize.y; i++)
         {
             for (int j = 0; j < TilemapSize.x; j++)
@@ -128,16 +138,12 @@ public class Tilemap : AbstractWorldEntity, IUpdatable, IRenderer
                 {
                     ColliderMap[Index] = Self.AddComponent<BoxCollider2D>();
                     ColliderMap[Index].size = new Vector2(1 / TilesPerUnit - ColliderMargin, 1 / TilesPerUnit - ColliderMargin);
-                    ColliderMap[Index].offset = new Vector2(j / TilesPerUnit + ColliderMap[Index].size.x / 2 - TilemapSize.x / 2f / TilesPerUnit + ColliderMargin / 2, 
+                    ColliderMap[Index].offset = new Vector2(j / TilesPerUnit + ColliderMap[Index].size.x / 2 - TilemapSize.x / 2f / TilesPerUnit + ColliderMargin / 2,
                                                             i / TilesPerUnit + ColliderMap[Index].size.y / 2 - TilemapSize.y / 2f / TilesPerUnit + ColliderMargin / 2);
                     ColliderMap[Index].usedByComposite = true;
                 }
             }
         }
-        RB = Self.AddComponent<Rigidbody2D>();
-        RB.isKinematic = true;
-        CompositeCollider = Self.AddComponent<CompositeCollider2D>();
-        CompositeCollider.generationType = CompositeCollider2D.GenerationType.Manual;
         CompositeCollider.GenerateGeometry();
     }
 
@@ -151,8 +157,12 @@ public class Tilemap : AbstractWorldEntity, IUpdatable, IRenderer
 
     }
 
-    public void InitializeRenderer()
+    public void InitializeRenderer() //TODO:: reorganise to allow for creating new tilemaps without replacing entire objects
     {
+        //Initialize Buffers
+        if (WallBuffer != null) WallBuffer.Dispose();
+        if (FloorBuffer != null) FloorBuffer.Dispose();
+
         if (WallCompute == null)
         {
             WallCompute = UnityEngine.Object.Instantiate(Resources.Load<ComputeShader>("ComputeShaders/TilemapComputeShader"));
@@ -311,12 +321,12 @@ public class Tilemap : AbstractWorldEntity, IUpdatable, IRenderer
         GameObject.Destroy(Self);
     }
 
-    protected override void SetEntityType()
+    public override byte[] GetBytes()
     {
-        Type = EntityType.Tilemap;
+        throw new NotImplementedException();
     }
 
-    public override byte[] GetBytes()
+    public override void ParseBytes(byte[] Data)
     {
         throw new NotImplementedException();
     }

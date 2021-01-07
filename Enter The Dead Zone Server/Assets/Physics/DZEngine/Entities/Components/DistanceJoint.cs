@@ -55,11 +55,6 @@ namespace DeadZoneEngine.Entities.Components
 
         }
 
-        protected override void SetEntityType()
-        {
-            Type = AbstractWorldEntity.EntityType.DistanceJoint;
-        }
-
         public override void Set(object Data)
         {
             DistanceJointData DistanceJointWrapper = (DistanceJointData)Data;
@@ -158,10 +153,9 @@ namespace DeadZoneEngine.Entities.Components
 
         public override byte[] GetBytes()
         {
-            //EntityType + ulong EntityID + ulong EntityID + float Distance, Vector2 Anchor
+            //ulong EntityID + ulong EntityID + float Distance, Vector2 Anchor
             //TODO:: might be worth optimizing this to use arrays or something if performance is hit hard
             List<byte> Data = new List<byte>();
-            Data.AddRange(BitConverter.GetBytes((int)Type));
             Data.AddRange(BitConverter.GetBytes(ID));
             Data.AddRange(BitConverter.GetBytes(Active));
             Data.AddRange(BitConverter.GetBytes(A.ID));
@@ -172,6 +166,11 @@ namespace DeadZoneEngine.Entities.Components
             Data.AddRange(BitConverter.GetBytes(ARatio));
             Data.AddRange(BitConverter.GetBytes(BRatio));
             return Data.ToArray();
+        }
+
+        public override void ParseBytes(byte[] Data)
+        {
+
         }
     }
 }
