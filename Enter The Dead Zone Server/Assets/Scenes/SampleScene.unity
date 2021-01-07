@@ -196,8 +196,8 @@ GameObject:
   - component: {fileID: 519420031}
   - component: {fileID: 519420029}
   - component: {fileID: 519420033}
-  - component: {fileID: 519420030}
   - component: {fileID: 519420034}
+  - component: {fileID: 519420030}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -222,7 +222,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 519420028}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 79eaf6387c01c534784be10435f2a2c0, type: 3}
+  m_Script: {fileID: 11500000, guid: 5741c7dac3c03d7439606180e2abaad2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!20 &519420031

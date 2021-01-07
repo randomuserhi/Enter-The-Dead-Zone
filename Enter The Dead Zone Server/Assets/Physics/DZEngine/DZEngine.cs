@@ -1,7 +1,9 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Reflection;
 using UnityEngine;
 
 using DeadZoneEngine.Entities;
@@ -13,17 +15,11 @@ namespace DeadZoneEngine
     {
         public static float InvDeltaTime = 0;
         public static int NumPhysicsIterations = 10;
-        public static bool ActiveRenderers = false;
-
-        //Test
-        static PlayerCreature P;
+        public static bool ActiveRenderers = true;
 
         public static void Initialize()
         {
-            P = new PlayerCreature();
-
-            Tilemap T1 = new Tilemap(32, new Vector2Int(4, 2));
-            Tilemap T2 = new Tilemap(32, new Vector2Int(4, 2));
+            
         }
 
         private static void AddIfContainsInterface<T>(this List<T> List, object Entity) where T : class
@@ -50,6 +46,96 @@ namespace DeadZoneEngine
             _RenderableObjects.AddIfContainsInterface(Entity);
         }
 
+        #region DZEngine.ManagedList
+
+        private static HashSet<Type> ManagedListTypes = new HashSet<Type>();
+        private static Dictionary<(Type, Type), Delegate> GetInvokeCache = new Dictionary<(Type, Type), Delegate>();
+        private static Dictionary<Type, (Delegate, Delegate)> GetManagedInvokeCache = new Dictionary<Type, (Delegate, Delegate)>();
+        private static void InvokeIfContainsInterface<SearchType, ListType>(Delegate Method, List<ListType> List) where SearchType : class
+        {
+            for (int i = 0; i < List.Count; i++) 
+            {
+                SearchType Item = List[i] as SearchType;
+                if (Item != null)
+                    ((Action<SearchType>)Method)(Item);
+            }
+        }
+        private static Action<Delegate, List<InvokeType>> GetInvokeFromType<InvokeType>(Type T)
+        {
+            var Label = (T, typeof(InvokeType));
+            if (GetInvokeCache.ContainsKey(Label))
+                return (Action<Delegate, List<InvokeType>>)GetInvokeCache[Label];
+            MethodInfo Method = typeof(DZEngine).GetMethods(BindingFlags.NonPublic | BindingFlags.Static).Single(I => I.Name == nameof(DZEngine.InvokeIfContainsInterface));
+            Action<Delegate, List<InvokeType>> DelegateAction = (Action<Delegate, List<InvokeType>>)Delegate.CreateDelegate(typeof(Action<Delegate, List<InvokeType>>), Method.MakeGenericMethod(T, typeof(InvokeType)));
+            GetInvokeCache.Add(Label, DelegateAction);
+            return DelegateAction;
+        }
+        private static void UpdateManagedLists()
+        {
+            foreach (Type T in ManagedListTypes)
+            {
+                Delegate UpdateListMethod = null;
+                Delegate ClearListMethod = null;
+                if (GetManagedInvokeCache.ContainsKey(T))
+                {
+                    UpdateListMethod = GetManagedInvokeCache[T].Item1;
+                    ClearListMethod = GetManagedInvokeCache[T].Item2;
+                }
+                else
+                {
+                    Type ActionGeneric = typeof(Action<>).MakeGenericType(T);
+                    Type Generic = typeof(ManagedList<>).MakeGenericType(T);
+                    MethodInfo UpdateListMethodInfo = Generic.GetMethod(nameof(ManagedList<object>.UpdateExistingLists));
+                    MethodInfo ClearListMethodInfo = Generic.GetMethod(nameof(ManagedList<object>.ClearExistingLists));
+                    UpdateListMethod = Delegate.CreateDelegate(ActionGeneric, UpdateListMethodInfo);
+                    ClearListMethod = Delegate.CreateDelegate(typeof(Action), ClearListMethodInfo);
+                    GetManagedInvokeCache.Add(T, (UpdateListMethod, ClearListMethod));
+                }
+
+                ((Action)ClearListMethod)();
+                GetInvokeFromType<AbstractWorldEntity>(T)(UpdateListMethod, _AbstractWorldEntities);
+                GetInvokeFromType<IPhysicsUpdatable> (T)(UpdateListMethod, _PhysicsUpdatableObjects);
+                GetInvokeFromType<IUpdatable>(T)(UpdateListMethod, _UpdatableObjects);
+                GetInvokeFromType<IIteratableUpdatable>(T)(UpdateListMethod, _IteratableUpdatableObjects);
+                GetInvokeFromType<IRenderer>(T)(UpdateListMethod, _RenderableObjects);
+            }
+        }
+        public class ManagedList<T> : HashSet<T> where T : class
+        {
+            public static List<WeakReference> ExistingLists = new List<WeakReference>();
+
+            public ManagedList()
+            {
+                ExistingLists.Add(new WeakReference(this));
+                ManagedListTypes.Add(typeof(T));
+            }
+
+            public static void ClearExistingLists()
+            {
+                ExistingLists.RemoveAll(I =>
+                {
+                    if (I.IsAlive)
+                    {
+                        ManagedList<T> L = (ManagedList<T>)I.Target;
+                        L.Clear();
+                        return false;
+                    }
+                    return true;
+                });
+            }
+
+            public static void UpdateExistingLists(T Item)
+            {
+                for (int i = 0; i < ExistingLists.Count; i++)
+                {
+                    ManagedList<T> L = (ManagedList<T>)ExistingLists[i].Target;
+                    L.Add(Item);
+                }
+            }
+        }
+
+        #endregion
+
         public static List<object> EntitesToPush = new List<object>();
         private static List<AbstractWorldEntity> _AbstractWorldEntities = new List<AbstractWorldEntity>();
         private static List<IPhysicsUpdatable> _PhysicsUpdatableObjects = new List<IPhysicsUpdatable>();
@@ -57,7 +143,12 @@ namespace DeadZoneEngine
         private static List<IIteratableUpdatable> _IteratableUpdatableObjects = new List<IIteratableUpdatable>();
         private static List<IRenderer> _RenderableObjects = new List<IRenderer>();
 
-        public static ReadOnlyCollection<AbstractWorldEntity> AbstractWorldEntites { get { return _AbstractWorldEntities.AsReadOnly(); } }
+        public static void AddComponent(_IInstantiatableDeletable Component)
+        {
+            EntitesToPush.Add(Component);
+        }
+
+        public static ReadOnlyCollection<AbstractWorldEntity> AbstractWorldEntities { get { return _AbstractWorldEntities.AsReadOnly(); } }
         public static ReadOnlyCollection<IPhysicsUpdatable> PhysicsUpdatableObjects { get { return _PhysicsUpdatableObjects.AsReadOnly(); } }
         public static ReadOnlyCollection<IUpdatable> UpdatableObjects { get { return _UpdatableObjects.AsReadOnly(); } }
         public static ReadOnlyCollection<IIteratableUpdatable> IteratableUpdatableObjects { get { return _IteratableUpdatableObjects.AsReadOnly(); } }
@@ -92,6 +183,8 @@ namespace DeadZoneEngine
             Debug.Log(IteratableUpdatableObjects.Count);*/
 
             InvDeltaTime = 1f / Time.deltaTime;
+
+            UpdateManagedLists();
 
             EntitesToPush.RemoveAll(I =>
             {

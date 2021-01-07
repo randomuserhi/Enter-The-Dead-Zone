@@ -9,49 +9,6 @@ using UnityEngine.UI;
 
 using DeadZoneEngine;
 using DeadZoneEngine.Entities;
-
-/*public class TilemapWrapper : PhysicalObject
-{
-    private Tilemap Map;
-    private TilemapRenderer Renderer;
-    private TilemapCollider2D Collider;
-    private CompositeCollider2D CompositeCollider;
-
-    public TilemapWrapper()
-    {
-        Init();
-    }
-    public TilemapWrapper(ulong ID) : base(ID)
-    {
-        Init();
-    }
-
-    private void Init()
-    {
-        Map = Self.AddComponent<Tilemap>();
-        Renderer = Self.AddComponent<TilemapRenderer>();
-        Collider = Self.AddComponent<TilemapCollider2D>();
-        CompositeCollider = Self.AddComponent<CompositeCollider2D>();
-
-        Collider.usedByComposite = true;
-    }
-
-    public override void Set(object Data)
-    {
-        
-    }
-
-    protected override void SetEntityType()
-    {
-        Type = EntityType.Tilemap;
-    }
-
-    public override byte[] GetBytes()
-    {
-        throw new NotImplementedException();
-    }
-}*/
-
 public struct Tile
 {
     public int NumFrames;
@@ -78,9 +35,8 @@ public class TilePallet
 
 public class Tilemap : AbstractWorldEntity, IUpdatable, IRenderer
 {
-    //List of sprite renderers to apply render sorting too such that they render above walls correctly
-    public List<IRenderer<SpriteRenderer>> AppliedRenderers = new List<IRenderer<SpriteRenderer>>();
-
+    //Automatically updating list to new IRenderer<SpriteRenderer> that appear in DZEngine
+    public DZEngine.ManagedList<IRenderer<SpriteRenderer>> AppliedRenderers = new DZEngine.ManagedList<IRenderer<SpriteRenderer>>();
     public List<PhysicalObject> Sorting; 
 
     private ComputeShader WallCompute;
@@ -316,14 +272,14 @@ public class Tilemap : AbstractWorldEntity, IUpdatable, IRenderer
         FloorBuffer.SetData(Floor);
         FloorCompute.Dispatch(ComputeKernel, TilemapSize.x, TilemapSize.y, 1);
 
-        for (int i = 0; i < AppliedRenderers.Count; i++)
+        foreach (IRenderer<SpriteRenderer> AppliedRender in AppliedRenderers)
         {
-            float YOffset = (Self.transform.position.y + TilemapWorldSize.y / 2f) - AppliedRenderers[i].RenderObject.gameObject.transform.position.y;
-            float XOffset = (Self.transform.position.x + TilemapWorldSize.x / 2f) - AppliedRenderers[i].RenderObject.gameObject.transform.position.x;
+            float YOffset = (Self.transform.position.y + TilemapWorldSize.y / 2f) - AppliedRender.RenderObject.gameObject.transform.position.y;
+            float XOffset = (Self.transform.position.x + TilemapWorldSize.x / 2f) - AppliedRender.RenderObject.gameObject.transform.position.x;
             if (YOffset >= 0 && XOffset >= 0 &&
                 YOffset <= TilemapWorldSize.y && XOffset <= TilemapWorldSize.x)
             {
-                AppliedRenderers[i].RenderObject.sortingOrder = Mathf.RoundToInt(YOffset * TilesPerUnit) * 2;
+                AppliedRender.RenderObject.sortingOrder = Mathf.RoundToInt(YOffset * TilesPerUnit) * 2;
             }
         }
     }
@@ -341,9 +297,12 @@ public class Tilemap : AbstractWorldEntity, IUpdatable, IRenderer
         if (FloorBuffer != null)
             FloorBuffer.Release();
         //Delete Object
-        for (int i = 0; i < Rows.Length; i++)
+        if (Rows != null)
         {
-            GameObject.Destroy(Rows[i].gameObject);
+            for (int i = 0; i < Rows.Length; i++)
+            {
+                GameObject.Destroy(Rows[i].gameObject);
+            }
         }
         GameObject.Destroy(Self);
     }

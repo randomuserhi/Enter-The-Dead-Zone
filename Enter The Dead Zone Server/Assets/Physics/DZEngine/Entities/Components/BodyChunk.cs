@@ -8,8 +8,16 @@ using UnityEngine;
 
 namespace DeadZoneEngine.Entities.Components
 {
-    public class BodyChunk : PhysicalObject
+    public class BodyChunk : PhysicalObject, IRenderer<SpriteRenderer>
     {
+        public SpriteRenderer RenderObject { get; set; }
+        public virtual void InitializeRenderer()
+        {
+            RenderObject = Self.AddComponent<SpriteRenderer>();
+            RenderObject.sprite = Resources.Load<Sprite>("Sprites/Circle");
+        }
+        public virtual void Render() { }
+
         public CircleCollider2D Collider { get; private set; }
         public ContactPoint2D[] Contacts = new ContactPoint2D[10];
         public float Height;
@@ -36,9 +44,6 @@ namespace DeadZoneEngine.Entities.Components
 
             InvInertia = 1;
             InvMass = 1;
-
-            //For debugging
-            Self.AddComponent<SpriteRenderer>().sprite = Resources.Load<Sprite>("Sprites/Circle");
         }
 
         protected override void SetEntityType()
