@@ -12,10 +12,6 @@ namespace DeadZoneEngine.Entities
 
         public PhysicalJoint(ulong ID) : base(ID) { }
 
-        protected override void _Instantiate()
-        {
-            DZEngine.IteratableUpdatableObjects.Add(this);
-        }
         public virtual void PreUpdate() { }
         public virtual void IteratedUpdate() { }
     }

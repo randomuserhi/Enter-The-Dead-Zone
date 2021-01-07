@@ -17,4 +17,9 @@ public class PhysicsHandler : MonoBehaviour
     {
         DZEngine.FixedUpdate();
     }
+
+    void OnApplicationQuit()
+    {
+        DZEngine.ReleaseResources();
+    }
 }

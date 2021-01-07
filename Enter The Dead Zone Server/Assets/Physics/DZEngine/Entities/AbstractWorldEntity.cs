@@ -63,19 +63,21 @@ namespace DeadZoneEngine.Entities
         }
     }
 
-    public abstract class AbstractWorldEntity : IInstantiatableAndDeletable
+    public abstract class AbstractWorldEntity : _IInstantiatableDeletable
     {
         public EntityID ID;
-        public EntityType Type;
+        public EntityType Type = EntityType.Null;
         public AbstractWorldEntity()
         {
             ID = new EntityID(this);
             SetEntityType();
+            DZEngine.EntitesToPush.Add(this);
         }
         public AbstractWorldEntity(ulong ID)
         {
             this.ID = new EntityID(this, ID);
             SetEntityType();
+            DZEngine.EntitesToPush.Add(this);
         }
 
         public virtual void Set(object Data) { } //Used by some entities for initializing with given data, its used in cases where the client receives data and needs to set the data for the given object
@@ -86,36 +88,22 @@ namespace DeadZoneEngine.Entities
 
         public abstract byte[] GetBytes();
 
-        public void Destroy()
-        {
-            if (FlaggedToDelete)
-                EntityID.Remove(ID);
-            else
-                Debug.LogWarning("Call Delete() rather than Destroy()!");
-            FlaggedToDelete = true;
-        }
+        public bool Active { get; set; } = true;
+        public bool FlaggedToDelete { get; set; } = false;
 
-        private bool _Active = true;
-        public bool Active { get { return _Active; } set { _Active = value; } }
-        private bool _FlaggedToDelete;
-        public bool FlaggedToDelete { get { return _FlaggedToDelete; } set { _FlaggedToDelete = value; } }
-
-        public void Instantiate()
-        {
-            DZEngine.InstantiatableDeletable.Add(this);
-            _Instantiate();
-        }
-        protected virtual void _Instantiate() { }
+        public virtual void Instantiate() { }
 
         public void Delete()
         {
             FlaggedToDelete = true;
-            _Delete();
+            EntityID.Remove(ID);
+            OnDelete();
         }
-        protected virtual void _Delete() { }
+        protected virtual void OnDelete() { }
 
         public enum EntityType
         {
+            Null,
             DistanceJoint,
             BodyChunk,
             PlayerCreature,

@@ -34,11 +34,7 @@ namespace DeadZoneEngine.Entities
             RB.sharedMaterial = Resources.Load<PhysicsMaterial2D>("PhysicsMaterial/Zero");
         }
 
-        protected override void _Instantiate()
-        {
-            DZEngine.PhysicsUpdatableObjects.Add(this);
-        }
-        protected override void _Delete()
+        protected override void OnDelete()
         {
             GameObject.Destroy(Self);
         }

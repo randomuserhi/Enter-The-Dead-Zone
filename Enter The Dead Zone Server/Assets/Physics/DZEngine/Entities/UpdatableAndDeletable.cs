@@ -6,41 +6,40 @@ using System.Threading.Tasks;
 
 namespace DeadZoneEngine.Entities
 {
-    public interface IRenderer
-    {
-    }
-
-    public interface IInstantiatableAndDeletable
-    {
-        bool FlaggedToDelete { get; set; }
-
-        void Instantiate();
-
-        void Destroy();
-
-        void Delete();
-    }
-
-    public interface IUpdatable
+    public interface _IInstantiatableDeletable
     {
         bool Active { get; set; }
         bool FlaggedToDelete { get; set; }
+        void Delete();
+        void Instantiate();
+    }
+
+    public interface IRenderer : _IInstantiatableDeletable
+    {
+        void InitializeRenderer();
+
+        void Render();
+    }
+
+    public interface IRenderer<T> : _IInstantiatableDeletable, IRenderer where T : class
+    {
+        T RenderObject { get; set; }
+    }
+
+    public interface IUpdatable : _IInstantiatableDeletable
+    {
         void Update();
         void BodyPhysicsUpdate();
     }
 
-    public interface IPhysicsUpdatable
+    public interface IPhysicsUpdatable : _IInstantiatableDeletable
     {
-        bool Active { get; set; }
-        bool FlaggedToDelete { get; set; }
         void IsolateVelocity();
         void RestoreVelocity();
     }
 
-    public interface IIteratableUpdatable
+    public interface IIteratableUpdatable : _IInstantiatableDeletable
     {
-        bool Active { get; set; }
-        bool FlaggedToDelete { get; set; }
         void PreUpdate();
         void IteratedUpdate();
     }
