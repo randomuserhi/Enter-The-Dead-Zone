@@ -10,6 +10,7 @@ namespace DeadZoneEngine.Entities.Components
 {
     public class BodyChunk : PhysicalObject, IRenderer<SpriteRenderer>
     {
+        public int SortingLayer { get; set; }
         public SpriteRenderer RenderObject { get; set; }
         public virtual void InitializeRenderer()
         {

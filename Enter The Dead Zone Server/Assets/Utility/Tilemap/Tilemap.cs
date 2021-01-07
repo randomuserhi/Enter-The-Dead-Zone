@@ -35,9 +35,7 @@ public class TilePallet
 
 public class Tilemap : AbstractWorldEntity, IUpdatable, IRenderer
 {
-    //Automatically updating list to new IRenderer<SpriteRenderer> that appear in DZEngine
-    public DZEngine.ManagedList<IRenderer<SpriteRenderer>> AppliedRenderers = new DZEngine.ManagedList<IRenderer<SpriteRenderer>>();
-    public List<PhysicalObject> Sorting; 
+    public int SortingLayer { get; set; }
 
     private ComputeShader WallCompute;
     private ComputeShader FloorCompute;
@@ -59,8 +57,8 @@ public class Tilemap : AbstractWorldEntity, IUpdatable, IRenderer
     ComputeBuffer WallBuffer;
     ComputeBuffer FloorBuffer;
 
-    private RawImage FloorRender;
-    private RawImage[] Rows;
+    private Canvas FloorRender;
+    private Canvas[] Rows;
     private RenderTexture WallRenderTexture;
     private RenderTexture FloorRenderTexture;
 
@@ -184,36 +182,36 @@ public class Tilemap : AbstractWorldEntity, IUpdatable, IRenderer
         };
         FloorRenderTexture.Create();
 
-        Canvas C = Self.AddComponent<Canvas>();
-        C.renderMode = RenderMode.WorldSpace;
-        C.sortingLayerName = "Floor";
+        FloorRender = Self.AddComponent<Canvas>();
+        FloorRender.renderMode = RenderMode.WorldSpace;
+        FloorRender.sortingLayerName = "Floor";
         Self.AddComponent<CanvasScaler>();
         Self.AddComponent<GraphicRaycaster>();
         Self.GetComponent<RectTransform>().sizeDelta = Vector2.zero;
-        FloorRender = Self.AddComponent<RawImage>();
-        FloorRender.rectTransform.sizeDelta = new Vector2((float)TilemapSize.x / TilesPerUnit, (float)TilemapSize.y / TilesPerUnit);
-        FloorRender.material = Resources.Load<Material>("Materials/LitMaterial");
-        FloorRender.texture = FloorRenderTexture;
+        RawImage FloorImage = Self.AddComponent<RawImage>();
+        FloorImage.rectTransform.sizeDelta = new Vector2((float)TilemapSize.x / TilesPerUnit, (float)TilemapSize.y / TilesPerUnit);
+        FloorImage.material = Resources.Load<Material>("Materials/LitMaterial");
+        FloorImage.texture = FloorRenderTexture;
 
         //Initialize row gameobjects
-        Rows = new RawImage[TilemapSize.y];
+        Rows = new Canvas[TilemapSize.y];
         for (int i = 0; i < TilemapSize.y; i++)
         {
             GameObject Row = new GameObject();
             Row.transform.parent = Self.transform;
-            Canvas CRow = Row.AddComponent<Canvas>();
-            CRow.renderMode = RenderMode.WorldSpace;
-            CRow.overrideSorting = true;
-            CRow.sortingOrder = i * 2 + 1;
+            Rows[i] = Row.AddComponent<Canvas>();
+            Rows[i].renderMode = RenderMode.WorldSpace;
+            Rows[i].overrideSorting = true;
+            Rows[i].sortingOrder = Mathf.RoundToInt(Row.transform.position.y) * 2 + 1;
             RectTransform RT = Row.GetComponent<RectTransform>();
             RT.sizeDelta = Vector2.zero;
             float StrideHeight = ((float)WallTilePalletData.TileStride / TileDimension) / TilesPerUnit;
             RT.position = new Vector3(0, -(i / TilesPerUnit) + StrideHeight / 2);
-            Rows[i] = Row.AddComponent<RawImage>();
-            Rows[i].rectTransform.sizeDelta = new Vector2(TilemapSize.x / TilesPerUnit, StrideHeight);
-            Rows[i].material = Resources.Load<Material>("Materials/LitMaterial");
-            Rows[i].texture = WallRenderTexture;
-            Rows[i].uvRect = new Rect(new Vector2(0, i * 1f / TilemapSize.y), new Vector2(1, 1f / TilemapSize.y));
+            RawImage RowImage = Row.AddComponent<RawImage>();
+            RowImage.rectTransform.sizeDelta = new Vector2(TilemapSize.x / TilesPerUnit, StrideHeight);
+            RowImage.material = Resources.Load<Material>("Materials/LitMaterial");
+            RowImage.texture = WallRenderTexture;
+            RowImage.uvRect = new Rect(new Vector2(0, i * 1f / TilemapSize.y), new Vector2(1, 1f / TilemapSize.y));
         }
 
         //Set Render Texture
@@ -265,23 +263,29 @@ public class Tilemap : AbstractWorldEntity, IUpdatable, IRenderer
         }
     }
 
+    private Vector3 PrevTilePosition;
+    private void UpdateRenderSortingLayers()
+    {
+        if (PrevTilePosition != Self.transform.position) //Avoid updating all rows constantly has tilemaps can get quite large
+        {
+            PrevTilePosition = Self.transform.position;
+            for (int i = 0; i < Rows.Length; i++)
+            {
+                float StrideHeight = ((float)WallTilePalletData.TileStride / TileDimension) / TilesPerUnit;
+                float BaseY = Rows[i].transform.position.y - ((1 / TilesPerUnit - StrideHeight) / 2);
+                Rows[i].sortingOrder = Mathf.RoundToInt(-BaseY) * 2 + 1;
+            }
+        }
+    }
+
     public void Render()
     {
+        UpdateRenderSortingLayers();
+
         WallBuffer.SetData(Walls);
         WallCompute.Dispatch(ComputeKernel, TilemapSize.x, TilemapSize.y, 1);
         FloorBuffer.SetData(Floor);
         FloorCompute.Dispatch(ComputeKernel, TilemapSize.x, TilemapSize.y, 1);
-
-        foreach (IRenderer<SpriteRenderer> AppliedRender in AppliedRenderers)
-        {
-            float YOffset = (Self.transform.position.y + TilemapWorldSize.y / 2f) - AppliedRender.RenderObject.gameObject.transform.position.y;
-            float XOffset = (Self.transform.position.x + TilemapWorldSize.x / 2f) - AppliedRender.RenderObject.gameObject.transform.position.x;
-            if (YOffset >= 0 && XOffset >= 0 &&
-                YOffset <= TilemapWorldSize.y && XOffset <= TilemapWorldSize.x)
-            {
-                AppliedRender.RenderObject.sortingOrder = Mathf.RoundToInt(YOffset * TilesPerUnit) * 2;
-            }
-        }
     }
 
     public override void Set(object Data)

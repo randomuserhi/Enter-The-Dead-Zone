@@ -11,6 +11,8 @@ using DeadZoneEngine.Entities.Components;
 
 public abstract class AbstractCreature : AbstractWorldEntity, IUpdatable, IRenderer
 {
+    public int SortingLayer { get; set; }
+
     public BodyChunk[] BodyChunks;
     public DistanceJoint[] BodyChunkConnections;
 

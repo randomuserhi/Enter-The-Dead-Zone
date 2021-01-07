@@ -16,6 +16,8 @@ namespace DeadZoneEngine.Entities
 
     public interface IRenderer : _IInstantiatableDeletable
     {
+        int SortingLayer { get; set; }
+
         void InitializeRenderer();
 
         void Render();
