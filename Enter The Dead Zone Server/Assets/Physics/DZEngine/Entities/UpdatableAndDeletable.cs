@@ -6,19 +6,20 @@ using System.Threading.Tasks;
 
 namespace DeadZoneEngine.Entities
 {
-    public interface IServerSendable
-    {
-        int ServerObjectType { get; set; }
-        byte[] GetBytes();
-        void ParseBytes(byte[] Data);
-    }
-
     public interface _IInstantiatableDeletable
     {
         bool Active { get; set; }
         bool FlaggedToDelete { get; set; }
+        bool Disposed { get; set; }
         void Delete();
         void Instantiate();
+    }
+
+    public interface IServerSendable : _IInstantiatableDeletable
+    {
+        int ServerObjectType { get; set; }
+        byte[] GetBytes();
+        void ParseBytes(byte[] Data);
     }
 
     public interface IRenderer : _IInstantiatableDeletable

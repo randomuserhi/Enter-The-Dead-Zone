@@ -164,18 +164,50 @@ namespace DeadZoneEngine
                 return true;
             });
 
-            _AbstractWorldEntities.RemoveAll(I =>
+            _ServerSendableObjects.RemoveAll(I =>
             {
-                I.Delete();
-                return true;
+                return DeleteHandle(I, true);
             });
 
-            _PhysicsUpdatableObjects.Clear();
-            _UpdatableObjects.Clear();
-            _IteratableUpdatableObjects.Clear();
-            _RenderableObjects.Clear();
+            _AbstractWorldEntities.RemoveAll(I =>
+            {
+                return DeleteHandle(I, true);
+            });
+
+            _PhysicsUpdatableObjects.RemoveAll(I =>
+            {
+                return DeleteHandle(I, true);
+            });
+
+            _UpdatableObjects.RemoveAll(I =>
+            {
+                return DeleteHandle(I, true);
+            });
+
+            _IteratableUpdatableObjects.RemoveAll(I =>
+            {
+                return DeleteHandle(I, true);
+            });
+
+            _RenderableObjects.RemoveAll(I =>
+            {
+                return DeleteHandle(I, true);
+            });
         }
 
+        private static bool DeleteHandle(_IInstantiatableDeletable DeletableObject, bool ForceDelete = false)
+        {
+            if (DeletableObject.FlaggedToDelete || ForceDelete)
+            {
+                if (!DeletableObject.Disposed)
+                {
+                    DeletableObject.Disposed = true;
+                    DeletableObject.Delete();
+                }
+                return true;
+            }
+            return false;
+        }
         public static void FixedUpdate()
         {
             /*Debug.Log("---- PreEntityCounts ----");
@@ -196,11 +228,12 @@ namespace DeadZoneEngine
 
             _AbstractWorldEntities.RemoveAll(I => 
             {
-                if (I.FlaggedToDelete)
-                {
-                    I.Delete();
-                }
-                return I.FlaggedToDelete;
+                return DeleteHandle(I);
+            });
+
+            _ServerSendableObjects.RemoveAll(I =>
+            {
+                return DeleteHandle(I);
             });
 
             //Isolate the general physics updates from creature body physics -> this is specific for maintaining physic objects inside of creature bodies
@@ -211,7 +244,7 @@ namespace DeadZoneEngine
                 {
                     I.IsolateVelocity();
                 }
-                return I.FlaggedToDelete;
+                return DeleteHandle(I);
             });
 
             _UpdatableObjects.RemoveAll(I =>
@@ -222,7 +255,7 @@ namespace DeadZoneEngine
                                            //its seperated and run in a seperate physics operation to prevent self-righting body physics from being counteracted from normal physics (such as gravity).
                                            //In other words this simply isolates the body physics from the standard physics
                 }
-                return I.FlaggedToDelete;
+                return DeleteHandle(I);
             });
 
             //Check and resolve physics constraints (Joints etc) => Essentially update the isolated physics of just creature bodies
@@ -232,7 +265,7 @@ namespace DeadZoneEngine
                 {
                     I.PreUpdate();
                 }
-                return I.FlaggedToDelete;
+                return DeleteHandle(I);
             });
             for (int j = 0; j < DZSettings.NumPhysicsIterations; j++)
             {
@@ -282,7 +315,7 @@ namespace DeadZoneEngine
                     if (DZSettings.ActiveRenderers)
                         I.Render();
                 }
-                return I.FlaggedToDelete;
+                return DeleteHandle(I);
             });
 
             /*Debug.Log("---- PostEntityCounts ----");

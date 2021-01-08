@@ -83,6 +83,7 @@ namespace DeadZoneEngine.Entities
 
         public bool Active { get; set; } = true;
         public bool FlaggedToDelete { get; set; } = false;
+        public bool Disposed { get; set; } = false;
 
         public virtual void Instantiate() { }
 
