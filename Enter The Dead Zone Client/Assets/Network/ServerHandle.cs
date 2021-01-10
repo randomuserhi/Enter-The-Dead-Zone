@@ -10,12 +10,12 @@ namespace Network
 {
     public struct PacketWrapper
     {
-        public Packet Packet;
+        public Packet Data;
         public long Epoch;
 
         public PacketWrapper(Packet Packet, long Epoch)
         {
-            this.Packet = Packet;
+            this.Data = Packet;
             this.Epoch = Epoch;
         }
     }

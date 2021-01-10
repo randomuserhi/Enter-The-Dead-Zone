@@ -20,10 +20,10 @@ public class ServerHandler : MonoBehaviour
         ServerHandle.PacketHandle = (Packet) =>
         {
 
-            int SizeOfPacket = Packet.Packet.ReadInt();
-            long Epoch = Packet.Packet.ReadLong();
-            int ClientIndex = Packet.Packet.ReadInt();
-            ServerCode Job = (ServerCode)Packet.Packet.ReadInt();
+            int SizeOfPacket = Packet.Data.ReadInt();
+            long Epoch = Packet.Data.ReadLong();
+            int ClientIndex = Packet.Data.ReadInt();
+            ServerCode Job = (ServerCode)Packet.Data.ReadInt();
 
             PerformServerAction(SizeOfPacket, ClientIndex, Packet, Job);
 

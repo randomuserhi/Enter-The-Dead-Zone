@@ -102,7 +102,17 @@ namespace Network
             Buffer.AddRange(BitConverter.GetBytes(Value));
         }
 
+        public void Write(float Value)
+        {
+            Buffer.AddRange(BitConverter.GetBytes(Value));
+        }
+
         public void Write(long Value)
+        {
+            Buffer.AddRange(BitConverter.GetBytes(Value));
+        }
+
+        public void Write(ulong Value)
         {
             Buffer.AddRange(BitConverter.GetBytes(Value));
         }
@@ -163,7 +173,7 @@ namespace Network
             }
             else
             {
-                throw new Exception("Could not read Long value");
+                throw new Exception("Could not read Unsigned Long value");
             }
         }
 

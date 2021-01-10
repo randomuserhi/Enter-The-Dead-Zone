@@ -18,7 +18,7 @@ public class Loader
     private static void Start()
     {
         Application.quitting += Dispose;
-        Application.targetFrameRate = 30; //Limit tick rate / frame rate
+        Application.targetFrameRate = Game.ServerTickRate; //Limit tick rate / frame rate
         QualitySettings.vSyncCount = 0; //Turn off vsync
         Physics2D.simulationMode = SimulationMode2D.Script; //My program controls when unity updates
 
