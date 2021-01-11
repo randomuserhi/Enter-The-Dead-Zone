@@ -14,11 +14,11 @@ public class Loader
     public static IPCNamedServer IPCServer;
     public static TCPUDPServer TCPUDPServer;
 
-    [RuntimeInitializeOnLoadMethod]
+    [RuntimeInitializeOnLoadMethod] //Runs on application start
     private static void Start()
     {
-        Application.quitting += Dispose;
-        Application.targetFrameRate = Game.ServerTickRate; //Limit tick rate / frame rate
+        Application.quitting += Dispose; //Setup dispose to call when game is closed
+        Application.targetFrameRate = Game.ServerTickRate; //Limit server tick rate / frame rate
         QualitySettings.vSyncCount = 0; //Turn off vsync
         Physics2D.simulationMode = SimulationMode2D.Script; //My program controls when unity updates
 
@@ -26,7 +26,7 @@ public class Loader
         TCPUDPServer = new TCPUDPServer(26950, 4, 4096);
         ServerHandler.Initialise();
 
-        TCPUDPServer.Connect();
+        TCPUDPServer.Connect(); //Startup server
     }
 
     private static void Dispose()

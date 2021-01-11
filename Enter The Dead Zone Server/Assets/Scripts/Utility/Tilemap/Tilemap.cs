@@ -10,13 +10,16 @@ using UnityEngine.UI;
 using DeadZoneEngine;
 using DeadZoneEngine.Entities;
 
+/// <summary>
+/// Defines a tile of a tilemap
+/// </summary>
 public struct Tile
 {
-    public int NumFrames;
-    public int AnimationFrame;
-    public int TileIndex;
-    public int Blank;
-    public int Render;
+    public int NumFrames; //Number of animation frames
+    public int AnimationFrame; //Animation frame index
+    public int TileIndex; //Which tile from tile pallet
+    public int Blank; //Is this tile blank?
+    public int Render; //Is this tile being rendered?
 
     public Tile(int Blank = 0, int TileIndex = 0, int NumFrames = 1, int AnimationFrame = 0, int Render = 1)
     {
@@ -28,21 +31,25 @@ public struct Tile
     }
 }
 
+/// <summary>
+/// Defines a tilepallet for a tilemap
+/// </summary>
 public class TilePallet
 {
-    public int NumTiles;
-    public Texture2D Pallet;
-    public int TileStride;
-    public int[] FrameCount;
+    public int NumTiles; //Number of different tiles
+    public Texture2D Pallet; //Pallet
+    public int TileStride; //Number of pixels between tiles
+    public int[] FrameCount; //Number of animation frames for each tile
 }
 
 public class Tilemap : AbstractWorldEntity, IUpdatable, IRenderer
 {
     public int SortingLayer { get; set; }
 
+    //ComputeShaders for GPU for rendering wall and floor tilemaps
     private ComputeShader WallCompute;
     private ComputeShader FloorCompute;
-    private int ComputeKernel;
+    private int ComputeKernel; //Kernel index of GPU function
 
     protected GameObject Self;
 
@@ -57,28 +64,31 @@ public class Tilemap : AbstractWorldEntity, IUpdatable, IRenderer
     //
     // This is to make rendering easier in the compute shader
 
+    //Buffers for wall and floor for passing tilemaps to GPU
     ComputeBuffer WallBuffer;
     ComputeBuffer FloorBuffer;
 
+    //Components for rendering to Unity
     private RawImage FloorRender;
     private RawImage[] Rows;
     private RenderTexture WallRenderTexture;
     private RenderTexture FloorRenderTexture;
 
+    //Tile pallets for wall and floor
     public TilePallet WallTilePalletData;
     public TilePallet FloorTilePalletData;
 
-    private float TilesPerUnit = 1;
-    private int TileDimension = 32;
-    private int WallTileHeight = 32;
-    private Vector2Int TilemapSize;
-    private Vector2 TilemapWorldSize;
+    private float TilesPerUnit = 1; //Size of tiles in respect to a unity unit
+    private int TileDimension = 32; //Pixel width and height of tile
+    private int WallTileHeight = 32; //Pixel height of a wall tile
+    private Vector2Int TilemapSize; //Size of tilemap
+    private Vector2 TilemapWorldSize; //Size of tilemap in unity units
 
-    private const float ColliderMargin = 0.02f;
-    private CompositeCollider2D CompositeCollider;
-    private BoxCollider2D[] ColliderMap;
-    private List<BoxCollider2D> ColliderList;
-    private Rigidbody2D RB;
+    private const float ColliderMargin = 0.02f; //Margin for colliders (shrinks collider size by this value on each side)
+    private CompositeCollider2D CompositeCollider; //Composite collider for optimizing collisions
+    private BoxCollider2D[] ColliderMap; //Layout of colliders on tilemap
+    private List<BoxCollider2D> ColliderList; //List of colliders in use
+    private Rigidbody2D RB; //Rigidbody of tilemap
 
     public Tilemap(int TileDimension, int WallTileHeight, Vector2Int TilemapSize, float TilesPerUnit = 1)
     {
@@ -121,6 +131,9 @@ public class Tilemap : AbstractWorldEntity, IUpdatable, IRenderer
         Initialize();
     }
 
+    /// <summary>
+    /// Resize tilemap to fit a new floor and wall map
+    /// </summary>
     public void Resize(Vector2Int NewTilemapSize, Tile[] FloorMap, Tile[] WallMap)
     {
         TilemapSize = NewTilemapSize;
@@ -131,6 +144,9 @@ public class Tilemap : AbstractWorldEntity, IUpdatable, IRenderer
             GenerateRenders();
     }
 
+    /// <summary>
+    /// Releases unused memory as tilemap caches textures and objects for reuse
+    /// </summary>
     public void ReleaseUnusedResources()
     {
         ColliderList.RemoveAll(I =>
@@ -152,8 +168,12 @@ public class Tilemap : AbstractWorldEntity, IUpdatable, IRenderer
             Rows = new RawImage[TilemapSize.y];
             Array.Copy(Temp, 0, Rows, 0, TilemapSize.y);
         }
+        Resources.UnloadUnusedAssets();
     }
 
+    /// <summary>
+    /// Initializes base tilemap
+    /// </summary>
     private void Initialize()
     {
         TilemapWorldSize = (Vector2)TilemapSize / TilesPerUnit;
@@ -175,23 +195,21 @@ public class Tilemap : AbstractWorldEntity, IUpdatable, IRenderer
 
     public void InitializeRenderer() { }
 
-    public override void OnCreate()
+    protected override void OnCreate()
     {
+        //Initialize colliders
         GenerateColliders();
 
         //Initialize renders
         GenerateRenders();
     }
 
-    public void Update()
-    {
-
-    }
+    public void Update() { }
 
     public void BodyPhysicsUpdate() { }
 
-    private Vector3 PrevTilePosition;
-    private void UpdateRenderSortingLayers()
+    private Vector3 PrevTilePosition; //Store previous position of tilemap
+    private void UpdateRenderSortingLayers() //Updates the render sorting layer of each tile row
     {
         if (Rows == null) return;
         if (PrevTilePosition != Self.transform.position) //Avoid updating all rows constantly has tilemaps can get quite large
@@ -208,8 +226,9 @@ public class Tilemap : AbstractWorldEntity, IUpdatable, IRenderer
 
     public void Render()
     {
-        UpdateRenderSortingLayers();
+        UpdateRenderSortingLayers(); //Update the sorting layers for each tile row
 
+        //Generate textures to render
         if (WallBuffer == null || FloorBuffer == null || WallCompute == null || FloorCompute == null)
             return;
         WallBuffer.SetData(WallMap);
@@ -218,6 +237,9 @@ public class Tilemap : AbstractWorldEntity, IUpdatable, IRenderer
         FloorCompute.Dispatch(ComputeKernel, TilemapSize.x / 4 + 1, TilemapSize.y / 4 + 1, 1);
     }
 
+    /// <summary>
+    /// Assigns new tile pallets to tilemap
+    /// </summary>
     public void SetTilePallet()
     {
         WallCompute.SetTexture(ComputeKernel, "TilePallet", WallTilePalletData.Pallet);
@@ -228,14 +250,19 @@ public class Tilemap : AbstractWorldEntity, IUpdatable, IRenderer
         FloorCompute.SetInt("TilePalletCount", FloorTilePalletData.NumTiles);
     }
 
+    /// <summary>
+    /// Generates new composite colliders for a tilemap
+    /// </summary>
+    /// <param name="Truncate">If true, disposes of unused colliders</param>
     public virtual void GenerateColliders(bool Truncate = false)
     {
+        //Expand collider array if needed
         if (ColliderMap.Length < TilemapSize.x * TilemapSize.y)
             ColliderMap = new BoxCollider2D[TilemapSize.x * TilemapSize.y];
 
-        int ReuseIndex = 0;
-        int FinalReuseIndex = 0;
-        int NumCurrentColliders = ColliderList.Count;
+        int ReuseIndex = 0; //Index of colliders to reuse
+        int FinalReuseIndex = 0; //Indicates the last collider that was reused
+        int NumCurrentColliders = ColliderList.Count; //Store the number of current colliders
         for (int i = 0; i < TilemapSize.y; i++)
         {
             for (int j = 0; j < TilemapSize.x; j++)
@@ -244,18 +271,19 @@ public class Tilemap : AbstractWorldEntity, IUpdatable, IRenderer
                 if (WallMap[Index].Blank == 0)
                 {
                     BoxCollider2D Collider = null;
-                    if (FinalReuseIndex == 0 && ReuseIndex < NumCurrentColliders)
+                    if (FinalReuseIndex == 0 && ReuseIndex < NumCurrentColliders) //If there are colliders to reuse, reuse them
                     {
                         Collider = ColliderList[ReuseIndex];
                         ReuseIndex++;
                     }
-                    else
+                    else //Otherwise create new colliders
                     {
                         FinalReuseIndex = ReuseIndex;
                         Collider = Self.AddComponent<BoxCollider2D>();
                         ColliderList.Add(Collider);
                     }
 
+                    //Position the colliders on the tilemap
                     Collider.enabled = true;
                     float Dimension = 1 / TilesPerUnit;
                     Collider.size = new Vector2(Dimension - ColliderMargin, Dimension - ColliderMargin);
@@ -268,7 +296,7 @@ public class Tilemap : AbstractWorldEntity, IUpdatable, IRenderer
             }
         }
 
-        if (Truncate)
+        if (Truncate) //If true, dispose of unused colliders
         {
             for (; ReuseIndex < NumCurrentColliders; ReuseIndex++)
             {
@@ -276,7 +304,7 @@ public class Tilemap : AbstractWorldEntity, IUpdatable, IRenderer
             }
             ColliderList.RemoveRange(FinalReuseIndex, NumCurrentColliders - FinalReuseIndex);
         }
-        else
+        else //Disable unused colliders but cache to reuse
             for (; ReuseIndex < NumCurrentColliders; ReuseIndex++)
             {
                 ColliderList[ReuseIndex].enabled = false;
@@ -285,12 +313,17 @@ public class Tilemap : AbstractWorldEntity, IUpdatable, IRenderer
         CompositeCollider.GenerateGeometry();
     }
 
+    /// <summary>
+    /// Generates new renders for rendering a different sized tilemap
+    /// </summary>
+    /// <param name="Truncate">If true, disposes of unused renders</param>
     private void GenerateRenders(bool Truncate = false)
     {
         //Initialize Buffers
         if (WallBuffer != null) WallBuffer.Dispose();
         if (FloorBuffer != null) FloorBuffer.Dispose();
 
+        //Initialize compute shaders
         if (WallCompute == null)
         {
             WallCompute = UnityEngine.Object.Instantiate(Resources.Load<ComputeShader>("ComputeShaders/TilemapComputeShader"));
@@ -313,13 +346,14 @@ public class Tilemap : AbstractWorldEntity, IUpdatable, IRenderer
         FloorCompute.SetInt("MapWidth", TilemapSize.x);
         FloorCompute.SetInt("MapHeight", TilemapSize.y);
 
+        //Check TilePallets
         if (WallTilePalletData == null || FloorTilePalletData == null)
         {
             Debug.LogWarning("WallTilePalletData or FloorTilePalletData is null, rendering default pallets...");
             GenerateDefaultTileData();
         }
 
-        //Set TilePallet
+        //Set TilePallets
         SetTilePallet();
 
         //Set the buffers
@@ -333,6 +367,7 @@ public class Tilemap : AbstractWorldEntity, IUpdatable, IRenderer
         WallCompute.SetBuffer(ComputeKernel, "Map", WallBuffer);
         FloorCompute.SetBuffer(ComputeKernel, "Map", FloorBuffer);
 
+        //Create new textures if required
         if (WallRenderTexture == null)
         {
             WallRenderTexture = new RenderTexture(TileDimension * TilemapSize.x, WallTileHeight * TilemapSize.y, 8)
@@ -345,7 +380,7 @@ public class Tilemap : AbstractWorldEntity, IUpdatable, IRenderer
             WallCompute.SetTexture(ComputeKernel, "Result", WallRenderTexture);
 
         }
-        else if (Truncate || WallRenderTexture.width < TilemapSize.x || WallRenderTexture.height < TilemapSize.y)
+        else if (Truncate || WallRenderTexture.width < TilemapSize.x || WallRenderTexture.height < TilemapSize.y) //Truncate textures if option was true to release more memory
         {
             WallRenderTexture.Release();
             WallRenderTexture.width = TilemapSize.x;
@@ -353,6 +388,7 @@ public class Tilemap : AbstractWorldEntity, IUpdatable, IRenderer
             WallRenderTexture.Create();
         }
 
+        //Create new textures if required
         if (FloorRenderTexture == null)
         {
             FloorRenderTexture = new RenderTexture(TileDimension * TilemapSize.x, TileDimension * TilemapSize.y, 8)
@@ -364,7 +400,7 @@ public class Tilemap : AbstractWorldEntity, IUpdatable, IRenderer
             FloorRenderTexture.Create();
             FloorCompute.SetTexture(ComputeKernel, "Result", FloorRenderTexture);
         }
-        else if (Truncate || FloorRenderTexture.width < TilemapSize.x || FloorRenderTexture.height < TilemapSize.y)
+        else if (Truncate || FloorRenderTexture.width < TilemapSize.x || FloorRenderTexture.height < TilemapSize.y) //Truncate textures if option was true to release more memory
         {
             FloorRenderTexture.Release();
             FloorRenderTexture.width = TilemapSize.x;
@@ -372,7 +408,7 @@ public class Tilemap : AbstractWorldEntity, IUpdatable, IRenderer
             FloorRenderTexture.Create();
         }
 
-        if (FloorRender == null)
+        if (FloorRender == null) //Create a new render for the floor map if needed
         {
             Canvas FloorCanvas = Self.AddComponent<Canvas>();
             FloorCanvas.renderMode = RenderMode.WorldSpace;
@@ -382,6 +418,7 @@ public class Tilemap : AbstractWorldEntity, IUpdatable, IRenderer
             Self.GetComponent<RectTransform>().sizeDelta = Vector2.zero;
             FloorRender = Self.AddComponent<RawImage>();
         }
+        //Scale the floormap render
         FloorRender.rectTransform.sizeDelta = new Vector2((float)TilemapSize.x / TilesPerUnit, (float)TilemapSize.y / TilesPerUnit);
         FloorRender.material = Resources.Load<Material>("Materials/LitMaterial");
         FloorRender.texture = FloorRenderTexture;
@@ -392,15 +429,15 @@ public class Tilemap : AbstractWorldEntity, IUpdatable, IRenderer
         if (Rows == null)
             Rows = new RawImage[TilemapSize.y];
         else
-            CurrentLength = Rows.Length > TilemapSize.y ? TilemapSize.y : Rows.Length;
-        if (Rows.Length < TilemapSize.y)
+            CurrentLength = Rows.Length > TilemapSize.y ? TilemapSize.y : Rows.Length; //Get the number of rows to render for a given tilemap
+        if (Rows.Length < TilemapSize.y) //Resize array of rows if needed
         {
             RawImage[] Temp = Rows;
             Rows = new RawImage[TilemapSize.y];
             Array.Copy(Temp, 0, Rows, 0, Temp.Length);
         }
         int i = 0;
-        for (; i < CurrentLength; i++)
+        for (; i < CurrentLength; i++) //Loop through number of rows that can be reused
         {
             Rows[i].rectTransform.sizeDelta = Vector2.zero;
             float StrideHeight = ((float)WallTileHeight / TileDimension) / TilesPerUnit;
@@ -411,7 +448,7 @@ public class Tilemap : AbstractWorldEntity, IUpdatable, IRenderer
             float RenderHeight = (float)WallTileHeight * TilemapSize.y / WallRenderTexture.height;
             Rows[i].uvRect = new Rect(0, i * RenderHeight / TilemapSize.y, (float)TileDimension * TilemapSize.x / WallRenderTexture.width, RenderHeight / TilemapSize.y);
         }
-        for (; i < TilemapSize.y; i++)
+        for (; i < TilemapSize.y; i++) //Loop through remainder of tilemap and create new rows
         {
             GameObject Row = new GameObject();
             Row.transform.parent = Self.transform;
@@ -431,14 +468,14 @@ public class Tilemap : AbstractWorldEntity, IUpdatable, IRenderer
             RowImage.uvRect = new Rect(0, i * RenderHeight / TilemapSize.y, (float)TileDimension * TilemapSize.x / WallRenderTexture.width, RenderHeight / TilemapSize.y);
             Rows[i] = RowImage;
         }
-        for (; i < Rows.Length; i++)
+        for (; i < Rows.Length; i++) //Loop through remainding rows and destroy them if truncate option was true, otherwise deactivate and cache to reuse
         {
             if (Truncate)
                 GameObject.Destroy(Rows[i].gameObject);
             else
                 Rows[i].gameObject.SetActive(false);
         }
-        if (Truncate)
+        if (Truncate && Rows.Length != TilemapSize.y) //Resize array of rows to size of tilemap if truncate option is true
         {
             RawImage[] Temp = Rows;
             Rows = new RawImage[TilemapSize.y];
@@ -446,6 +483,9 @@ public class Tilemap : AbstractWorldEntity, IUpdatable, IRenderer
         }
     }
 
+    /// <summary>
+    /// Generate default tilepallets when none are provided
+    /// </summary>
     private void GenerateDefaultTileData()
     {
         if (WallTilePalletData == null)
@@ -477,7 +517,7 @@ public class Tilemap : AbstractWorldEntity, IUpdatable, IRenderer
             WallBuffer.Release();
         if (FloorBuffer != null)
             FloorBuffer.Release();
-        //Delete Object
+        //Delete Objects
         if (Rows != null)
         {
             for (int i = 0; i < Rows.Length; i++)

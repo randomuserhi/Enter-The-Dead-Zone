@@ -12,6 +12,7 @@ using Network;
 
 public class Game
 {
+    public static DZEngine.ManagedList<IServerSendable> ServerItems = new DZEngine.ManagedList<IServerSendable>();
     public static int ServerTickRate = 30;
     public static ulong ClientTicks = 0;
 
@@ -19,7 +20,7 @@ public class Game
     {
     }
 
-    public static void UnWrapSnapshot(PacketWrapper Packet) //TODO:: place specific entity unwraps into their respective classes / abstract methods
+    public static void UnWrapSnapshot(PacketWrapper Packet)
     {
         Packet P = Packet.Data;
         ServerTickRate = P.ReadInt();
@@ -48,6 +49,14 @@ public class Game
             }
 
             ServerItem.ParseBytes(P, ServerTick);
+            ServerItem.RecentlyUpdated = true;
+        }
+        foreach (IServerSendable Item in ServerItems)
+        {
+            if (!Item.RecentlyUpdated) //Item was not contained in recent snapshot so remove it
+            {
+                DZEngine.Destroy(Item);
+            }
         }
     }
 

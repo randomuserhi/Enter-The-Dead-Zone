@@ -91,47 +91,84 @@ namespace Network
             Buffer.AddRange(Data);
         }
 
+        /// <summary>
+        /// Writes a string without setting ReadableBuffer
+        /// </summary>
+        /// <param name="Data"></param>
         public void Write(string Value)
         {
             Write(Value.Length); //Add length of string
             Buffer.AddRange(Encoding.ASCII.GetBytes(Value));
         }
 
+        /// <summary>
+        /// Writes an int without setting ReadableBuffer
+        /// </summary>
+        /// <param name="Data"></param>
         public void Write(int Value)
         {
             Buffer.AddRange(BitConverter.GetBytes(Value));
         }
 
+        /// <summary>
+        /// Writes a float without setting ReadableBuffer
+        /// </summary>
+        /// <param name="Data"></param>
         public void Write(float Value)
         {
             Buffer.AddRange(BitConverter.GetBytes(Value));
         }
 
+        /// <summary>
+        /// Writes a long without setting ReadableBuffer
+        /// </summary>
+        /// <param name="Data"></param>
         public void Write(long Value)
         {
             Buffer.AddRange(BitConverter.GetBytes(Value));
         }
 
+        /// <summary>
+        /// Writes an ulong without setting ReadableBuffer
+        /// </summary>
+        /// <param name="Data"></param>
         public void Write(ulong Value)
         {
             Buffer.AddRange(BitConverter.GetBytes(Value));
         }
 
+        /// <summary>
+        /// Writes a boolean without setting ReadableBuffer
+        /// </summary>
+        /// <param name="Data"></param>
         public void Write(bool Value)
         {
             Buffer.AddRange(BitConverter.GetBytes(Value));
         }
 
+        /// <summary>
+        /// Returns the unread length of the packet
+        /// </summary>
+        /// <param name="Data"></param>
         public int UnreadLength()
         {
             return ReadableBuffer.Length - ReadPosition;
         }
 
+        /// <summary>
+        /// Set the reading position for the packet
+        /// </summary>
+        /// <param name="ReadPosition"></param>
         public void Seek(int ReadPosition)
         {
             this.ReadPosition = ReadPosition;
         }
 
+        /// <summary>
+        /// Reads a boolean value from the current ReadPosition of the packet
+        /// </summary>
+        /// <param name="MoveRead">Move the ReadPosition after read</param>
+        /// <returns></returns>
         public bool ReadBool(bool MoveRead = true)
         {
             if (UnreadLength() >= sizeof(bool))
@@ -147,6 +184,11 @@ namespace Network
             }
         }
 
+        /// <summary>
+        /// Reads a long value from the current ReadPosition of the packet
+        /// </summary>
+        /// <param name="MoveRead">Move the ReadPosition after read</param>
+        /// <returns></returns>
         public long ReadLong(bool MoveRead = true)
         {
             if (UnreadLength() >= sizeof(long))
@@ -162,6 +204,11 @@ namespace Network
             }
         }
 
+        /// <summary>
+        /// Reads an ulong value from the current ReadPosition of the packet
+        /// </summary>
+        /// <param name="MoveRead">Move the ReadPosition after read</param>
+        /// <returns></returns>
         public ulong ReadULong(bool MoveRead = true)
         {
             if (UnreadLength() >= sizeof(ulong))
@@ -177,6 +224,11 @@ namespace Network
             }
         }
 
+        /// <summary>
+        /// Reads a int value from the current ReadPosition of the packet
+        /// </summary>
+        /// <param name="MoveRead">Move the ReadPosition after read</param>
+        /// <returns></returns>
         public int ReadInt(bool MoveRead = true)
         {
             if (UnreadLength() >= sizeof(int))
@@ -192,6 +244,11 @@ namespace Network
             }
         }
 
+        /// <summary>
+        /// Reads a float value from the current ReadPosition of the packet
+        /// </summary>
+        /// <param name="MoveRead">Move the ReadPosition after read</param>
+        /// <returns></returns>
         public float ReadFloat(bool MoveRead = true)
         {
             if (UnreadLength() >= sizeof(float))
@@ -207,6 +264,11 @@ namespace Network
             }
         }
 
+        /// <summary>
+        /// Reads a string value from the current ReadPosition of the packet
+        /// </summary>
+        /// <param name="MoveRead">Move the ReadPosition after read</param>
+        /// <returns></returns>
         public string ReadString(bool MoveRead = true)
         {
             try

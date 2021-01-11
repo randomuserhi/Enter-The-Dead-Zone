@@ -6,6 +6,9 @@ using System.Threading.Tasks;
 
 namespace DeadZoneEngine.Entities
 {
+    /// <summary>
+    /// Describes a joint interaction between objects
+    /// </summary>
     public abstract class PhysicalJoint : AbstractWorldEntity, IIteratableUpdatable
     {
         public PhysicalJoint() { }

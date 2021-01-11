@@ -20,7 +20,7 @@ namespace DeadZoneEngine.Entities.Components
         public virtual void Render() { }
 
         public CircleCollider2D Collider { get; private set; }
-        public ContactPoint2D[] Contacts = new ContactPoint2D[10];
+        public ContactPoint2D[] Contacts = new ContactPoint2D[10]; //Contact buffer for getting collision contacts
         public float Height;
 
         public BodyChunk()

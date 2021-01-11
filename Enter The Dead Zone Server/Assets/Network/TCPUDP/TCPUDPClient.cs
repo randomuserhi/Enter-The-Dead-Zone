@@ -31,6 +31,9 @@ namespace Network.TCPUDP
             TCPReceiveBuffer = new byte[DataBufferSize];
         }
 
+        /// <summary>
+        /// Connect to server with UDP
+        /// </summary>
         public void UDPConnect(int LocalPort, string ServerIP, int ServerPort)
         {
             EndPoint = new IPEndPoint(IPAddress.Parse(ServerIP), ServerPort);
@@ -41,6 +44,10 @@ namespace Network.TCPUDP
             UDPSocket.BeginReceive(UDPReceiveCallback, null);
         }
 
+        /// <summary>
+        /// Send a packet to the server with UDP
+        /// </summary>
+        /// <param name="ClientIndex">This clients index</param>
         public void UDPSendMessage(Packet Packet, int ClientIndex = -1)
         {
             try
@@ -79,11 +86,19 @@ namespace Network.TCPUDP
             }
         }
 
+        /// <summary>
+        /// Handles received data
+        /// </summary>
         public void UDPHandleData(byte[] Data, long Epoch)
         {
             ServerHandle.ProcessPacket(new Packet(Data), Epoch);
         }
 
+        /// <summary>
+        /// Asynchronously attempts connecting to server
+        /// </summary>
+        /// <param name="Timeout">Time in milliseconds untill connection will timeout, a value of -1 indicates no timeout</param>
+        /// <returns></returns>
         public async Task TCPConnect(string ServerIP, int ServerPort, int Timeout = -1)
         {
             TCPSocket = new TcpClient();
@@ -214,6 +229,9 @@ namespace Network.TCPUDP
             return false; //packet is over multiple deliveries, dont reset buffer
         }
 
+        /// <summary>
+        /// Closes TCP connection
+        /// </summary>
         public void TCPDisconnect()
         {
             try
@@ -230,6 +248,9 @@ namespace Network.TCPUDP
             }
         }
 
+        /// <summary>
+        /// Closes UDP Connection
+        /// </summary>
         public void UDPDisconnect()
         {
             try
@@ -248,6 +269,9 @@ namespace Network.TCPUDP
             }
         }
 
+        /// <summary>
+        /// Closes TCP and UDP connections
+        /// </summary>
         public void DisconnectAll()
         {
             Debug.Log("Disconnecting...");
@@ -260,7 +284,6 @@ namespace Network.TCPUDP
             Dispose(false);
         }
 
-        //https://stackoverflow.com/questions/18336856/implementing-idisposable-correctly
         public void Dispose()
         {
             Dispose(true);

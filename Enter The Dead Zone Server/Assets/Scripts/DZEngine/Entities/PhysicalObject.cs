@@ -8,6 +8,9 @@ using UnityEngine;
 
 namespace DeadZoneEngine.Entities
 {
+    /// <summary>
+    /// Describes a physics object
+    /// </summary>
     public abstract class PhysicalObject : AbstractWorldEntity, IPhysicsUpdatable
     {
         public GameObject Self;
@@ -36,7 +39,7 @@ namespace DeadZoneEngine.Entities
 
         protected override void OnDelete()
         {
-            GameObject.Destroy(Self);
+            GameObject.Destroy(Self); //Destroy unity object
         }
 
         public virtual void Update() { }
@@ -44,6 +47,9 @@ namespace DeadZoneEngine.Entities
 
 
         private Vector2 PreVelocity;
+        /// <summary>
+        /// Isolate the current velocity and use PreVelocity for physics updates
+        /// </summary>
         public void IsolateVelocity()
         {
             Vector2 Temp = PreVelocity;
@@ -51,6 +57,9 @@ namespace DeadZoneEngine.Entities
             Velocity = Temp;
         }
 
+        /// <summary>
+        /// Restore the current velocity for physics updates
+        /// </summary>
         public void RestoreVelocity()
         {
             Vector2 Temp = Velocity;

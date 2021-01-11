@@ -55,6 +55,7 @@ namespace Network.IPC
         /// <summary>
         /// Asynchronously attempt connecting to client
         /// </summary>
+        /// <param name="Timeout">Time in milliseconds untill connection will timeout, a value of -1 indicates no timeout</param>
         /// <returns></returns>
         public async Task Connect(int Timeout = -1)
         {
@@ -106,7 +107,6 @@ namespace Network.IPC
         /// <summary>
         /// Handles message recieved by the server
         /// </summary>
-        /// <param name="Result"></param>
         private void ReceiveCallback(IAsyncResult Result)
         {
             try
@@ -177,7 +177,6 @@ namespace Network.IPC
         /// <summary>
         /// Called upon succesful pipe connection, begins reading PipeStream
         /// </summary>
-        /// <param name="Result"></param>
         private void PipeConnected(IAsyncResult Result)
         {
             NamedPipeServerWrapper Pipe = (NamedPipeServerWrapper)Result.AsyncState;
@@ -202,7 +201,6 @@ namespace Network.IPC
             Dispose(false);
         }
 
-        //https://stackoverflow.com/questions/18336856/implementing-idisposable-correctly
         public void Dispose()
         {
             Dispose(true);

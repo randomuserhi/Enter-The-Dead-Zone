@@ -17,7 +17,7 @@ namespace DeadZoneEngine
 
         public static void Initialize()
         {
-            
+
         }
 
         private static void AddIfContainsInterface<T>(this List<T> List, object Entity) where T : class
@@ -52,7 +52,7 @@ namespace DeadZoneEngine
         private static Dictionary<Type, (Delegate, Delegate)> GetManagedInvokeCache = new Dictionary<Type, (Delegate, Delegate)>();
         private static void InvokeIfContainsInterface<SearchType, ListType>(Delegate Method, List<ListType> List) where SearchType : class
         {
-            for (int i = 0; i < List.Count; i++) 
+            for (int i = 0; i < List.Count; i++)
             {
                 SearchType Item = List[i] as SearchType;
                 if (Item != null)
@@ -95,7 +95,7 @@ namespace DeadZoneEngine
 
                 ((Action)ClearListMethod)();
                 GetInvokeFromType<AbstractWorldEntity>(T)(UpdateListMethod, _AbstractWorldEntities);
-                GetInvokeFromType<IPhysicsUpdatable> (T)(UpdateListMethod, _PhysicsUpdatableObjects);
+                GetInvokeFromType<IPhysicsUpdatable>(T)(UpdateListMethod, _PhysicsUpdatableObjects);
                 GetInvokeFromType<IUpdatable>(T)(UpdateListMethod, _UpdatableObjects);
                 GetInvokeFromType<IIteratableUpdatable>(T)(UpdateListMethod, _IteratableUpdatableObjects);
                 GetInvokeFromType<IRenderer>(T)(UpdateListMethod, _RenderableObjects);
@@ -247,13 +247,14 @@ namespace DeadZoneEngine
                 return true;
             });
 
-            _AbstractWorldEntities.RemoveAll(I => 
+            _AbstractWorldEntities.RemoveAll(I =>
             {
                 return DeleteHandle(I);
             });
 
             _ServerSendableObjects.RemoveAll(I =>
             {
+                I.RecentlyUpdated = false;
                 return DeleteHandle(I);
             });
 
@@ -309,7 +310,7 @@ namespace DeadZoneEngine
             for (int i = 0; i < _UpdatableObjects.Count; i++)
             {
                 if (_UpdatableObjects[i].Active)
-                    _UpdatableObjects[i].Update(); 
+                    _UpdatableObjects[i].Update();
             }
 
             //Check and resolve physics constraints (Joints etc) => Essentially update the general physics of all bodies

@@ -5,6 +5,7 @@ using UnityEngine;
 using DeadZoneEngine;
 using DeadZoneEngine.Entities;
 
+//Unity Script to update DZEngine
 public class DZScript : MonoBehaviour
 {
     public void Start()

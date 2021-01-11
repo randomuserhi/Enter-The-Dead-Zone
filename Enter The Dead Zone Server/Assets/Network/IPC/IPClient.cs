@@ -11,6 +11,9 @@ using System.Threading;
 
 namespace Network.IPC
 {
+    /// <summary>
+    /// Represents a PipeStream with its respective Buffer and AsyncCallback
+    /// </summary>
     public struct NamedPipeClientWrapper
     {
         public byte[] ReceiveBuffer;
@@ -34,6 +37,12 @@ namespace Network.IPC
         public NamedPipeClientStream PipeOut;
         public NamedPipeClientStream PipeIn;
 
+        /// <summary>
+        /// Creates a new NamedPipeClient
+        /// </summary>
+        /// <param name="PipeName">Client name</param>
+        /// <param name="ServerName">Server pipe name</param>
+        /// <param name="DataBufferSize">Size of data buffer</param>
         public IPCNamedClient(string PipeName, string ServerName, int DataBufferSize)
         {
             this.DataBufferSize = DataBufferSize;
@@ -48,6 +57,11 @@ namespace Network.IPC
             Dispose(false);
         }
 
+        /// <summary>
+        /// Asynchronously attempt connecting to server
+        /// </summary>
+        /// <param name="Timeout">Time in milliseconds untill connection will timeout, a value of -1 indicates no timeout</param>
+        /// <returns></returns>
         public async Task Connect(int Timeout = -1)
         {
             //Wait for connection
@@ -72,11 +86,16 @@ namespace Network.IPC
             PipeConnected(new NamedPipeClientWrapper(PipeOut));
         }
 
+        /// <summary>
+        /// Called during connection to client, NOTE: Clients may not have successfully connected at this point
+        /// </summary>
         protected virtual void OnStart()
         {
         }
 
-        //Needs to use Packet class to do so
+        /// <summary>
+        /// Sends a given Packet to the server
+        /// </summary>
         public void SendMessage(Packet Packet)
         {
             try
@@ -93,6 +112,9 @@ namespace Network.IPC
             }
         }
 
+        /// <summary>
+        /// Handles message recieved by the client
+        /// </summary>
         private void ReceiveCallback(IAsyncResult Result)
         {
             try
@@ -158,6 +180,9 @@ namespace Network.IPC
             return false; //packet is over multiple deliveries, dont reset buffer
         }
 
+        /// <summary>
+        /// Called upon succesful pipe connection, begins reading PipeStream
+        /// </summary>
         private void PipeConnected(NamedPipeClientWrapper Pipe)
         {
             try
@@ -173,7 +198,6 @@ namespace Network.IPC
             }
         }
 
-        //https://stackoverflow.com/questions/18336856/implementing-idisposable-correctly
         public void Dispose()
         {
             Dispose(true);

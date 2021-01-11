@@ -13,19 +13,33 @@ namespace DeadZoneEngine
 {
     public static class DZEngine
     {
-        public static float InvDeltaTime = 0;
+        public static float InvDeltaTime = 0; // 1 / DeltaTime of frame
 
+        /// <summary>
+        /// Called on startup
+        /// </summary>
         public static void Initialize()
         {
             
         }
 
+        /// <summary>
+        /// Adds a given entity to a DZEngine.ManagedList if its of the correct type
+        /// </summary>
+        /// <typeparam name="T">ManagedList Type</typeparam>
+        /// <param name="List">List to append to</param>
+        /// <param name="Entity">Entity to append</param>
         private static void AddIfContainsInterface<T>(this List<T> List, object Entity) where T : class
         {
             T Interface = Entity as T;
             if (Interface != null)
                 List.Add(Interface);
         }
+
+        /// <summary>
+        /// Calls relevant initialization functions and adds entity to DZEngine
+        /// </summary>
+        /// <param name="Entity"></param>
         private static void InstantiateAndAddEntity(object Entity)
         {
             _IInstantiatableDeletable Instantiatable = Entity as _IInstantiatableDeletable;
@@ -47,9 +61,17 @@ namespace DeadZoneEngine
 
         #region DZEngine.ManagedList
 
-        private static HashSet<Type> ManagedListTypes = new HashSet<Type>();
-        private static Dictionary<(Type, Type), Delegate> GetInvokeCache = new Dictionary<(Type, Type), Delegate>();
-        private static Dictionary<Type, (Delegate, Delegate)> GetManagedInvokeCache = new Dictionary<Type, (Delegate, Delegate)>();
+        private static HashSet<Type> ManagedListTypes = new HashSet<Type>(); //Contains all created managed lists
+        private static Dictionary<(Type, Type), Delegate> GetInvokeCache = new Dictionary<(Type, Type), Delegate>(); //Caching delegate functions used for calling relevant add functions
+        private static Dictionary<Type, (Delegate, Delegate)> GetManagedInvokeCache = new Dictionary<Type, (Delegate, Delegate)>(); //Caching delegate functions used for clearing and updating managed lists
+        
+        /// <summary>
+        /// Invokes a given delegate on every item that contains the provided interface
+        /// </summary>
+        /// <typeparam name="SearchType">Interface the item should contain</typeparam>
+        /// <typeparam name="ListType">Type of list being checked</typeparam>
+        /// <param name="Method">Delegate to call</param>
+        /// <param name="List">List being checked</param>
         private static void InvokeIfContainsInterface<SearchType, ListType>(Delegate Method, List<ListType> List) where SearchType : class
         {
             for (int i = 0; i < List.Count; i++) 
@@ -61,20 +83,31 @@ namespace DeadZoneEngine
                 }
             }
         }
+        
+        /// <summary>
+        /// Returns the given delegate to add an item to a managed list
+        /// </summary>
+        /// <typeparam name="InvokeType">Type of list being invoked onto</typeparam>
+        /// <param name="T">Type of item</param>
+        /// <returns></returns>
         private static Action<Delegate, List<InvokeType>> GetInvokeFromType<InvokeType>(Type T)
         {
-            var Label = (T, typeof(InvokeType));
-            if (GetInvokeCache.ContainsKey(Label))
-                return (Action<Delegate, List<InvokeType>>)GetInvokeCache[Label];
+            var Label = (T, typeof(InvokeType)); //Key for cache dictionary
+            if (GetInvokeCache.ContainsKey(Label)) //Check if it does not already exist
+                return (Action<Delegate, List<InvokeType>>)GetInvokeCache[Label]; //If so return cached delegate
+            //Find the right method to generate delegate from
             MethodInfo Method = typeof(DZEngine).GetMethods(BindingFlags.NonPublic | BindingFlags.Static).Single(I => I.Name == nameof(DZEngine.InvokeIfContainsInterface));
+            //Generate delegate from method
             Action<Delegate, List<InvokeType>> DelegateAction = (Action<Delegate, List<InvokeType>>)Delegate.CreateDelegate(typeof(Action<Delegate, List<InvokeType>>), Method.MakeGenericMethod(T, typeof(InvokeType)));
+            //Add delegate to cache
             GetInvokeCache.Add(Label, DelegateAction);
             return DelegateAction;
         }
         private static void UpdateManagedLists()
         {
-            foreach (Type T in ManagedListTypes)
+            foreach (Type T in ManagedListTypes) //Loop through all existing managed lists
             {
+                //Find the approapriate update and clear delegates for handling the lists
                 Delegate UpdateListMethod = null;
                 Delegate ClearListMethod = null;
                 if (GetManagedInvokeCache.ContainsKey(T))
@@ -93,7 +126,8 @@ namespace DeadZoneEngine
                     GetManagedInvokeCache.Add(T, (UpdateListMethod, ClearListMethod));
                 }
 
-                ((Action)ClearListMethod)();
+                ((Action)ClearListMethod)(); //Clear the managed list of items
+                //Update the managed list with new items
                 GetInvokeFromType<AbstractWorldEntity>(T)(UpdateListMethod, _AbstractWorldEntities);
                 GetInvokeFromType<IPhysicsUpdatable> (T)(UpdateListMethod, _PhysicsUpdatableObjects);
                 GetInvokeFromType<IUpdatable>(T)(UpdateListMethod, _UpdatableObjects);
@@ -102,16 +136,27 @@ namespace DeadZoneEngine
                 GetInvokeFromType<IServerSendable>(T)(UpdateListMethod, _ServerSendableObjects);
             }
         }
+        
+        /// <summary>
+        /// Defines a list that is automatically updated to contain all entities of type T assigned to DZEngine
+        /// This is useful for simply getting a list of specific IRender<>
+        /// </summary>
+        /// <typeparam name="T">Type of entity</typeparam>
         public class ManagedList<T> : HashSet<T> where T : class
         {
             public static List<WeakReference> ExistingLists = new List<WeakReference>();
 
             public ManagedList()
             {
+                //Keep track of all existing managed lists with weak references to allow Garbage Collection (GC)
                 ExistingLists.Add(new WeakReference(this));
+                //Add Type that is being managed to type list
                 ManagedListTypes.Add(typeof(T));
             }
 
+            /// <summary>
+            /// Removes lists that have been cleaned up by GC
+            /// </summary>
             public static void ClearExistingLists()
             {
                 ExistingLists.RemoveAll(I =>
@@ -126,6 +171,10 @@ namespace DeadZoneEngine
                 });
             }
 
+            /// <summary>
+            /// Adds a new item to all lists of type T
+            /// </summary>
+            /// <param name="Item"></param>
             public static void UpdateExistingLists(T Item)
             {
                 for (int i = 0; i < ExistingLists.Count; i++)
@@ -138,23 +187,35 @@ namespace DeadZoneEngine
 
         #endregion
 
-        public static List<object> EntitesToPush = new List<object>();
-        private static List<IServerSendable> _ServerSendableObjects = new List<IServerSendable>();
-        private static List<AbstractWorldEntity> _AbstractWorldEntities = new List<AbstractWorldEntity>();
-        private static List<IPhysicsUpdatable> _PhysicsUpdatableObjects = new List<IPhysicsUpdatable>();
-        private static List<IUpdatable> _UpdatableObjects = new List<IUpdatable>();
-        private static List<IIteratableUpdatable> _IteratableUpdatableObjects = new List<IIteratableUpdatable>();
-        private static List<IRenderer> _RenderableObjects = new List<IRenderer>();
+        public static List<object> EntitesToPush = new List<object>(); //List of entities to push to DZEngine
 
+        //Lists of entity interfaces that define DZEngine
+        private static List<IServerSendable> _ServerSendableObjects = new List<IServerSendable>(); //All entities that are sendable across the server and client
+        private static List<AbstractWorldEntity> _AbstractWorldEntities = new List<AbstractWorldEntity>(); //All abstract world entities
+        private static List<IPhysicsUpdatable> _PhysicsUpdatableObjects = new List<IPhysicsUpdatable>(); //All objects that use the seperate (isolated) physics loop
+        private static List<IUpdatable> _UpdatableObjects = new List<IUpdatable>(); //All objects that use the standard update loop
+        private static List<IIteratableUpdatable> _IteratableUpdatableObjects = new List<IIteratableUpdatable>(); //All objects that use the impulse engine
+        private static List<IRenderer> _RenderableObjects = new List<IRenderer>(); //All objects that have a renderer
+
+        /// <summary>
+        /// Destroys an entity
+        /// </summary>
+        /// <param name="Item"></param>
         public static void Destroy(_IInstantiatableDeletable Item)
         {
             Item.FlaggedToDelete = true;
         }
+
+        /// <summary>
+        /// Adds an unmanaged entity (not of type AbstractWorldEntity), these are called components
+        /// </summary>
+        /// <param name="Component"></param>
         public static void AddComponent(_IInstantiatableDeletable Component)
         {
             EntitesToPush.Add(Component);
         }
 
+        //public getters for lists
         public static ReadOnlyCollection<IServerSendable> ServerSendableObjects { get { return _ServerSendableObjects.AsReadOnly(); } }
         public static ReadOnlyCollection<AbstractWorldEntity> AbstractWorldEntities { get { return _AbstractWorldEntities.AsReadOnly(); } }
         public static ReadOnlyCollection<IPhysicsUpdatable> PhysicsUpdatableObjects { get { return _PhysicsUpdatableObjects.AsReadOnly(); } }
@@ -162,6 +223,9 @@ namespace DeadZoneEngine
         public static ReadOnlyCollection<IIteratableUpdatable> IteratableUpdatableObjects { get { return _IteratableUpdatableObjects.AsReadOnly(); } }
         public static ReadOnlyCollection<IRenderer> RenderableObjects { get { return _RenderableObjects.AsReadOnly(); } }
 
+        /// <summary>
+        /// Releases and disposes of all entities and their managed resources
+        /// </summary>
         public static void ReleaseResources()
         {
             EntitesToPush.RemoveAll(I =>
@@ -201,11 +265,17 @@ namespace DeadZoneEngine
             });
         }
 
+        /// <summary>
+        /// Checks the deletion of an object
+        /// </summary>
+        /// <param name="DeletableObject">Object to delete</param>
+        /// <param name="ForceDelete">Force delete the object regardless</param>
+        /// <returns>true if object was disposed, otherwise false</returns>
         private static bool DeleteHandle(_IInstantiatableDeletable DeletableObject, bool ForceDelete = false)
         {
-            if (DeletableObject.FlaggedToDelete || ForceDelete)
+            if (DeletableObject.FlaggedToDelete || ForceDelete) //Check if the object is flagged to delete or is forced to delete
             {
-                if (!DeletableObject.Disposed)
+                if (!DeletableObject.Disposed) //If the object has not already been disposed the perform delete
                 {
                     DeletableObject.Disposed = true;
                     DeletableObject.Delete();
@@ -215,6 +285,11 @@ namespace DeadZoneEngine
             return false;
         }
 
+        /// <summary>
+        /// Gets the bytes of a given entity
+        /// </summary>
+        /// <param name="Item"></param>
+        /// <returns></returns>
         public static byte[] GetBytes(IServerSendable Item)
         {
             //Header Contents => EntityID, FlaggedToDelete, EntityType
@@ -229,31 +304,32 @@ namespace DeadZoneEngine
             return Data.ToArray();
         }
 
+        /// <summary>
+        /// Called once per frame
+        /// </summary>
         public static void FixedUpdate()
         {
-            /*Debug.Log("---- PreEntityCounts ----");
-            Debug.Log(InstantiatableDeletable.Count);
-            Debug.Log(PhysicsUpdatableObjects.Count);
-            Debug.Log(UpdatableObjects.Count);
-            Debug.Log(IteratableUpdatableObjects.Count);*/
+            InvDeltaTime = 1f / Time.deltaTime; //Calculate the recipricol of the amount of time that has passed since last frame
 
-            InvDeltaTime = 1f / Time.deltaTime;
+            UpdateManagedLists(); //Update DZEngine.ManagedLists
 
-            UpdateManagedLists();
-
+            //Push entites into DZEngine
             EntitesToPush.RemoveAll(I =>
             {
                 InstantiateAndAddEntity(I);
                 return true;
             });
 
+            //Remove deleted AbstractWorldEntities
             _AbstractWorldEntities.RemoveAll(I => 
             {
                 return DeleteHandle(I);
             });
 
+            //Remove deleted server entites and reset their recently updated check
             _ServerSendableObjects.RemoveAll(I =>
             {
+                I.RecentlyUpdated = false;
                 return DeleteHandle(I);
             });
 
@@ -272,14 +348,14 @@ namespace DeadZoneEngine
             {
                 if (!I.FlaggedToDelete && I.Active)
                 {
-                    I.BodyPhysicsUpdate(); //This is specific to creatures mainly to update self-righting bodies or other body animation specific physics
+                    I.BodyPhysicsUpdate(); //This is specific to entites mainly to update self-righting bodies or other body animation specific physics
                                            //its seperated and run in a seperate physics operation to prevent self-righting body physics from being counteracted from normal physics (such as gravity).
                                            //In other words this simply isolates the body physics from the standard physics
                 }
                 return DeleteHandle(I);
             });
 
-            //Check and resolve physics constraints (Joints etc) => Essentially update the isolated physics of just creature bodies
+            //Check and resolve physics constraints from impulse engine
             _IteratableUpdatableObjects.RemoveAll(I =>
             {
                 if (!I.FlaggedToDelete && I.Active)
@@ -299,20 +375,21 @@ namespace DeadZoneEngine
                 Physics2D.Simulate(1f / 60f / DZSettings.NumPhysicsIterations);
             }
 
-            //Restore the velocities back to normal, we are no longer considering the creature body in an isolated system
+            //Restore the velocities back to normal, we are no longer considering the entity in an isolated system
             for (int i = 0; i < _PhysicsUpdatableObjects.Count; i++)
             {
                 if (_PhysicsUpdatableObjects[i].Active)
                     _PhysicsUpdatableObjects[i].RestoreVelocity();
             }
 
+            //Update updatable entities
             for (int i = 0; i < _UpdatableObjects.Count; i++)
             {
                 if (_UpdatableObjects[i].Active)
                     _UpdatableObjects[i].Update(); 
             }
 
-            //Check and resolve physics constraints (Joints etc) => Essentially update the general physics of all bodies
+            //Check and resolve physics constraints from impulse engine
             for (int i = 0; i < _IteratableUpdatableObjects.Count; i++)
             {
                 if (_IteratableUpdatableObjects[i].Active)
@@ -329,6 +406,7 @@ namespace DeadZoneEngine
                 Physics2D.Simulate(1f / 60f / DZSettings.NumPhysicsIterations);
             }
 
+            //Render renderable entities
             _RenderableObjects.RemoveAll(I =>
             {
                 if (!I.FlaggedToDelete && I.Active)
@@ -338,12 +416,6 @@ namespace DeadZoneEngine
                 }
                 return DeleteHandle(I);
             });
-
-            /*Debug.Log("---- PostEntityCounts ----");
-            Debug.Log(InstantiatableDeletable.Count);
-            Debug.Log(PhysicsUpdatableObjects.Count);
-            Debug.Log(UpdatableObjects.Count);
-            Debug.Log(IteratableUpdatableObjects.Count);*/
         }
     }
 }

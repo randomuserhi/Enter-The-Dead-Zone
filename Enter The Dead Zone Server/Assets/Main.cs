@@ -7,12 +7,12 @@ using DeadZoneEngine.Entities;
 
 public static class Main
 {
-    //Coding my own sorting layers
+    //Sorting layers for rendering
     public enum SortingLayers
     {
         Default
     }
-    private static DZEngine.ManagedList<IRenderer<SpriteRenderer>> SpriteRenderers = new DZEngine.ManagedList<IRenderer<SpriteRenderer>>();
+    private static DZEngine.ManagedList<IRenderer<SpriteRenderer>> SpriteRenderers = new DZEngine.ManagedList<IRenderer<SpriteRenderer>>(); //List of SpriteRenderers
 
     static PlayerCreature P;
 

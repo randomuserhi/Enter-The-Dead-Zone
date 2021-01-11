@@ -32,6 +32,7 @@ public struct PlayerCreatureData
 public class PlayerCreature : AbstractCreature, IServerSendable
 {
     public int ServerObjectType { get; set; } = (int)DZSettings.EntityType.PlayerCreature;
+    public bool RecentlyUpdated { get; set; } = false;
 
     public struct PlayerStats
     {

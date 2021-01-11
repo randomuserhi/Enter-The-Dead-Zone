@@ -30,11 +30,18 @@ namespace Network.TCPUDP
             TCPReceiveBuffer = new byte[DataBufferSize];
         }
 
+        /// <summary>
+        /// Setup a UDP connection
+        /// </summary>
+        /// <param name="EndPoint"></param>
         public void UDPConnect(IPEndPoint EndPoint)
         {
             this.EndPoint = EndPoint;
         }
 
+        /// <summary>
+        /// Initialize connection with an incoming socket
+        /// </summary>
         public void TCPConnect(TcpClient IncomingSocket)
         {
             TCPSocket = IncomingSocket;
@@ -117,6 +124,11 @@ namespace Network.TCPUDP
             return false; //packet is over multiple deliveries, dont reset buffer
         }
 
+        /// <summary>
+        /// Handles the received data accordingly and passes it on to server handle
+        /// </summary>
+        /// <param name="Data">Recieved data</param>
+        /// <param name="Epoch">Time of packet arrival in epoch</param>
         public void UDPHandleData(byte[] Data, long Epoch)
         {
             ServerHandle.ProcessPacket(new Packet(Data), Epoch);
@@ -141,6 +153,9 @@ namespace Network.TCPUDP
             }
         }
 
+        /// <summary>
+        /// Disconnects TCP connection
+        /// </summary>
         public void TCPDisconnect()
         {
             try
@@ -157,11 +172,17 @@ namespace Network.TCPUDP
             }
         }
 
+        /// <summary>
+        /// Disconnects UDP connection
+        /// </summary>
         public void UDPDisconnect()
         {
             EndPoint = null;
         }
 
+        /// <summary>
+        /// Disconnects UDP and TCP connection
+        /// </summary>
         public void DisconnectAll()
         {
             Debug.Log("Disconnecting...");
@@ -173,7 +194,6 @@ namespace Network.TCPUDP
             Dispose(false);
         }
 
-        //https://stackoverflow.com/questions/18336856/implementing-idisposable-correctly
         public void Dispose()
         {
             Dispose(true);
@@ -208,6 +228,12 @@ namespace Network.TCPUDP
         public Action OnStart;
         public Action<int> OnTCPClientConnection;
 
+        /// <summary>
+        /// Creates a new TCPUDP Server
+        /// </summary>
+        /// <param name="Port">Port of socket</param>
+        /// <param name="MaxNumberConnections">Number of clients that may connect to the server</param>
+        /// <param name="DataBufferSize">Size of data buffer</param>
         public TCPUDPServer(int Port, int MaxNumberConnections, int DataBufferSize)
         {
             this.MaxNumberConnections = MaxNumberConnections;
@@ -230,6 +256,7 @@ namespace Network.TCPUDP
         /// <summary>
         /// Asynchronously listen for client connection
         /// </summary>
+        /// <param name="Timeout">Time in milliseconds untill connection will timeout, a value of -1 indicates no timeout</param>
         /// <returns></returns>
         public async Task Connect(int Timeout = -1)
         {
@@ -354,7 +381,6 @@ namespace Network.TCPUDP
             Dispose(false);
         }
 
-        //https://stackoverflow.com/questions/18336856/implementing-idisposable-correctly
         public void Dispose()
         {
             Dispose(true);
