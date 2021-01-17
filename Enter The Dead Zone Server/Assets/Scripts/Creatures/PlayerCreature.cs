@@ -70,6 +70,10 @@ public class PlayerCreature : AbstractCreature, IServerSendable
 
     public override void Update()
     {
+        //Test movement
+        Controller.Direction.x = Input.GetAxis("Horizontal");
+        Controller.Direction.y = Input.GetAxis("Vertical");
+
         UpdateBodyState();
         UpdateMovement();
     }

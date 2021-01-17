@@ -237,7 +237,7 @@ namespace DeadZoneEngine
             Debug.Log(UpdatableObjects.Count);
             Debug.Log(IteratableUpdatableObjects.Count);*/
 
-            InvDeltaTime = 1f / Time.deltaTime;
+            InvDeltaTime = Game.ClientTickRate;
 
             UpdateManagedLists();
 
@@ -297,7 +297,7 @@ namespace DeadZoneEngine
                         _IteratableUpdatableObjects[i].IteratedUpdate();
                 }
 
-                Physics2D.Simulate(1f / 60f / DZSettings.NumPhysicsIterations);
+                Physics2D.Simulate(Time.fixedDeltaTime / 2f / DZSettings.NumPhysicsIterations);
             }
 
             //Restore the velocities back to normal, we are no longer considering the creature body in an isolated system
@@ -327,7 +327,7 @@ namespace DeadZoneEngine
                         _IteratableUpdatableObjects[i].IteratedUpdate();
                 }
 
-                Physics2D.Simulate(1f / 60f / DZSettings.NumPhysicsIterations);
+                Physics2D.Simulate(Time.fixedDeltaTime / 2f / DZSettings.NumPhysicsIterations);
             }
 
             _RenderableObjects.RemoveAll(I =>

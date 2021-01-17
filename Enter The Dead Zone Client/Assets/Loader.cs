@@ -20,6 +20,7 @@ public class Loader
     private static void Start()
     {
         Application.quitting += Dispose;
+        Time.fixedDeltaTime = 1f / Game.ClientTickRate;
         Physics2D.simulationMode = SimulationMode2D.Script;
 
         TCPUDPClient = new TCPUDPClient(4096);

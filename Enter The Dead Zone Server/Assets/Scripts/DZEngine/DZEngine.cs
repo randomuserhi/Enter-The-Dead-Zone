@@ -309,7 +309,7 @@ namespace DeadZoneEngine
         /// </summary>
         public static void FixedUpdate()
         {
-            InvDeltaTime = 1f / Time.deltaTime; //Calculate the recipricol of the amount of time that has passed since last frame
+            InvDeltaTime = Game.ServerTickRate;
 
             UpdateManagedLists(); //Update DZEngine.ManagedLists
 
@@ -372,7 +372,7 @@ namespace DeadZoneEngine
                         _IteratableUpdatableObjects[i].IteratedUpdate();
                 }
 
-                Physics2D.Simulate(1f / 60f / DZSettings.NumPhysicsIterations);
+                Physics2D.Simulate(Time.fixedDeltaTime / 2f / DZSettings.NumPhysicsIterations);
             }
 
             //Restore the velocities back to normal, we are no longer considering the entity in an isolated system
@@ -403,7 +403,7 @@ namespace DeadZoneEngine
                         _IteratableUpdatableObjects[i].IteratedUpdate();
                 }
 
-                Physics2D.Simulate(1f / 60f / DZSettings.NumPhysicsIterations);
+                Physics2D.Simulate(Time.fixedDeltaTime / 2f / DZSettings.NumPhysicsIterations);
             }
 
             //Render renderable entities

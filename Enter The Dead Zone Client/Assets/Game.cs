@@ -14,10 +14,24 @@ public class Game
 {
     public static DZEngine.ManagedList<IServerSendable> ServerItems = new DZEngine.ManagedList<IServerSendable>();
     public static int ServerTickRate = 30;
+    public static int ClientTickRate = 60;
+
+    private static float ConversionRate = 0.5f;
+
+    private static ulong TrueClientTicks = 0;
     public static ulong ClientTicks = 0;
+
+    private struct Snapshot
+    {
+        public ulong Ticks;
+    }
+
+    private static Snapshot PrevSnapshot;
 
     public static void FixedUpdate()
     {
+        TrueClientTicks++;
+        ClientTicks = (ulong)(TrueClientTicks * ConversionRate);
     }
 
     public static void UnWrapSnapshot(PacketWrapper Packet)
@@ -25,6 +39,13 @@ public class Game
         Packet P = Packet.Data;
         ServerTickRate = P.ReadInt();
         ulong ServerTick = P.ReadULong();
+
+        if (PrevSnapshot.Ticks >= ServerTick)
+        {
+            return;
+        }
+
+        ConversionRate = (float)ServerTickRate / ClientTickRate;
 
         int NumSnapshotItems = P.ReadInt();
         for (int i = 0; i < NumSnapshotItems; i++)
@@ -44,7 +65,7 @@ public class Game
                 ServerItem = Parse(P, ID, Type);
             if (ServerItem == null)
             {
-                Debug.LogError("Unable to Parse item from server snapshot");
+                Debug.LogWarning("Unable to Parse item from server snapshot");
                 return;
             }
 
@@ -58,6 +79,8 @@ public class Game
                 DZEngine.Destroy(Item);
             }
         }
+
+        PrevSnapshot.Ticks = ServerTick; 
     }
 
     private static IServerSendable Parse(Packet P, ulong ID, DZSettings.EntityType Type)
