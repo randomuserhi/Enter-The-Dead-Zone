@@ -12,7 +12,8 @@ public static class DZSettings
     public enum EntityType //Different entity types
     {
         Null,
-        PlayerCreature
+        PlayerCreature,
+        Tilemap
     }
 
     public static int NumPhysicsIterations = 10; //Number of physics iterations the impulse engine uses

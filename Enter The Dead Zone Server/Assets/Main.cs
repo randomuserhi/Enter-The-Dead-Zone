@@ -14,36 +14,10 @@ public static class Main
     }
     private static DZEngine.ManagedList<IRenderer<SpriteRenderer>> SpriteRenderers = new DZEngine.ManagedList<IRenderer<SpriteRenderer>>(); //List of SpriteRenderers
 
-    static PlayerCreature P;
-
     // Start is called before the first frame update
     public static void Start()
     {
-        P = new PlayerCreature();
-
-        Tilemap T1 = (Tilemap)new Tilemap(32, 48, new Vector2Int(4, 2), 1f);
-        Tilemap T2 = (Tilemap)new Tilemap(32, 48, new Vector2Int(4, 2), 1f);
-
-        Tile[] WallMap = new Tile[12]
-            {
-                new Tile(0, 1, 2, 1), new Tile(1), new Tile(0, 1, 2, 1), new Tile(1),
-                new Tile(1), new Tile(0, 1, 2, 1), new Tile(1), new Tile(0, 1, 2, 1),
-                new Tile(0, 1, 2, 1), new Tile(1), new Tile(0, 1, 2, 1), new Tile(1)
-            };
-
-        Tile[] FloorMap = new Tile[12]
-            {
-                new Tile(0, 1, 0), new Tile(0, 1, 0), new Tile(0, 1, 0), new Tile(0, 1, 0),
-                new Tile(0, 1, 0), new Tile(0, 1, 0), new Tile(0, 1, 0), new Tile(0, 1, 0),
-                new Tile(0, 1, 0), new Tile(0, 1, 0), new Tile(0, 1, 0), new Tile(0, 1, 0)
-            };
-
-        T1.Resize(new Vector2Int(4, 3), FloorMap, WallMap);
-        T1.Resize(new Vector2Int(4, 2), FloorMap, WallMap);
-        T1.ReleaseUnusedResources();
     }
-
-    public static bool TestDelete = false;
 
     // Update is called once per frame
     public static void FixedUpdate()
@@ -54,7 +28,11 @@ public static class Main
                 Renderer.RenderObject.sortingOrder = Mathf.RoundToInt(-Renderer.RenderObject.transform.position.y) * 2 + 1;
         }
 
-        if (TestDelete)
-            DZEngine.Destroy(P);
+        /*for (int i = 0; i < DZEngine.AbstractWorldEntities.Count; i++)
+        {
+            Tilemap T = DZEngine.AbstractWorldEntities[i] as Tilemap;
+            if (T != null)
+                Debug.Log((ulong)T.ID + ":" + T.FlaggedToDelete);
+        }*/
     }
 }

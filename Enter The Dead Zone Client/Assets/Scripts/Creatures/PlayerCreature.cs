@@ -14,21 +14,6 @@ public class PlayerController
     public Vector2 Direction;
 }
 
-//Wrapper for player creature data for intialization
-public struct PlayerCreatureData
-{
-    public BodyChunk A;
-    public BodyChunk B;
-    public DistanceJoint J;
-
-    public PlayerCreatureData(BodyChunk A, BodyChunk B, DistanceJoint J)
-    {
-        this.A = A;
-        this.B = B;
-        this.J = J;
-    }
-}
-
 public class PlayerCreature : AbstractCreature, IServerSendable
 {
     public int ServerObjectType { get; set; } = (int)DZSettings.EntityType.PlayerCreature;
@@ -41,42 +26,40 @@ public class PlayerCreature : AbstractCreature, IServerSendable
 
     private enum BodyState
     {
-        UprightTest, //For testing physics system
+        UprightTest,
         Limp,
         Standing
     }
-    
-    private BodyState State;
-    private PlayerController Controller;
-    public PlayerStats Stats;
+
+    private BodyState State; //Ragdoll state
+    private PlayerController Controller; //Controller for player movement
+    public PlayerStats Stats; //General player stats
 
     private float[] DynamicRunSpeed; //Controls Speed of each bodychunk
 
     public PlayerCreature(ulong ID) : base(ID)
     {
-        Set(new PlayerCreatureData(new BodyChunk(this), new BodyChunk(this), new DistanceJoint()));
+        Initialize();
     }
 
     public PlayerCreature()
     {
-        Set(new PlayerCreatureData(new BodyChunk(this), new BodyChunk(this), new DistanceJoint()));
+        Initialize();
     }
 
-    public void Set(object Data)
+    private void Initialize()
     {
-        PlayerCreatureData Wrapper = (PlayerCreatureData)Data;
-
         Controller = new PlayerController();
         State = BodyState.Standing;
-        Stats.RunSpeed = 1f;
+        Stats.RunSpeed = 2f;
 
         BodyChunks = new BodyChunk[2];
-        BodyChunks[0] = Wrapper.A;
-        BodyChunks[1] = Wrapper.B;
+        BodyChunks[0] = new BodyChunk(this);
+        BodyChunks[1] = new BodyChunk(this);
         SetGravity(0f);
 
         BodyChunkConnections = new DistanceJoint[1];
-        BodyChunkConnections[0] = Wrapper.J;
+        BodyChunkConnections[0] = new DistanceJoint();
         BodyChunkConnections[0].Set(new DistanceJointData(BodyChunks[0], BodyChunks[1], 1.5f, Vector2.zero));
         BodyChunkConnections[0].Active = false;
 
@@ -133,7 +116,6 @@ public class PlayerCreature : AbstractCreature, IServerSendable
                 break;
             case BodyState.Standing:
                 {
-                    //TODO:: implement friction of different surfaces (harder to accelerate on ice, feet cant gain traction (similar to ice in minecraft))
                     DynamicRunSpeed[0] = 1f;
                     DynamicRunSpeed[1] = 3f;
                     BodyChunks[0].Velocity += new Vector2(Stats.RunSpeed * DynamicRunSpeed[0] * Controller.Direction.x, 0);
@@ -166,13 +148,13 @@ public class PlayerCreature : AbstractCreature, IServerSendable
                 break;
             case BodyState.Limp:
                 {
-                    SetGravity(0f); //For upright test
+                    SetGravity(0f);
                     BodyChunkConnections[0].Active = true;
                 }
                 break;
             case BodyState.Standing:
                 {
-                    SetGravity(0f); //For upright test
+                    SetGravity(0f);
                     BodyChunkConnections[0].Active = false;
 
                     float Dist = Vector2.Distance(BodyChunks[0].Position, BodyChunks[1].Position);
@@ -193,6 +175,13 @@ public class PlayerCreature : AbstractCreature, IServerSendable
         BodyChunks[1].Gravity = Gravity;
     }
 
+    protected override void OnDelete()
+    {
+        BodyChunks[0].Delete();
+        BodyChunks[1].Delete();
+        BodyChunkConnections[0].Delete();
+    }
+
     public override byte[] GetBytes()
     {
         List<byte> Data = new List<byte>();
@@ -202,7 +191,7 @@ public class PlayerCreature : AbstractCreature, IServerSendable
         return Data.ToArray();
     }
 
-    public override void ParseBytes(Network.Packet Data, ulong ServerTick)
+    public override void ParseBytes(DZNetwork.Packet Data, ulong ServerTick)
     {
         BodyChunks[0].ParseBytes(Data, ServerTick);
         BodyChunks[1].ParseBytes(Data, ServerTick);

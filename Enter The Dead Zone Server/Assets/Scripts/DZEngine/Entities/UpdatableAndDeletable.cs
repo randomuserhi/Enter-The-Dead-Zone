@@ -28,7 +28,7 @@ namespace DeadZoneEngine.Entities
         int ServerObjectType { get; set; } //Type of entity
         bool RecentlyUpdated { get; set; } //Has this entity recently been acknowledged by server
         byte[] GetBytes(); //Convert the entity into byte data
-        void ParseBytes(Network.Packet Data, ulong ServerTick); //Parse byte data into this entity
+        void ParseBytes(DZNetwork.Packet Data, ulong ServerTick); //Parse byte data into this entity
     }
 
     /// <summary>

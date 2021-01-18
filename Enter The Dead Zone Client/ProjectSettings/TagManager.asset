@@ -38,6 +38,9 @@ TagManager:
   - 
   - VirtualCamera
   m_SortingLayers:
+  - name: Floor
+    uniqueID: 4392729
+    locked: 0
   - name: Default
     uniqueID: 0
     locked: 0

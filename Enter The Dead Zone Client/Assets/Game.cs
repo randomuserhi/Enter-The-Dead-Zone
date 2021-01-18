@@ -8,10 +8,12 @@ using UnityEngine;
 using DeadZoneEngine;
 using DeadZoneEngine.Entities;
 using DeadZoneEngine.Entities.Components;
-using Network;
+using DZNetwork;
 
 public class Game
 {
+    public static byte NumLocalPlayers = 0;
+
     public static DZEngine.ManagedList<IServerSendable> ServerItems = new DZEngine.ManagedList<IServerSendable>();
     public static int ServerTickRate = 30;
     public static int ClientTickRate = 60;
@@ -31,14 +33,32 @@ public class Game
     public static void FixedUpdate()
     {
         TrueClientTicks++;
-        ClientTicks = (ulong)(TrueClientTicks * ConversionRate);
+
+        //Framerate of client may not be the same as tick rate, this ensures that tickupdate is called at the correct timings or close to the correct timings
+        ulong ClientTickUpdate = (ulong)(TrueClientTicks * ConversionRate);
+        if (ClientTickUpdate != ClientTicks)
+        {
+            ClientTicks = ClientTickUpdate;
+            TickUpdate();
+        }
     }
 
-    public static void UnWrapSnapshot(PacketWrapper Packet)
+    private static void TickUpdate()
     {
-        Packet P = Packet.Data;
-        ServerTickRate = P.ReadInt();
-        ulong ServerTick = P.ReadULong();
+        Loader.Client.FixedUpdate();
+        if (!Loader.Client.Connected)
+            return;
+
+        Packet PingPacket = new Packet();
+        PingPacket.Write((int)ServerCode.ClientPing);
+        PingPacket.Write(NumLocalPlayers);
+        Loader.Client.Send(PingPacket);
+    }
+
+    public static void UnWrapSnapshot(Packet Packet)
+    {
+        ServerTickRate = Packet.ReadInt();
+        ulong ServerTick = Packet.ReadULong();
 
         if (PrevSnapshot.Ticks >= ServerTick)
         {
@@ -47,12 +67,12 @@ public class Game
 
         ConversionRate = (float)ServerTickRate / ClientTickRate;
 
-        int NumSnapshotItems = P.ReadInt();
+        int NumSnapshotItems = Packet.ReadInt();
         for (int i = 0; i < NumSnapshotItems; i++)
         {
-            ulong ID = P.ReadULong();
+            ulong ID = Packet.ReadULong();
             _IInstantiatableDeletable Item = EntityID.GetObject(ID);
-            bool FlaggedToDelete = P.ReadBool();
+            bool FlaggedToDelete = Packet.ReadBool();
             if (FlaggedToDelete)
             {
                 if (Item != null)
@@ -60,16 +80,16 @@ public class Game
                 continue;
             }
             IServerSendable ServerItem = Item as IServerSendable;
-            DZSettings.EntityType Type = (DZSettings.EntityType)P.ReadInt();
+            DZSettings.EntityType Type = (DZSettings.EntityType)Packet.ReadInt();
             if (ServerItem == null)
-                ServerItem = Parse(P, ID, Type);
+                ServerItem = Parse(Packet, ID, Type);
             if (ServerItem == null)
             {
                 Debug.LogWarning("Unable to Parse item from server snapshot");
                 return;
             }
 
-            ServerItem.ParseBytes(P, ServerTick);
+            ServerItem.ParseBytes(Packet, ServerTick);
             ServerItem.RecentlyUpdated = true;
         }
         foreach (IServerSendable Item in ServerItems)
@@ -88,9 +108,20 @@ public class Game
         switch (Type)
         {
             case DZSettings.EntityType.PlayerCreature: return new PlayerCreature(ID);
+            case DZSettings.EntityType.Tilemap: return new Tilemap(ID);
             case DZSettings.EntityType.Null: return null;
             default: Debug.LogWarning("Parsing unknown entity type");  return null;
         }
+    }
+
+    public static void Connected()
+    {
+        Debug.Log("Client Connected");
+    }
+
+    public static void Disconnected()
+    {
+        Debug.Log("Client Disconnected");
     }
 }
 

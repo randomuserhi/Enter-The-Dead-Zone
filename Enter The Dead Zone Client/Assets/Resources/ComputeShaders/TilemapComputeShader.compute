@@ -1,0 +1,44 @@
+﻿#pragma kernel TilemapRender
+
+struct Tile
+{
+	int NumFrames; //Total number of animation frames
+	int AnimationFrame; //Which animation frame to render
+	int TileIndex; //Which tile from the tile pallet
+	int Blank; //Is this tile blank
+	int Render; //Should this tile be rendered
+};
+
+RWTexture2D<float4>Result;
+Texture2D<float4> TilePallet;
+RWStructuredBuffer<Tile> Map;
+int TileStride;
+int TilePalletCount;
+uint MapWidth;
+uint MapHeight;
+int TileWidth;
+int TileHeight;
+//TODO:: maybe implement some type of transparency colour
+
+//Produces a tilemap texture using the provided tilemappallet
+[numthreads(4,4,1)]
+void TilemapRender(uint3 id : SV_DispatchThreadID)
+{
+	if (id.x < MapWidth && id.y < MapHeight)
+	{
+		Tile T = Map[id.y * MapWidth + id.x];
+		if (T.Blank == 0 && T.Render == 1)
+		{
+			for (int x = 0; x < TileWidth; x++)
+			{
+				for (int y = 0; y < TileHeight; y++)
+				{
+					//Calculate what pixel to render onto the texture from the tilepallet
+					uint2 TilePalletIndex = uint2(T.AnimationFrame * TileWidth + x, (TilePalletCount - T.TileIndex - 1) * TileStride + y);
+					uint2 RenderIndex = uint2(id.x * TileWidth + x, (MapHeight - id.y - 1) * TileHeight + y);
+					Result[RenderIndex] = TilePallet[TilePalletIndex];
+				}
+			}
+		}
+	}
+}

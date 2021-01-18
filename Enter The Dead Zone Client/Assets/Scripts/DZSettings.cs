@@ -9,7 +9,8 @@ public static class DZSettings
     public enum EntityType
     {
         Null,
-        PlayerCreature
+        PlayerCreature,
+        Tilemap
     }
 
     public static int NumPhysicsIterations = 10;

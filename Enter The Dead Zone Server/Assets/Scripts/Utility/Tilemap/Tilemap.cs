@@ -42,8 +42,11 @@ public class TilePallet
     public int[] FrameCount; //Number of animation frames for each tile
 }
 
-public class Tilemap : AbstractWorldEntity, IUpdatable, IRenderer
+public class Tilemap : AbstractWorldEntity, IUpdatable, IRenderer, IServerSendable
 {
+    public int ServerObjectType { get; set; } = (int)DZSettings.EntityType.Tilemap;
+    public bool RecentlyUpdated { get; set; } = false;
+
     public int SortingLayer { get; set; }
 
     //ComputeShaders for GPU for rendering wall and floor tilemaps
@@ -100,12 +103,12 @@ public class Tilemap : AbstractWorldEntity, IUpdatable, IRenderer
         WallMap = new Tile[TilemapSize.x * TilemapSize.y];
         Initialize();
     }
-    public Tilemap(ulong ID, int TileDimension, int WallTileHeight, Vector2Int TilemapSize, float TilesPerUnit = 1) : base(ID)
+    public Tilemap(ulong ID) : base(ID)
     {
-        this.TileDimension = TileDimension;
-        this.WallTileHeight = WallTileHeight;
-        this.TilemapSize = TilemapSize;
-        this.TilesPerUnit = TilesPerUnit;
+        TileDimension = 32;
+        WallTileHeight = 32;
+        TilemapSize = Vector2Int.zero;
+        TilesPerUnit = 1;
         FloorMap = new Tile[TilemapSize.x * TilemapSize.y];
         WallMap = new Tile[TilemapSize.x * TilemapSize.y];
         Initialize();
@@ -530,11 +533,78 @@ public class Tilemap : AbstractWorldEntity, IUpdatable, IRenderer
 
     public override byte[] GetBytes()
     {
-        throw new NotImplementedException();
+        List<byte> Data = new List<byte>();
+        Data.AddRange(BitConverter.GetBytes(-1)); //Tilemap pallet
+        Data.AddRange(BitConverter.GetBytes(Self.transform.position.x)); //Tilemap position
+        Data.AddRange(BitConverter.GetBytes(Self.transform.position.y));
+        Data.AddRange(BitConverter.GetBytes(TilemapSize.x));
+        Data.AddRange(BitConverter.GetBytes(TilemapSize.y));
+        Data.AddRange(BitConverter.GetBytes(TilesPerUnit));
+        Data.AddRange(BitConverter.GetBytes(WallTileHeight));
+        int Volume = TilemapSize.x * TilemapSize.y;
+        for (int i = 0; i < Volume; i++)
+        {
+            Tile T = FloorMap[i];
+            Data.AddRange(BitConverter.GetBytes(T.Blank));
+            if (T.Blank == 0)
+            {
+                Data.AddRange(BitConverter.GetBytes(T.Render));
+                Data.AddRange(BitConverter.GetBytes(T.TileIndex));
+                Data.AddRange(BitConverter.GetBytes(T.AnimationFrame));
+            }
+        }
+        for (int i = 0; i < Volume; i++)
+        {
+            Tile T = WallMap[i];
+            Data.AddRange(BitConverter.GetBytes(T.Blank));
+            if (T.Blank == 0)
+            {
+                Data.AddRange(BitConverter.GetBytes(T.Render));
+                Data.AddRange(BitConverter.GetBytes(T.TileIndex));
+                Data.AddRange(BitConverter.GetBytes(T.AnimationFrame));
+            }
+        }
+        return Data.ToArray();
     }
 
-    public override void ParseBytes(Network.Packet Data, ulong ServerTick)
+    public override void ParseBytes(DZNetwork.Packet Data, ulong ServerTick)
     {
-        throw new NotImplementedException();
+        int TilePalletIndex = Data.ReadInt();
+        if (TilePalletIndex == -1)
+            GenerateDefaultTileData();
+
+        Self.transform.position = new Vector3(Data.ReadFloat(), Data.ReadFloat());
+
+        Vector2Int TilemapSize = new Vector2Int(Data.ReadInt(), Data.ReadInt());
+        TilesPerUnit = Data.ReadFloat();
+        WallTileHeight = Data.ReadInt();
+
+        int Volume = TilemapSize.x * TilemapSize.y;
+
+        Tile[] FloorMap = new Tile[Volume];
+        for (int i = 0; i < Volume; i++)
+        {
+            int Blank = Data.ReadInt();
+            FloorMap[i].Blank = Blank;
+            if (Blank == 1)
+                continue;
+            FloorMap[i].Render = Data.ReadInt();
+            FloorMap[i].TileIndex = Data.ReadInt();
+            FloorMap[i].AnimationFrame = Data.ReadInt();
+        }
+
+        Tile[] WallMap = new Tile[Volume];
+        for (int i = 0; i < Volume; i++)
+        {
+            int Blank = Data.ReadInt();
+            WallMap[i].Blank = Blank;
+            if (Blank == 1)
+                continue;
+            WallMap[i].Render = Data.ReadInt();
+            WallMap[i].TileIndex = Data.ReadInt();
+            WallMap[i].AnimationFrame = Data.ReadInt();
+        }
+
+        Resize(TilemapSize, FloorMap, WallMap);
     }
 }

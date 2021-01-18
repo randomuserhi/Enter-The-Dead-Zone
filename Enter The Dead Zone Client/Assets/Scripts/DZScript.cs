@@ -5,35 +5,22 @@ using UnityEngine;
 using DeadZoneEngine;
 using DeadZoneEngine.Entities;
 
+//Unity Script to update DZEngine
 public class DZScript : MonoBehaviour
 {
-    //Coding my own sorting layers
-    public enum SortingLayers
-    {
-        Default
-    }
-    private static DZEngine.ManagedList<IRenderer<SpriteRenderer>> SpriteRenderers = new DZEngine.ManagedList<IRenderer<SpriteRenderer>>();
-
-    // Start is called before the first frame update
-    void Start()
+    public void Start()
     {
         DZEngine.Initialize();
-        
+        Main.Start();
     }
 
-    // Update is called once per frame
-    void FixedUpdate()
+    public void FixedUpdate()
     {
         DZEngine.FixedUpdate();
-
-        foreach (IRenderer<SpriteRenderer> Renderer in SpriteRenderers)
-        {
-            if (Renderer.SortingLayer == (int)SortingLayers.Default)
-                Renderer.RenderObject.sortingOrder = Mathf.RoundToInt(-Renderer.RenderObject.transform.position.y) * 2 + 1;
-        }
+        Main.FixedUpdate();
     }
 
-    void OnApplicationQuit()
+    private void OnApplicationQuit()
     {
         DZEngine.ReleaseResources();
     }

@@ -2,13 +2,13 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-using Network;
+using DZNetwork;
 
 public enum ServerCode //TODO somehow implement / catch disconnection => its not a packet so not sure how to do this
 {
     EstablishUPDConnection,
     UDPConnectionEstablished,
-
+    ClientPing,
     SnapshotData
 }
 
@@ -19,16 +19,8 @@ public class ServerHandler : MonoBehaviour
     {
         ServerHandle.PacketHandle = (Packet) =>
         {
-
-            int SizeOfPacket = Packet.Data.ReadInt();
-            long Epoch = Packet.Data.ReadLong();
-            int ClientIndex = Packet.Data.ReadInt();
-            ServerCode Job = (ServerCode)Packet.Data.ReadInt();
-
-            PerformServerAction(SizeOfPacket, ClientIndex, Packet, Job);
-
-            ServerHandle.Ping = (int)(Packet.Epoch - Epoch);
-
+            ServerCode Job = (ServerCode)Packet.ReadInt();
+            PerformServerAction(Packet, Job);
         };
     }
 
@@ -37,13 +29,12 @@ public class ServerHandler : MonoBehaviour
         
     }
 
-    private void PerformServerAction(int SizeOfPacket, int ClientIndex, PacketWrapper Packet, ServerCode Job)
+    private void PerformServerAction(Packet Packet, ServerCode Job)
     { 
         switch (Job)
         {
             case ServerCode.EstablishUPDConnection:
                 Debug.Log("ServerHandler.EstablishUPDConnection");
-                Loader.UDPConnectToServer(ClientIndex);
                 break;
             case ServerCode.UDPConnectionEstablished:
                 Debug.Log("ServerHandler.UDPConnectionEstablished");

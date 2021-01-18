@@ -2,13 +2,13 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-using Network;
+using DZNetwork;
 
 public enum ServerCode //TODO somehow implement / catch disconnection => its not a packet so not sure how to do this
 {
     EstablishUPDConnection,
     UDPConnectionEstablished,
-
+    ClientPing,
     SnapshotData
 }
 
@@ -19,32 +19,12 @@ public class ServerHandler : MonoBehaviour
     {
         ServerHandle.PacketHandle = (Packet) =>
         {
-
-            int SizeOfPacket = Packet.Packet.ReadInt();
-            long Epoch = Packet.Packet.ReadLong();
-            int ClientIndex = Packet.Packet.ReadInt();
-            ServerCode Job = (ServerCode)Packet.Packet.ReadInt();
-
-            PerformServerAction(SizeOfPacket, ClientIndex, Packet, Job);
-
-            ServerHandle.Ping = (int)(Packet.Epoch - Epoch);
-
+            ServerCode Job = (ServerCode)Packet.ReadInt();
+            PerformServerAction(Packet, Job);
         };
     }
 
-    public static void Initialise()
-    {
-        Network.TCPUDP.TCPUDPServer Server = Loader.TCPUDPServer;
-
-        Server.OnTCPClientConnection += (ClientIndex) =>
-        {
-            Packet EstablishPacket = new Packet();
-            EstablishPacket.Write((int)ServerCode.EstablishUPDConnection);
-            Server.TCPSendMessage(EstablishPacket, ClientIndex);
-        };
-    }
-
-    private void PerformServerAction(int SizeOfPacket, int ClientIndex, PacketWrapper Packet, ServerCode Job)
+    private void PerformServerAction(Packet Packet, ServerCode Job)
     {
         switch(Job)
         {
@@ -52,12 +32,17 @@ public class ServerHandler : MonoBehaviour
                 Debug.Log("ServerHandle.EstablishUDPConnection");
                 break;
             case ServerCode.UDPConnectionEstablished:
-                Debug.Log("Client " + ClientIndex + " succesfully connected.");
-                Game.AddClient(ClientIndex);
-                break;
+                Debug.Log("Client succesfully connected.");
 
+                Packet Response = new Packet();
+                Response.Write((int)ServerCode.UDPConnectionEstablished);
+                Loader.Server.Send(Response); //TODO:: change to TCP and re-write network code
+                break;
+            case ServerCode.ClientPing:
+                Debug.Log(Packet.ReadByte() + " number of players");
+                break;
             default:
-                Debug.LogError("Unknown ServerCode: " + Job + ", from Client " + ClientIndex);
+                Debug.LogError("Unknown ServerCode: " + Job);
                 break;
         }
     }

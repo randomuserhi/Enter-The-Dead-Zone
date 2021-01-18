@@ -14,14 +14,17 @@ namespace DeadZoneEngine.Entities
 
         public static ulong StaticID = 0;
 
+        public AbstractWorldEntity Self;
         public ulong Value;
         public EntityID(AbstractWorldEntity Self)
         {
+            this.Self = Self;
             Value = StaticID++; //TODO:: add case where StaticID == ulong.MaxValue
             IDToObject.Add(Value, Self);
         }
         public EntityID(AbstractWorldEntity Self, ulong ID)
         {
+            this.Self = Self;
             if (IDToObject.ContainsKey(ID))
             {
                 Debug.LogError("EntityID(ulong ID) => ID " + ID + " already exists!");
@@ -29,6 +32,27 @@ namespace DeadZoneEngine.Entities
             }
             Value = ID;
             IDToObject.Add(Value, Self);
+        }
+
+        public void ChangeID(ulong New, bool Replace = false)
+        {
+            if (IDToObject.ContainsKey(New))
+            {
+                if (Replace && IDToObject[New] != Self)
+                {
+                    DZEngine.Destroy(IDToObject[New]);
+                    IDToObject[New] = Self;
+                }
+                else
+                {
+                    Debug.LogError("Could not change ID as an object at that ID already exists...");
+                }
+            }
+            else
+            {
+                IDToObject.Add(New, IDToObject[Value]);
+                Remove(this);
+            }
         }
 
         public static void Remove(EntityID ID)
@@ -100,7 +124,7 @@ namespace DeadZoneEngine.Entities
             OnCreate();
             return this;
         }
-        public virtual void OnCreate() { }
+        protected virtual void OnCreate() { }
 
         public void Delete()
         {
@@ -112,6 +136,6 @@ namespace DeadZoneEngine.Entities
         protected virtual void OnDelete() { }
 
         public abstract byte[] GetBytes();
-        public abstract void ParseBytes(Network.Packet Data, ulong ServerTick);
+        public abstract void ParseBytes(DZNetwork.Packet Data, ulong ServerTick);
     }
 }

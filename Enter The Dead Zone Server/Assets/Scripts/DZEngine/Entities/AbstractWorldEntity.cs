@@ -8,23 +8,23 @@ using UnityEngine;
 
 namespace DeadZoneEngine.Entities
 {
-    /// <summary>
-    /// Handles providing unique IDs for all server-bound entities
-    /// </summary>
     public class EntityID
     {
         public static Dictionary<ulong, _IInstantiatableDeletable> IDToObject = new Dictionary<ulong, _IInstantiatableDeletable>();
 
         public static ulong StaticID = 0;
 
+        public AbstractWorldEntity Self;
         public ulong Value;
         public EntityID(AbstractWorldEntity Self)
         {
+            this.Self = Self;
             Value = StaticID++; //TODO:: add case where StaticID == ulong.MaxValue
             IDToObject.Add(Value, Self);
         }
         public EntityID(AbstractWorldEntity Self, ulong ID)
         {
+            this.Self = Self;
             if (IDToObject.ContainsKey(ID))
             {
                 Debug.LogError("EntityID(ulong ID) => ID " + ID + " already exists!");
@@ -34,10 +34,27 @@ namespace DeadZoneEngine.Entities
             IDToObject.Add(Value, Self);
         }
 
-        /// <summary>
-        /// Removes an entity from the ID list
-        /// </summary>
-        /// <param name="ID">ID to remove</param>
+        public void ChangeID(ulong New, bool Replace = false)
+        {
+            if (IDToObject.ContainsKey(New))
+            {
+                if (Replace && IDToObject[New] != Self)
+                {
+                    DZEngine.Destroy(IDToObject[New]);
+                    IDToObject[New] = Self;
+                }
+                else
+                {
+                    Debug.LogError("Could not change ID as an object at that ID already exists...");
+                }
+            }
+            else
+            {
+                IDToObject.Add(New, IDToObject[Value]);
+                Remove(this);
+            }
+        }
+
         public static void Remove(EntityID ID)
         {
             if (IDToObject.ContainsKey(ID))
@@ -46,9 +63,6 @@ namespace DeadZoneEngine.Entities
                 Debug.LogError("EntityID.Remove(EntityID ID) => ID " + ID + " does not exist!");
         }
 
-        /// <summary>
-        /// Returns an entity from ID, if no entity is found returns null
-        /// </summary>
         public static _IInstantiatableDeletable GetObject(ulong ID)
         {
             if (IDToObject.ContainsKey(ID))
@@ -56,9 +70,6 @@ namespace DeadZoneEngine.Entities
             return null;
         }
 
-        /// <summary>
-        /// Checks if an entity of the given ID exists
-        /// </summary>
         public static bool Exists(ulong ID)
         {
             return IDToObject.ContainsKey(ID);
@@ -69,7 +80,6 @@ namespace DeadZoneEngine.Entities
             return ID.Value;
         }
 
-        //Override equality operations
         public override bool Equals(object Obj)
         {
             return Obj is EntityID && this == (EntityID)Obj;
@@ -88,51 +98,34 @@ namespace DeadZoneEngine.Entities
         }
     }
 
-    /// <summary>
-    /// Abstract entity that describes all entities
-    /// </summary>
     public abstract class AbstractWorldEntity : _IInstantiatableDeletable
     {
-        public EntityID ID { get; set; } = null; //If an entity is not server-bound no ID needs to be provided (null value)
+        public EntityID ID { get; set; } = null;
         public AbstractWorldEntity()
         {
-            if (this is IServerSendable) //Check if an entity is server-bound and generate an ID for it
+            if (this is IServerSendable)
                 ID = new EntityID(this);
-            DZEngine.EntitesToPush.Add(this); //Add entity to DZEngine
+            DZEngine.EntitesToPush.Add(this);
         }
-        public AbstractWorldEntity(ulong ID) //Creates an entity with the given ID
+        public AbstractWorldEntity(ulong ID)
         {
-            if (this is IServerSendable) //Check if an entity is server-bound and generate an ID for it
+            if (this is IServerSendable)
                 this.ID = new EntityID(this, ID);
-            DZEngine.EntitesToPush.Add(this); //Add entity to DZEngine
+            DZEngine.EntitesToPush.Add(this);
         }
 
         public bool Active { get; set; } = true;
         public bool FlaggedToDelete { get; set; } = false;
         public bool Disposed { get; set; } = false;
 
-        /// <summary>
-        /// Called before constructor to initialize base values
-        /// </summary>
         public virtual void Instantiate() { }
-
-        /// <summary>
-        /// Is used when values need to be initialized after constructor
-        /// </summary>
-        /// <returns>Self</returns>
-        public object Create() 
+        public object Create()
         {
             OnCreate();
             return this;
         }
-        /// <summary>
-        /// Called on Create()
-        /// </summary>
         protected virtual void OnCreate() { }
 
-        /// <summary>
-        /// Primes object for deletion
-        /// </summary>
         public void Delete()
         {
             FlaggedToDelete = true;
@@ -140,22 +133,9 @@ namespace DeadZoneEngine.Entities
                 EntityID.Remove(ID);
             OnDelete();
         }
-        /// <summary>
-        /// Is called on Delete()
-        /// </summary>
         protected virtual void OnDelete() { }
 
-        /// <summary>
-        /// Returns the bytes representing an entity
-        /// </summary>
-        /// <returns></returns>
         public abstract byte[] GetBytes();
-
-        /// <summary>
-        /// Parse bytes from a packet into this entity
-        /// </summary>
-        /// <param name="Data">Packet Data</param>
-        /// <param name="ServerTick">Tick timing for when packet was sent from server</param>
-        public abstract void ParseBytes(Network.Packet Data, ulong ServerTick);
+        public abstract void ParseBytes(DZNetwork.Packet Data, ulong ServerTick);
     }
 }

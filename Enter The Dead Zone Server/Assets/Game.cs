@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using UnityEngine;
 using DeadZoneEngine;
 using Templates;
-using Network;
+using DZNetwork;
 using DeadZoneEngine.Entities;
 
 /// <summary>
@@ -15,7 +15,8 @@ using DeadZoneEngine.Entities;
 /// </summary>
 public class Game
 {
-    public readonly static Dictionary<int, Player> Clients = new Dictionary<int, Player>();
+    public static Dictionary<System.Net.EndPoint, Client> ConnectedClients = new Dictionary<System.Net.EndPoint, Client>();
+
     public static ulong ServerTicks = 0;
     public static int ServerTickRate = 30;
 
@@ -24,14 +25,13 @@ public class Game
     /// </summary>
     public static void FixedUpdate()
     {
+        Loader.Server.FixedUpdate();
+
         ServerTicks++;
-        foreach (Player P in Clients.Values) //Send a snapshot of the world to each client
-        {
-            SendSnapshot(P);
-        }
+        SendSnapshot();
     }
 
-    private static void SendSnapshot(Player Client) //Sends world snapshot to given client
+    private static void SendSnapshot() //Sends world snapshot to given client
     {
         Packet SnapshotPacket = new Packet();
         SnapshotPacket.Write((int)ServerCode.SnapshotData);
@@ -44,19 +44,23 @@ public class Game
             SnapshotPacket.Write(DZEngine.GetBytes(DZEngine.ServerSendableObjects[i]));
         }
 
-        Debug.Log("SnapShotSent");
-        Loader.TCPUDPServer.UDPSendMessage(SnapshotPacket, Client.ClientIndex);
+        Loader.Server.Send(SnapshotPacket);
     }
 
-    /// <summary>
-    /// Adds a given client to the game world
-    /// </summary>
-    /// <param name="ClientIndex"></param>
-    public static void AddClient(int ClientIndex)
+    
+    public static void AddConnection(System.Net.EndPoint EndPoint)
     {
-        Player P = new Player();
-        P.ClientIndex = ClientIndex;
-        Clients.Add(ClientIndex, P);
+        System.Net.IPEndPoint IP = (System.Net.IPEndPoint)EndPoint;
+        Debug.Log("Client Connected: " + IP.Address + ":" + IP.Port);
+
+        if (!ConnectedClients.ContainsKey(EndPoint))
+            ConnectedClients.Add(EndPoint, new Client());
+    }
+
+    public static void RemoveConnection(System.Net.EndPoint EndPoint)
+    {
+        System.Net.IPEndPoint IP = (System.Net.IPEndPoint)EndPoint;
+        Debug.Log("Client Disconnected: " + IP.Address + ":" + IP.Port);
     }
 
     /// <summary>

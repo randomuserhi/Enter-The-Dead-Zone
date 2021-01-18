@@ -5,14 +5,11 @@ using UnityEngine;
 using System.Threading;
 using System.Threading.Tasks;
 
-using Network;
-using Network.IPC;
-using Network.TCPUDP;
+using DZNetwork;
 
 public class Loader
 {
-    public static IPCNamedServer IPCServer;
-    public static TCPUDPServer TCPUDPServer;
+    public static DZServer Server = new DZServer();
 
     [RuntimeInitializeOnLoadMethod] //Runs on application start
     private static void Start()
@@ -23,18 +20,14 @@ public class Loader
         QualitySettings.vSyncCount = 0; //Turn off vsync
         Physics2D.simulationMode = SimulationMode2D.Script; //My program controls when unity updates
 
-        //change such that max number of players etc is changable
-        TCPUDPServer = new TCPUDPServer(26950, 4, 4096);
-        ServerHandler.Initialise();
-
-        TCPUDPServer.Connect(); //Startup server
+        Server.ConnectHandle += Game.AddConnection;
+        Server.DisconnectHandle += Game.RemoveConnection;
+        Server.PacketHandle += ServerHandle.ProcessPacket;
+        Server.Connect(26950); //Startup server
     }
 
     private static void Dispose()
     {
-        if (IPCServer != null)
-            IPCServer.Dispose();
-        if (TCPUDPServer != null)
-            TCPUDPServer.Dispose();
+        Server.Dispose();
     }
 }

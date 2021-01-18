@@ -30,7 +30,7 @@ public class PlayerCreature : AbstractCreature, IServerSendable
         Limp,
         Standing
     }
-    
+
     private BodyState State; //Ragdoll state
     private PlayerController Controller; //Controller for player movement
     public PlayerStats Stats; //General player stats
@@ -51,7 +51,7 @@ public class PlayerCreature : AbstractCreature, IServerSendable
     {
         Controller = new PlayerController();
         State = BodyState.Standing;
-        Stats.RunSpeed = 1f;
+        Stats.RunSpeed = 2f;
 
         BodyChunks = new BodyChunk[2];
         BodyChunks[0] = new BodyChunk(this);
@@ -191,7 +191,7 @@ public class PlayerCreature : AbstractCreature, IServerSendable
         return Data.ToArray();
     }
 
-    public override void ParseBytes(Network.Packet Data, ulong ServerTick)
+    public override void ParseBytes(DZNetwork.Packet Data, ulong ServerTick)
     {
         BodyChunks[0].ParseBytes(Data, ServerTick);
         BodyChunks[1].ParseBytes(Data, ServerTick);

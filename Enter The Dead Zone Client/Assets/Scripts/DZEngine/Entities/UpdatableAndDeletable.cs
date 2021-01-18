@@ -22,7 +22,7 @@ namespace DeadZoneEngine.Entities
         int ServerObjectType { get; set; }
         bool RecentlyUpdated { get; set; }
         byte[] GetBytes();
-        void ParseBytes(Network.Packet Data, ulong ServerTick);
+        void ParseBytes(DZNetwork.Packet Data, ulong ServerTick);
     }
 
     public interface IRenderer : _IInstantiatableDeletable

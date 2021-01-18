@@ -177,7 +177,7 @@ namespace DeadZoneEngine.Entities.Components
             return Data.ToArray();
         }
 
-        public override void ParseBytes(Network.Packet Data, ulong ServerTick)
+        public override void ParseBytes(DZNetwork.Packet Data, ulong ServerTick)
         {
 
         }
