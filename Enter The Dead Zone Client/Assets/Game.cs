@@ -45,14 +45,18 @@ public class Game
 
     private static void TickUpdate()
     {
-        Loader.Client.FixedUpdate();
-        if (!Loader.Client.Connected)
-            return;
+        Loader.Socket.FixedUpdate();
 
-        Packet PingPacket = new Packet();
-        PingPacket.Write((int)ServerCode.ClientPing);
-        PingPacket.Write(NumLocalPlayers);
-        Loader.Client.Send(PingPacket);
+        if (Loader.Socket.SocketConnected)
+        {
+            Packet PingPacket = new Packet();
+            PingPacket.Write((int)ServerCode.ClientPing);
+            PingPacket.Write(NumLocalPlayers);
+            Loader.Socket.Send(PingPacket);
+        }
+
+        if (!Loader.Socket.Connected)
+            return;
     }
 
     public static void UnWrapSnapshot(Packet Packet)
@@ -68,6 +72,7 @@ public class Game
         ConversionRate = (float)ServerTickRate / ClientTickRate;
 
         int NumSnapshotItems = Packet.ReadInt();
+        Debug.Log("NumSnapShot: " + NumSnapshotItems);
         for (int i = 0; i < NumSnapshotItems; i++)
         {
             ulong ID = Packet.ReadULong();
@@ -89,6 +94,11 @@ public class Game
                 return;
             }
 
+            if ((DZSettings.EntityType)ServerItem.ServerObjectType != Type)
+            {
+                Debug.LogWarning("Entity Types of ID " + ID + " do not match, skipping parse...");
+                continue;
+            }
             ServerItem.ParseBytes(Packet, ServerTick);
             ServerItem.RecentlyUpdated = true;
         }
@@ -100,7 +110,7 @@ public class Game
             }
         }
 
-        PrevSnapshot.Ticks = ServerTick; 
+        PrevSnapshot.Ticks = ServerTick;
     }
 
     private static IServerSendable Parse(Packet P, ulong ID, DZSettings.EntityType Type)

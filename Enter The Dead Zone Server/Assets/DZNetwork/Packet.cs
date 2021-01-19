@@ -6,20 +6,58 @@ using System.Threading.Tasks;
 
 namespace DZNetwork
 {
-    public static class HeaderDetails
+    public static class PacketHandler
     {
         public static int ProtocolID = 0;
-        public static int HeaderSize = sizeof(int) * 4 + sizeof(long);
+        private static int PacketHeaderSize = sizeof(int) + sizeof(long) * 2;
+        public static int HeaderSize = sizeof(int) * 6 + sizeof(long) * 2;
+        public static int FullHeaderSize = sizeof(int) * 7 + sizeof(long) * 2;
 
-        public static void WriteHeader(Packet P)
+        public static long PacketID = 0;
+        public static int PacketSequence = 0;
+        public static int PacketAcknowledgement = 0;
+        public static int PacketAcknowledgementBitField = 0;
+
+        public static byte[][] GeneratePackets(Packet P)
         {
             long Epoch = (DateTime.Now - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).Ticks / 10000;
 
-            P.Write(ProtocolID);
-            P.Write(DZUDPSocket.PacketSequence);
-            P.Write(DZUDPSocket.PacketAcknowledgement);
-            P.Write(DZUDPSocket.PacketAcknowledgementBitField);
-            P.Write(Epoch);
+            byte[] Data = P.GetBytes();
+            float NumPacketsNoHeader = UnityEngine.Mathf.Ceil((float)Data.Length / Loader.Socket.BufferSize);
+            int NumPackets = UnityEngine.Mathf.CeilToInt((Data.Length + NumPacketsNoHeader * HeaderSize) / Loader.Socket.BufferSize);
+            byte[][] Packets = new byte[NumPackets][];
+
+            byte[] HeaderBytes = new byte[PacketHeaderSize];
+            int WriteHead = 0;
+            Buffer.BlockCopy(BitConverter.GetBytes(ProtocolID), 0, HeaderBytes, WriteHead, sizeof(int)); WriteHead += sizeof(int);
+            Buffer.BlockCopy(BitConverter.GetBytes(Epoch), 0, HeaderBytes, WriteHead, sizeof(long)); WriteHead += sizeof(long);
+            Buffer.BlockCopy(BitConverter.GetBytes(PacketID), 0, HeaderBytes, WriteHead, sizeof(long));
+
+            int RemainingPacketSize = Data.Length;
+            int ReadHead = 0;
+            for (int i = 0; i < NumPackets; i++)
+            {
+                int PacketSize = Math.Min(RemainingPacketSize, Loader.Socket.BufferSize - HeaderSize);
+                Packets[i] = new byte[PacketSize + HeaderSize];
+                Buffer.BlockCopy(HeaderBytes, 0, Packets[i], 0, HeaderBytes.Length);
+
+                int HeaderIndex = HeaderBytes.Length;
+                Buffer.BlockCopy(BitConverter.GetBytes(PacketSequence), 0, Packets[i], HeaderIndex, sizeof(int)); HeaderIndex += sizeof(int);
+                Buffer.BlockCopy(BitConverter.GetBytes(PacketAcknowledgement), 0, Packets[i], HeaderIndex, sizeof(int)); HeaderIndex += sizeof(int);
+                Buffer.BlockCopy(BitConverter.GetBytes(PacketAcknowledgementBitField), 0, Packets[i], HeaderIndex, sizeof(int)); HeaderIndex += sizeof(int);
+                Buffer.BlockCopy(BitConverter.GetBytes(Data.Length), 0, Packets[i], HeaderIndex, sizeof(int)); HeaderIndex += sizeof(int);
+                Buffer.BlockCopy(BitConverter.GetBytes(i), 0, Packets[i], HeaderIndex, sizeof(int));
+
+                Buffer.BlockCopy(Data, ReadHead, Packets[i], HeaderSize, PacketSize);
+                ReadHead += PacketSize;
+                RemainingPacketSize -= PacketSize;
+
+                PacketSequence++;
+            }
+
+            PacketID++;
+
+            return Packets;
         }
     }
 
@@ -36,7 +74,6 @@ namespace DZNetwork
         public Packet()
         {
             Buffer = new List<byte>();
-            HeaderDetails.WriteHeader(this);
         }
 
         /// <summary>
@@ -46,7 +83,7 @@ namespace DZNetwork
         public Packet(byte[] Buffer, int Start, int Count)
         {
             ReadableBuffer = new byte[Count];
-            Array.Copy(Buffer, Start, ReadableBuffer, 0, Count);
+            System.Buffer.BlockCopy(Buffer, Start, ReadableBuffer, 0, Count);
         }
 
         /// <summary>

@@ -7,7 +7,7 @@ using DZNetwork;
 
 public class Loader
 {
-    public static DZClient Client = new DZClient();
+    public static DZClient Socket = new DZClient();
 
     public static string ServerIP = "192.168.2.26"; //"172.16.6.165";//"192.168.2.51"; //"192.168.2.26"; //"172.16.6.165";
     public static int ServerPort = 26950;
@@ -22,14 +22,14 @@ public class Loader
         ServerHandler.Initialise();
 
         //Remove later
-        Client.ConnectHandle += Game.Connected;
-        Client.DisconnectHandle += Game.Disconnected;
-        Client.PacketHandle += ServerHandle.ProcessPacket;
-        Client.Connect(ServerIP, ServerPort);
+        Socket.ConnectHandle += Game.Connected;
+        Socket.DisconnectHandle += Game.Disconnected;
+        Socket.PacketHandle += ServerHandle.ProcessPacket;
+        Socket.Connect(ServerIP, ServerPort);
     }
 
     private static void Dispose()
     {
-        Client.Dispose();
+        Socket.Dispose();
     }
 }

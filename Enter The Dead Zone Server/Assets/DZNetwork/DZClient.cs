@@ -11,9 +11,42 @@ namespace DZNetwork
     public class DZClient : DZUDPSocket
     {
         public Action<Packet, long> PacketHandle;  //Delegate that is called on recieving a packet
+        public Action DisconnectHandle;
+        private bool DisconnectTrigger = true;
+        public Action ConnectHandle;
+
+        public const int ConnectionLifeTime = 150;
+        public uint TicksSinceLastConnection = 0;
+
+        public bool Connected = false;
+        public bool SocketConnected
+        {
+            get { return Socket.Connected; }
+            private set { }
+        }
 
         public DZClient() : base(4096)
         {
+            TicksSinceLastConnection = ConnectionLifeTime;
+        }
+
+        public void FixedUpdate()
+        {
+            TicksSinceLastConnection++;
+            if (TicksSinceLastConnection > ConnectionLifeTime)
+            {
+                Connected = false;
+                if (!DisconnectTrigger)
+                {
+                    DisconnectHandle();
+                    DisconnectTrigger = true;
+                }
+            }
+            else
+            {
+                Connected = true;
+                DisconnectTrigger = false;
+            }
         }
 
         public void Connect(string Address, int Port)
@@ -24,17 +57,33 @@ namespace DZNetwork
 
         public void Send(Packet Packet)
         {
-            Send(Packet.GetBytes());
+            byte[][] PacketData = PacketHandler.GeneratePackets(Packet);
+            for (int i = 0; i < PacketData.Length; i++)
+                Send(PacketData[i]);
         }
 
-        protected override void OnReceive(EndPoint ReceivedEndPoint, int NumBytesReceived)
+        Dictionary<long, PacketReconstructor> PacketsToReconstruct = new Dictionary<long, PacketReconstructor>();
+        private class PacketReconstructor
         {
-            int ReceivedProtocolID = BitConverter.ToInt32(ReceiveBuffer, 0);
-            if (ReceivedProtocolID != HeaderDetails.ProtocolID) return;
+            public int PacketByteCount;
+            public int ProcessedPacketCount;
+            public byte[] PacketIndex;
+            public byte[] Data;
+        }
 
-            long CurrentEpoch = (DateTime.Now - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).Ticks / 10000;
-            long ReceivedEpoch = BitConverter.ToInt64(ReceiveBuffer, sizeof(int));
-            PacketHandle?.Invoke(new Packet(ReceiveBuffer, HeaderDetails.HeaderSize, NumBytesReceived - HeaderDetails.HeaderSize), CurrentEpoch - ReceivedEpoch);
+        protected override void OnReceive(EndPoint ReceivedEndPoint)
+        {
+            TicksSinceLastConnection = 0;
+            if (Connected == false)
+            {
+                Connected = true;
+                ConnectHandle();
+            }
+        }
+
+        protected override void OnReceiveConstructedPacket(Packet Data, long Ping)
+        {
+            PacketHandle?.Invoke(Data, Ping);
         }
     }
 }

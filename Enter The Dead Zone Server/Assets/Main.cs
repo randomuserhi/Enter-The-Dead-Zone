@@ -17,6 +17,43 @@ public static class Main
     // Start is called before the first frame update
     public static void Start()
     {
+        Tile[] FloorMap = new Tile[]
+        {
+            new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(1, 1), new Tile(0, 1),
+            new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(1, 1), new Tile(0, 1),
+            new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1),
+            new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1),
+            new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1),
+            new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1),
+            new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1),
+            new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1),
+            new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1),
+            new Tile(1, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1),
+            new Tile(1, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1),
+            new Tile(1, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1),
+            new Tile(1, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(1, 1),
+            new Tile(1, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(1, 1)
+        };
+
+        Tile[] WallMap = new Tile[]
+        {
+            new Tile(1, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1),
+            new Tile(1, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1),
+            new Tile(1, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1),
+            new Tile(1, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1),
+            new Tile(1, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1),
+            new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1),
+            new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1),
+            new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(1, 1), new Tile(0, 1),
+            new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(1, 1), new Tile(0, 1),
+            new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1),
+            new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1),
+            new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1),
+            new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(1, 1),
+            new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(1, 1)
+        };
+
+        Tilemap T = (Tilemap)new Tilemap(32, 32, new Vector2Int(14, 14), FloorMap, WallMap, 1).Create();
     }
 
     // Update is called once per frame

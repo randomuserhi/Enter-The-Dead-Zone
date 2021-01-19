@@ -187,7 +187,15 @@ namespace DeadZoneEngine
 
         #endregion
 
-        public static List<object> EntitesToPush = new List<object>(); //List of entities to push to DZEngine
+        public static void Instantiate(object Item)
+        {
+            lock (EntitieQueueLock)
+            {
+                EntitiesToPush.Add(Item);
+            }
+        }
+        private static object EntitieQueueLock = new object();
+        private static List<object> EntitiesToPush = new List<object>(); //List of entities to push to DZEngine
 
         //Lists of entity interfaces that define DZEngine
         private static List<IServerSendable> _ServerSendableObjects = new List<IServerSendable>(); //All entities that are sendable across the server and client
@@ -212,7 +220,7 @@ namespace DeadZoneEngine
         /// <param name="Component"></param>
         public static void AddComponent(_IInstantiatableDeletable Component)
         {
-            EntitesToPush.Add(Component);
+            EntitiesToPush.Add(Component);
         }
 
         //public getters for lists
@@ -228,7 +236,7 @@ namespace DeadZoneEngine
         /// </summary>
         public static void ReleaseResources()
         {
-            EntitesToPush.RemoveAll(I =>
+            EntitiesToPush.RemoveAll(I =>
             {
                 InstantiateAndAddEntity(I);
                 return true;
@@ -314,7 +322,7 @@ namespace DeadZoneEngine
             UpdateManagedLists(); //Update DZEngine.ManagedLists
 
             //Push entites into DZEngine
-            EntitesToPush.RemoveAll(I =>
+            EntitiesToPush.RemoveAll(I =>
             {
                 InstantiateAndAddEntity(I);
                 return true;

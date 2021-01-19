@@ -53,9 +53,13 @@ namespace DZNetwork
         public void Send(Packet Packet)
         {
             List<EndPoint> Connections = ConnectedDevices.Keys.ToList();
+            if (Connections.Count == 0) return;
+
+            byte[][] PacketData = PacketHandler.GeneratePackets(Packet);
             foreach (EndPoint EndPoint in Connections)
                 if (EndPoint != null)
-                    SendTo(Packet.GetBytes(), EndPoint);
+                    for (int i = 0; i < PacketData.Length; i++)
+                        SendTo(PacketData[i], EndPoint);
         }
 
         public void SendTo(Packet Packet, EndPoint EndPoint)
@@ -63,11 +67,8 @@ namespace DZNetwork
             SendTo(Packet, EndPoint);
         }
 
-        protected override void OnReceive(EndPoint ReceivedEndPoint, int NumBytesReceived)
+        protected override void OnReceive(EndPoint ReceivedEndPoint)
         {
-            int ReceivedProtocolID = BitConverter.ToInt32(ReceiveBuffer, 0);
-            if (ReceivedProtocolID != HeaderDetails.ProtocolID) return;
-
             lock (DeviceUpdate)
             {
                 if (!ConnectedDevices.ContainsKey(ReceivedEndPoint))
@@ -78,13 +79,11 @@ namespace DZNetwork
                 else
                     ConnectedDevices[ReceivedEndPoint] = 0;
             }
+        }
 
-            long CurrentEpoch = (DateTime.Now - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).Ticks / 10000;
-            long ReceivedEpoch = BitConverter.ToInt64(ReceiveBuffer, sizeof(int));
-            int PacketSequence = BitConverter.ToInt32(ReceiveBuffer, sizeof(int) + sizeof(long));
-            int PacketAcknowledgement = BitConverter.ToInt32(ReceiveBuffer, sizeof(int) + sizeof(long) + sizeof(int));
-            int PacketAcknowledgementBitField = BitConverter.ToInt32(ReceiveBuffer, sizeof(int) + sizeof(long) + sizeof(int) + sizeof(int));
-            PacketHandle?.Invoke(new Packet(ReceiveBuffer, HeaderDetails.HeaderSize, NumBytesReceived - HeaderDetails.HeaderSize), CurrentEpoch - ReceivedEpoch);
+        protected override void OnReceiveConstructedPacket(Packet Data, long Ping)
+        {
+            PacketHandle?.Invoke(Data, Ping);
         }
     }
 }

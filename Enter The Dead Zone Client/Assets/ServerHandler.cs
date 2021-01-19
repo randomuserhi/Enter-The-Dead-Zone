@@ -6,8 +6,6 @@ using DZNetwork;
 
 public enum ServerCode //TODO somehow implement / catch disconnection => its not a packet so not sure how to do this
 {
-    EstablishUPDConnection,
-    UDPConnectionEstablished,
     ClientPing,
     SnapshotData
 }
@@ -33,18 +31,12 @@ public class ServerHandler : MonoBehaviour
     { 
         switch (Job)
         {
-            case ServerCode.EstablishUPDConnection:
-                Debug.Log("ServerHandler.EstablishUPDConnection");
-                break;
-            case ServerCode.UDPConnectionEstablished:
-                Debug.Log("ServerHandler.UDPConnectionEstablished");
-                break;
             case ServerCode.SnapshotData:
                 Game.UnWrapSnapshot(Packet);
                 break;
 
             default:
-                Debug.LogError("Unknown ServerCode: " + Job);
+                Debug.LogWarning("Unknown ServerCode: " + Job);
                 break;
         }
     }

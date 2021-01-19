@@ -25,7 +25,7 @@ public class Game
     /// </summary>
     public static void FixedUpdate()
     {
-        Loader.Server.FixedUpdate();
+        Loader.Socket.FixedUpdate();
 
         ServerTicks++;
         SendSnapshot();
@@ -44,7 +44,7 @@ public class Game
             SnapshotPacket.Write(DZEngine.GetBytes(DZEngine.ServerSendableObjects[i]));
         }
 
-        Loader.Server.Send(SnapshotPacket);
+        Loader.Socket.Send(SnapshotPacket);
     }
 
     

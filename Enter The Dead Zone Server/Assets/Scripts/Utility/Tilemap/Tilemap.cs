@@ -57,7 +57,7 @@ public class Tilemap : AbstractWorldEntity, IUpdatable, IRenderer, IServerSendab
     protected GameObject Self;
 
     public Tile[] FloorMap;
-    public Tile[] WallMap; 
+    public Tile[] WallMap;
     // Map format is height followed by width such that (0, 0) tile is the top left of the tilemap
     //                x
     //              ----->
@@ -139,12 +139,15 @@ public class Tilemap : AbstractWorldEntity, IUpdatable, IRenderer, IServerSendab
     /// </summary>
     public void Resize(Vector2Int NewTilemapSize, Tile[] FloorMap, Tile[] WallMap)
     {
-        TilemapSize = NewTilemapSize;
+        UpdateResizeOverNetwork = true;
         this.FloorMap = FloorMap;
         this.WallMap = WallMap;
-        GenerateColliders();
-        if (DZSettings.ActiveRenderers)
+        bool SizeChange = NewTilemapSize != TilemapSize;
+        if (SizeChange) TilemapSize = NewTilemapSize;
+        if (DZSettings.ActiveRenderers && SizeChange)
             GenerateRenders();
+        TilemapSize = NewTilemapSize;
+        GenerateColliders();
     }
 
     /// <summary>
@@ -445,6 +448,7 @@ public class Tilemap : AbstractWorldEntity, IUpdatable, IRenderer, IServerSendab
             Rows[i].rectTransform.sizeDelta = Vector2.zero;
             float StrideHeight = ((float)WallTileHeight / TileDimension) / TilesPerUnit;
             Rows[i].rectTransform.position = new Vector3(0, -TilemapSize.y / 2f / TilesPerUnit + StrideHeight / 2 + i / TilesPerUnit);
+            Rows[i].rectTransform.position += Self.transform.position;
             Rows[i].rectTransform.sizeDelta = new Vector2(TilemapSize.x / TilesPerUnit, StrideHeight);
             Rows[i].material = Resources.Load<Material>("Materials/LitMaterial");
             Rows[i].texture = WallRenderTexture;
@@ -464,6 +468,7 @@ public class Tilemap : AbstractWorldEntity, IUpdatable, IRenderer, IServerSendab
             RowImage.rectTransform.sizeDelta = Vector2.zero;
             float StrideHeight = ((float)WallTileHeight / TileDimension) / TilesPerUnit;
             RowImage.rectTransform.position = new Vector3(0, -TilemapSize.y / 2f + StrideHeight / 2 + i / TilesPerUnit);
+            RowImage.rectTransform.position += Self.transform.position;
             RowImage.rectTransform.sizeDelta = new Vector2(TilemapSize.x / TilesPerUnit, StrideHeight);
             RowImage.material = Resources.Load<Material>("Materials/LitMaterial");
             RowImage.texture = WallRenderTexture;
@@ -531,9 +536,42 @@ public class Tilemap : AbstractWorldEntity, IUpdatable, IRenderer, IServerSendab
         GameObject.Destroy(Self);
     }
 
+    private List<byte> MapCache = new List<byte>();
+    private bool UpdateResizeOverNetwork = false;
     public override byte[] GetBytes()
     {
+        if (UpdateResizeOverNetwork || !FirstParse)
+        {
+            FirstParse = true;
+            int Volume = TilemapSize.x * TilemapSize.y;
+            MapCache.Clear();
+            for (int i = 0; i < Volume; i++)
+            {
+                Tile T = FloorMap[i];
+                MapCache.AddRange(BitConverter.GetBytes(T.Blank));
+                if (T.Blank == 0)
+                {
+                    MapCache.AddRange(BitConverter.GetBytes(T.Render));
+                    MapCache.AddRange(BitConverter.GetBytes(T.TileIndex));
+                    MapCache.AddRange(BitConverter.GetBytes(T.AnimationFrame));
+                }
+            }
+            for (int i = 0; i < Volume; i++)
+            {
+                Tile T = WallMap[i];
+                MapCache.AddRange(BitConverter.GetBytes(T.Blank));
+                if (T.Blank == 0)
+                {
+                    MapCache.AddRange(BitConverter.GetBytes(T.Render));
+                    MapCache.AddRange(BitConverter.GetBytes(T.TileIndex));
+                    MapCache.AddRange(BitConverter.GetBytes(T.AnimationFrame));
+                }
+            }
+        }
+
         List<byte> Data = new List<byte>();
+        Data.AddRange(BitConverter.GetBytes(UpdateResizeOverNetwork));
+        UpdateResizeOverNetwork = false;
         Data.AddRange(BitConverter.GetBytes(-1)); //Tilemap pallet
         Data.AddRange(BitConverter.GetBytes(Self.transform.position.x)); //Tilemap position
         Data.AddRange(BitConverter.GetBytes(Self.transform.position.y));
@@ -541,34 +579,17 @@ public class Tilemap : AbstractWorldEntity, IUpdatable, IRenderer, IServerSendab
         Data.AddRange(BitConverter.GetBytes(TilemapSize.y));
         Data.AddRange(BitConverter.GetBytes(TilesPerUnit));
         Data.AddRange(BitConverter.GetBytes(WallTileHeight));
-        int Volume = TilemapSize.x * TilemapSize.y;
-        for (int i = 0; i < Volume; i++)
-        {
-            Tile T = FloorMap[i];
-            Data.AddRange(BitConverter.GetBytes(T.Blank));
-            if (T.Blank == 0)
-            {
-                Data.AddRange(BitConverter.GetBytes(T.Render));
-                Data.AddRange(BitConverter.GetBytes(T.TileIndex));
-                Data.AddRange(BitConverter.GetBytes(T.AnimationFrame));
-            }
-        }
-        for (int i = 0; i < Volume; i++)
-        {
-            Tile T = WallMap[i];
-            Data.AddRange(BitConverter.GetBytes(T.Blank));
-            if (T.Blank == 0)
-            {
-                Data.AddRange(BitConverter.GetBytes(T.Render));
-                Data.AddRange(BitConverter.GetBytes(T.TileIndex));
-                Data.AddRange(BitConverter.GetBytes(T.AnimationFrame));
-            }
-        }
+        Data.AddRange(MapCache);
+
         return Data.ToArray();
     }
 
+    private bool FirstParse = false;
     public override void ParseBytes(DZNetwork.Packet Data, ulong ServerTick)
     {
+        bool UpdateResizeOverNetwork = Data.ReadBool();
+        if (!UpdateResizeOverNetwork && FirstParse) return;
+        FirstParse = true;
         int TilePalletIndex = Data.ReadInt();
         if (TilePalletIndex == -1)
             GenerateDefaultTileData();

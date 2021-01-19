@@ -9,7 +9,7 @@ using DZNetwork;
 
 public class Loader
 {
-    public static DZServer Server = new DZServer();
+    public static DZServer Socket = new DZServer();
 
     [RuntimeInitializeOnLoadMethod] //Runs on application start
     private static void Start()
@@ -20,14 +20,14 @@ public class Loader
         QualitySettings.vSyncCount = 0; //Turn off vsync
         Physics2D.simulationMode = SimulationMode2D.Script; //My program controls when unity updates
 
-        Server.ConnectHandle += Game.AddConnection;
-        Server.DisconnectHandle += Game.RemoveConnection;
-        Server.PacketHandle += ServerHandle.ProcessPacket;
-        Server.Connect(26950); //Startup server
+        Socket.ConnectHandle += Game.AddConnection;
+        Socket.DisconnectHandle += Game.RemoveConnection;
+        Socket.PacketHandle += ServerHandle.ProcessPacket;
+        Socket.Connect(26950); //Startup server
     }
 
     private static void Dispose()
     {
-        Server.Dispose();
+        Socket.Dispose();
     }
 }
