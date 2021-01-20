@@ -218,21 +218,19 @@ public class Tilemap : AbstractWorldEntity, IUpdatable, IRenderer, IServerSendab
     private void UpdateRenderSortingLayers() //Updates the render sorting layer of each tile row
     {
         if (Rows == null) return;
-        if (PrevTilePosition != Self.transform.position) //Avoid updating all rows constantly has tilemaps can get quite large
+        PrevTilePosition = Self.transform.position;
+        for (int i = 0; i < TilemapSize.y; i++)
         {
-            PrevTilePosition = Self.transform.position;
-            for (int i = 0; i < TilemapSize.y; i++)
-            {
-                float StrideHeight = (WallTileHeight / TileDimension) / TilesPerUnit;
-                float BaseY = Rows[i].transform.position.y - ((1 / TilesPerUnit - StrideHeight) / 2);
-                Rows[i].canvas.sortingOrder = Mathf.RoundToInt(-BaseY) * 2 + 1;
-            }
+            float StrideHeight = (WallTileHeight / TileDimension) / TilesPerUnit;
+            float BaseY = Rows[i].transform.position.y - ((1 / TilesPerUnit - StrideHeight) / 2);
+            Rows[i].canvas.sortingOrder = Mathf.RoundToInt(-BaseY) + 1;
         }
     }
 
     public void Render()
     {
-        UpdateRenderSortingLayers(); //Update the sorting layers for each tile row
+        if (PrevTilePosition != Self.transform.position) //Avoid updating all rows constantly has tilemaps can get quite large
+            UpdateRenderSortingLayers(); //Update the sorting layers for each tile row
 
         //Generate textures to render
         if (WallBuffer == null || FloorBuffer == null || WallCompute == null || FloorCompute == null)
@@ -489,6 +487,8 @@ public class Tilemap : AbstractWorldEntity, IUpdatable, IRenderer, IServerSendab
             Rows = new RawImage[TilemapSize.y];
             Array.Copy(Temp, 0, Rows, 0, TilemapSize.y);
         }
+
+        UpdateRenderSortingLayers();
     }
 
     /// <summary>

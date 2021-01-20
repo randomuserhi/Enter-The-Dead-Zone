@@ -42,7 +42,7 @@ public static class Main
         foreach (IRenderer<SpriteRenderer> Renderer in SpriteRenderers)
         {
             if (Renderer.SortingLayer == (int)SortingLayers.Default)
-                Renderer.RenderObject.sortingOrder = Mathf.RoundToInt(-Renderer.RenderObject.transform.position.y) * 2 + 1;
+                Renderer.RenderObject.sortingOrder = Mathf.RoundToInt(-Renderer.RenderObject.transform.position.y);
         }
 
         /*for (int i = 0; i < DZEngine.AbstractWorldEntities.Count; i++)
