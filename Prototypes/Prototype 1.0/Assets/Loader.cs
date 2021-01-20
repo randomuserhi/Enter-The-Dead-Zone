@@ -104,7 +104,8 @@ public class Loader : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        string Layout =
+        string[] Layout =
+            new string[] {
             "11111111111111," +
             "10000000000001," +
             "10000000000001," +
@@ -118,8 +119,9 @@ public class Loader : MonoBehaviour
             "13222202000001," +
             "10000002000001," +
             "10000004000001," +
-            "11111111111111";
-        G = new Grid(Layout, 1);
+            "11111111111111"
+            };
+        G = new Grid(Layout[Random.Range(0, Layout.Length)], 1);
         GameObject PObj = new GameObject();
         P = PObj.AddComponent<Player>();
     }

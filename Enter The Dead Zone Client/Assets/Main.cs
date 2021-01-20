@@ -33,7 +33,7 @@ public static class Main
     public static void AddPlayer()
     {
         Game.NumLocalPlayers = 1;
-        //Client.Players.Add(new Player());
+        Client.Players.Add(new Player());
     }
 
     // Update is called once per frame

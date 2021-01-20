@@ -10,7 +10,7 @@ namespace DeadZoneEngine.Entities
 {
     public class EntityID
     {
-        private static object IDDictionaryLock = new object();
+        //private static object IDDictionaryLock = new object();
         public static Dictionary<ulong, _IInstantiatableDeletable> IDToObject = new Dictionary<ulong, _IInstantiatableDeletable>();
 
         public static ulong StaticID = 0;
@@ -19,61 +19,56 @@ namespace DeadZoneEngine.Entities
         public ulong Value;
         public EntityID(AbstractWorldEntity Self)
         {
-            lock (IDDictionaryLock)
-            {
-                this.Self = Self;
-                Value = StaticID++; //TODO:: add case where StaticID == ulong.MaxValue
-                IDToObject.Add(Value, Self);
-            }
+            this.Self = Self;
+            Value = StaticID++; //TODO:: add case where StaticID == ulong.MaxValue
+            IDToObject.Add(Value, Self);
         }
         public EntityID(AbstractWorldEntity Self, ulong ID)
         {
-            lock (IDDictionaryLock)
+            this.Self = Self;
+            if (IDToObject.ContainsKey(ID))
             {
-                this.Self = Self;
-                if (IDToObject.ContainsKey(ID))
-                {
-                    Debug.LogError("EntityID(ulong ID) => ID " + ID + " already exists!");
-                    return;
-                }
-                Value = ID;
-                IDToObject.Add(Value, Self);
+                Debug.LogError("EntityID(ulong ID) => ID " + ID + " already exists!");
+                return;
             }
+            Value = ID;
+            IDToObject.Add(Value, Self);
+        }
+
+        public void ChangeID()
+        {
+            Remove(this);
+            Value = StaticID++;
+            IDToObject.Add(Value, Self);
         }
 
         public void ChangeID(ulong New, bool Replace = false)
         {
-            lock (IDDictionaryLock)
+            if (IDToObject.ContainsKey(New))
             {
-                if (IDToObject.ContainsKey(New))
+                if (Replace && IDToObject[New] != Self)
                 {
-                    if (Replace && IDToObject[New] != Self)
-                    {
-                        DZEngine.Destroy(IDToObject[New]);
-                        IDToObject[New] = Self;
-                    }
-                    else
-                    {
-                        Debug.LogError("Could not change ID as an object at that ID already exists...");
-                    }
+                    DZEngine.Destroy(IDToObject[New]);
+                    IDToObject[New] = Self;
                 }
                 else
                 {
-                    IDToObject.Add(New, IDToObject[Value]);
-                    Remove(this);
+                    Debug.LogError("Could not change ID as an object at that ID already exists...");
                 }
+            }
+            else
+            {
+                IDToObject.Add(New, IDToObject[Value]);
+                Remove(this);
             }
         }
 
         public static void Remove(EntityID ID)
         {
-            lock (IDDictionaryLock)
-            {
-                if (IDToObject.ContainsKey(ID))
-                    IDToObject.Remove(ID.Value);
-                else
-                    Debug.LogError("EntityID.Remove(EntityID ID) => ID " + ID + " does not exist!");
-            }
+            if (IDToObject.ContainsKey(ID))
+                IDToObject.Remove(ID.Value);
+            else
+                Debug.LogError("EntityID.Remove(EntityID ID) => ID " + ID + " does not exist!");
         }
 
         public static _IInstantiatableDeletable GetObject(ulong ID)

@@ -96,8 +96,18 @@ public class Game
 
             if ((DZSettings.EntityType)ServerItem.ServerObjectType != Type)
             {
-                Debug.LogWarning("Entity Types of ID " + ID + " do not match, skipping parse...");
-                continue;
+                Debug.LogWarning("Entity Types of ID " + ID + " do not match... resetting IDs and re-parsing");
+                ServerItem.ID.ChangeID();
+
+                Item = EntityID.GetObject(ID);
+                ServerItem = Item as IServerSendable;
+                if (ServerItem == null)
+                    ServerItem = Parse(Packet, ID, Type);
+                if (ServerItem == null)
+                {
+                    Debug.LogWarning("Unable to Parse item from server snapshot");
+                    return;
+                }
             }
             ServerItem.ParseBytes(Packet, ServerTick);
             ServerItem.RecentlyUpdated = true;
