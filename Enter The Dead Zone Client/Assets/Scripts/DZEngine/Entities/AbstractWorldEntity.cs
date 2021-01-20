@@ -10,7 +10,6 @@ namespace DeadZoneEngine.Entities
 {
     public class EntityID
     {
-        //private static object IDDictionaryLock = new object();
         public static Dictionary<ulong, _IInstantiatableDeletable> IDToObject = new Dictionary<ulong, _IInstantiatableDeletable>();
 
         public static ulong StaticID = 0;

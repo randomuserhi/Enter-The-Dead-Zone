@@ -189,12 +189,8 @@ namespace DeadZoneEngine
 
         public static void Instantiate(object Item)
         {
-            lock (EntitieQueueLock)
-            {
-                EntitiesToPush.Add(Item);
-            }
+            EntitiesToPush.Add(Item);
         }
-        private static object EntitieQueueLock = new object();
         private static List<object> EntitiesToPush = new List<object>(); //List of entities to push to DZEngine
 
         //Lists of entity interfaces that define DZEngine
