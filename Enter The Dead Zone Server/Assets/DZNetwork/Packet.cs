@@ -210,6 +210,16 @@ namespace DZNetwork
         {
             this.ReadPosition = ReadPosition;
         }
+
+        /// <summary>
+        /// Skip bytes of a packet
+        /// </summary>
+        /// <param name="ReadPosition"></param>
+        public void Skip(int NumBytes)
+        {
+            ReadPosition += NumBytes;
+        }
+
         /// <summary>
         /// Reads a byte value from the current ReadPosition of the packet
         /// </summary>

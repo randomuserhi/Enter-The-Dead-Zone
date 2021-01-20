@@ -223,7 +223,7 @@ public class Tilemap : AbstractWorldEntity, IUpdatable, IRenderer, IServerSendab
         {
             float StrideHeight = (WallTileHeight / TileDimension) / TilesPerUnit;
             float BaseY = Rows[i].transform.position.y - ((1 / TilesPerUnit - StrideHeight) / 2);
-            Rows[i].canvas.sortingOrder = (int)-BaseY + 1;
+            Rows[i].canvas.sortingOrder = Mathf.RoundToInt(-BaseY) + 1;
         }
     }
 
@@ -579,6 +579,7 @@ public class Tilemap : AbstractWorldEntity, IUpdatable, IRenderer, IServerSendab
         Data.AddRange(BitConverter.GetBytes(TilemapSize.y));
         Data.AddRange(BitConverter.GetBytes(TilesPerUnit));
         Data.AddRange(BitConverter.GetBytes(WallTileHeight));
+        Data.AddRange(BitConverter.GetBytes(MapCache.Count));
         Data.AddRange(MapCache);
 
         return Data.ToArray();
@@ -588,8 +589,6 @@ public class Tilemap : AbstractWorldEntity, IUpdatable, IRenderer, IServerSendab
     public override void ParseBytes(DZNetwork.Packet Data, ulong ServerTick)
     {
         bool UpdateResizeOverNetwork = Data.ReadBool();
-        if (!UpdateResizeOverNetwork && FirstParse) return;
-        FirstParse = true;
         int TilePalletIndex = Data.ReadInt();
         if (TilePalletIndex == -1)
             GenerateDefaultTileData();
@@ -599,6 +598,14 @@ public class Tilemap : AbstractWorldEntity, IUpdatable, IRenderer, IServerSendab
         Vector2Int TilemapSize = new Vector2Int(Data.ReadInt(), Data.ReadInt());
         TilesPerUnit = Data.ReadFloat();
         WallTileHeight = Data.ReadInt();
+        int NumMapBytes = Data.ReadInt();
+
+        if (!UpdateResizeOverNetwork && FirstParse)
+        {
+            Data.Skip(NumMapBytes);
+            return;
+        }
+        FirstParse = true;
 
         int Volume = TilemapSize.x * TilemapSize.y;
 
