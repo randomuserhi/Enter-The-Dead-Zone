@@ -10,19 +10,19 @@ namespace DeadZoneEngine.Entities
 {
     public class EntityID
     {
-        public static Dictionary<ulong, _IInstantiatableDeletable> IDToObject = new Dictionary<ulong, _IInstantiatableDeletable>();
+        public static Dictionary<ushort, _IInstantiatableDeletable> IDToObject = new Dictionary<ushort, _IInstantiatableDeletable>();
 
-        public static ulong StaticID = 0;
+        private static HashSet<ushort> TakenIDs = new HashSet<ushort>();
+        public static ushort StaticID = 0;
 
         public AbstractWorldEntity Self;
-        public ulong Value;
+        public ushort Value;
         public EntityID(AbstractWorldEntity Self)
         {
             this.Self = Self;
-            Value = StaticID++; //TODO:: add case where StaticID == ulong.MaxValue
-            IDToObject.Add(Value, Self);
+            AssignNewID();
         }
-        public EntityID(AbstractWorldEntity Self, ulong ID)
+        public EntityID(AbstractWorldEntity Self, ushort ID)
         {
             this.Self = Self;
             if (IDToObject.ContainsKey(ID))
@@ -34,14 +34,30 @@ namespace DeadZoneEngine.Entities
             IDToObject.Add(Value, Self);
         }
 
+        private void AssignNewID()
+        {
+            ushort Next = StaticID++;
+            if (TakenIDs.Count >= ushort.MaxValue - 100)
+            {
+                Debug.LogError("No more IDs to give!");
+                return;
+            }
+            while (TakenIDs.Contains(Next))
+            {
+                Next = StaticID++;
+            }
+            Value = Next;
+            IDToObject.Add(Value, Self);
+            TakenIDs.Add(Value);
+        }
+
         public void ChangeID()
         {
             Remove(this);
-            Value = StaticID++;
-            IDToObject.Add(Value, Self);
+            AssignNewID();
         }
 
-        public void ChangeID(ulong New, bool Replace = false)
+        public void ChangeID(ushort New, bool Replace = false)
         {
             if (IDToObject.ContainsKey(New))
             {
@@ -65,24 +81,27 @@ namespace DeadZoneEngine.Entities
         public static void Remove(EntityID ID)
         {
             if (IDToObject.ContainsKey(ID))
-                IDToObject.Remove(ID.Value);
+            {
+                IDToObject.Remove(ID);
+                TakenIDs.Remove(ID);
+            }
             else
                 Debug.LogError("EntityID.Remove(EntityID ID) => ID " + ID + " does not exist!");
         }
 
-        public static _IInstantiatableDeletable GetObject(ulong ID)
+        public static _IInstantiatableDeletable GetObject(ushort ID)
         {
             if (IDToObject.ContainsKey(ID))
                 return IDToObject[ID];
             return null;
         }
 
-        public static bool Exists(ulong ID)
+        public static bool Exists(ushort ID)
         {
             return IDToObject.ContainsKey(ID);
         }
 
-        public static implicit operator ulong(EntityID ID)
+        public static implicit operator ushort(EntityID ID)
         {
             return ID.Value;
         }
@@ -118,7 +137,7 @@ namespace DeadZoneEngine.Entities
                 ID = new EntityID(this);
             DZEngine.Instantiate(this);
         }
-        public AbstractWorldEntity(ulong ID)
+        public AbstractWorldEntity(ushort ID)
         {
             if (this is IServerSendable)
                 this.ID = new EntityID(this, ID);

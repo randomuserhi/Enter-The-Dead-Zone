@@ -103,7 +103,7 @@ public class Tilemap : AbstractWorldEntity, IUpdatable, IRenderer, IServerSendab
         WallMap = new Tile[TilemapSize.x * TilemapSize.y];
         Initialize();
     }
-    public Tilemap(ulong ID) : base(ID)
+    public Tilemap(ushort ID) : base(ID)
     {
         TileDimension = 32;
         WallTileHeight = 32;
@@ -123,7 +123,7 @@ public class Tilemap : AbstractWorldEntity, IUpdatable, IRenderer, IServerSendab
         this.WallMap = WallMap;
         Initialize();
     }
-    public Tilemap(ulong ID, int TileDimension, int WallTileHeight, Vector2Int TilemapSize, Tile[] FloorMap, Tile[] WallMap, float TilesPerUnit = 1) : base(ID)
+    public Tilemap(ushort ID, int TileDimension, int WallTileHeight, Vector2Int TilemapSize, Tile[] FloorMap, Tile[] WallMap, float TilesPerUnit = 1) : base(ID)
     {
         this.TileDimension = TileDimension;
         this.WallTileHeight = WallTileHeight;

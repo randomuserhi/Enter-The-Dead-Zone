@@ -33,7 +33,7 @@ namespace DeadZoneEngine.Entities.Components
             Init();
         }
 
-        public BodyChunk(ulong ID) : base(ID)
+        public BodyChunk(ushort ID) : base(ID)
         {
             Init();
         }

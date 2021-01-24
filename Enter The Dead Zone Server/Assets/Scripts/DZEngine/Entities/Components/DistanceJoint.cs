@@ -53,7 +53,7 @@ namespace DeadZoneEngine.Entities.Components
         {
             
         }
-        public DistanceJoint(ulong ID) : base(ID)
+        public DistanceJoint(ushort ID) : base(ID)
         {
 
         }

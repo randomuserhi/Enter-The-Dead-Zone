@@ -9,16 +9,22 @@ namespace DZNetwork
     public static class PacketHandler
     {
         public static int ProtocolID = 0;
-        private static int PacketHeaderSize = sizeof(int) + sizeof(long) * 2;
-        public static int HeaderSize = sizeof(int) * 6 + sizeof(long) * 2;
-        public static int FullHeaderSize = sizeof(int) * 7 + sizeof(long) * 2;
+        private static int PacketHeaderSize = sizeof(int) + sizeof(long) + sizeof(ushort);
+        public static int HeaderSize = PacketHeaderSize + sizeof(ushort) * 2 + sizeof(int) * 3;
+        public static int FullHeaderSize = PacketHeaderSize + HeaderSize;
 
-        public static long PacketID = 0;
-        public static int PacketSequence = 0;
-        public static int PacketAcknowledgement = 0;
+        public static ushort PacketID = 0;
+        public static ushort LocalPacketSequence = 0;
+        public static ushort PacketAcknowledgement = 0;
         public static int PacketAcknowledgementBitField = 0;
 
-        public static byte[][] GeneratePackets(Packet P)
+        public struct PacketGroup
+        {
+            public ushort StartingPacketSequence;
+            public byte[][] Packets;
+        }
+
+        public static PacketGroup GeneratePackets(Packet P)
         {
             long Epoch = (DateTime.Now - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).Ticks / 10000;
 
@@ -31,7 +37,12 @@ namespace DZNetwork
             int WriteHead = 0;
             Buffer.BlockCopy(BitConverter.GetBytes(ProtocolID), 0, HeaderBytes, WriteHead, sizeof(int)); WriteHead += sizeof(int);
             Buffer.BlockCopy(BitConverter.GetBytes(Epoch), 0, HeaderBytes, WriteHead, sizeof(long)); WriteHead += sizeof(long);
-            Buffer.BlockCopy(BitConverter.GetBytes(PacketID), 0, HeaderBytes, WriteHead, sizeof(long));
+            Buffer.BlockCopy(BitConverter.GetBytes(PacketID), 0, HeaderBytes, WriteHead, sizeof(ushort));
+
+            PacketGroup PacketGroup = new PacketGroup()
+            {
+                StartingPacketSequence = LocalPacketSequence
+            };
 
             int RemainingPacketSize = Data.Length;
             int ReadHead = 0;
@@ -42,9 +53,10 @@ namespace DZNetwork
                 Buffer.BlockCopy(HeaderBytes, 0, Packets[i], 0, HeaderBytes.Length);
 
                 int HeaderIndex = HeaderBytes.Length;
-                Buffer.BlockCopy(BitConverter.GetBytes(PacketSequence), 0, Packets[i], HeaderIndex, sizeof(int)); HeaderIndex += sizeof(int);
-                Buffer.BlockCopy(BitConverter.GetBytes(PacketAcknowledgement), 0, Packets[i], HeaderIndex, sizeof(int)); HeaderIndex += sizeof(int);
+                Buffer.BlockCopy(BitConverter.GetBytes(LocalPacketSequence), 0, Packets[i], HeaderIndex, sizeof(ushort)); HeaderIndex += sizeof(ushort);
+                Buffer.BlockCopy(BitConverter.GetBytes(PacketAcknowledgement), 0, Packets[i], HeaderIndex, sizeof(ushort)); HeaderIndex += sizeof(ushort);
                 Buffer.BlockCopy(BitConverter.GetBytes(PacketAcknowledgementBitField), 0, Packets[i], HeaderIndex, sizeof(int)); HeaderIndex += sizeof(int);
+                UnityEngine.Debug.Log(PacketAcknowledgement + ") " + Convert.ToString(PacketAcknowledgementBitField, 2));
                 Buffer.BlockCopy(BitConverter.GetBytes(Data.Length), 0, Packets[i], HeaderIndex, sizeof(int)); HeaderIndex += sizeof(int);
                 Buffer.BlockCopy(BitConverter.GetBytes(i), 0, Packets[i], HeaderIndex, sizeof(int));
 
@@ -52,12 +64,13 @@ namespace DZNetwork
                 ReadHead += PacketSize;
                 RemainingPacketSize -= PacketSize;
 
-                PacketSequence++;
+                LocalPacketSequence++;
             }
 
             PacketID++;
 
-            return Packets;
+            PacketGroup.Packets = Packets;
+            return PacketGroup;
         }
     }
 
@@ -77,13 +90,22 @@ namespace DZNetwork
         }
 
         /// <summary>
-        /// Generates a packet from which data can be read
+        /// Generates a packet from which data can be read, making a copy
         /// </summary>
         /// <param name="Data">Bytes to be read</param>
         public Packet(byte[] Buffer, int Start, int Count)
         {
             ReadableBuffer = new byte[Count];
             System.Buffer.BlockCopy(Buffer, Start, ReadableBuffer, 0, Count);
+        }
+
+        /// <summary>
+        /// Generates a packet from which data can be read, without making a copy
+        /// </summary>
+        /// <param name="Data">Bytes to be read</param>
+        public Packet(byte[] Buffer)
+        {
+            ReadableBuffer = Buffer;
         }
 
         /// <summary>
@@ -302,6 +324,46 @@ namespace DZNetwork
         }
 
         /// <summary>
+        /// Reads a Short value from the current ReadPosition of the packet
+        /// </summary>
+        /// <param name="MoveRead">Move the ReadPosition after read</param>
+        /// <returns></returns>
+        public short ReadShort(bool MoveRead = true)
+        {
+            if (UnreadLength() >= sizeof(short))
+            {
+                short Value = BitConverter.ToInt16(ReadableBuffer, ReadPosition);
+                if (MoveRead)
+                    ReadPosition += sizeof(short);
+                return Value;
+            }
+            else
+            {
+                throw new Exception("Could not read Short value");
+            }
+        }
+
+        /// <summary>
+        /// Reads a ushort value from the current ReadPosition of the packet
+        /// </summary>
+        /// <param name="MoveRead">Move the ReadPosition after read</param>
+        /// <returns></returns>
+        public ushort ReadUShort(bool MoveRead = true)
+        {
+            if (UnreadLength() >= sizeof(ushort))
+            {
+                ushort Value = BitConverter.ToUInt16(ReadableBuffer, ReadPosition);
+                if (MoveRead)
+                    ReadPosition += sizeof(ushort);
+                return Value;
+            }
+            else
+            {
+                throw new Exception("Could not read UShort value");
+            }
+        }
+
+        /// <summary>
         /// Reads a int value from the current ReadPosition of the packet
         /// </summary>
         /// <param name="MoveRead">Move the ReadPosition after read</param>
@@ -318,6 +380,26 @@ namespace DZNetwork
             else
             {
                 throw new Exception("Could not read Int value");
+            }
+        }
+
+        /// <summary>
+        /// Reads a uint value from the current ReadPosition of the packet
+        /// </summary>
+        /// <param name="MoveRead">Move the ReadPosition after read</param>
+        /// <returns></returns>
+        public uint ReadUInt(bool MoveRead = true)
+        {
+            if (UnreadLength() >= sizeof(int))
+            {
+                uint Value = BitConverter.ToUInt32(ReadableBuffer, ReadPosition);
+                if (MoveRead)
+                    ReadPosition += sizeof(uint);
+                return Value;
+            }
+            else
+            {
+                throw new Exception("Could not read UInt value");
             }
         }
 

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -17,7 +18,7 @@ namespace DZNetwork
         private static readonly List<Packet> PacketsToProcess = new List<Packet>();
         private static readonly Queue<Packet> PacketsProcessing = new Queue<Packet>();
 
-        public static void ProcessPacket(Packet Packet, long Ping)
+        public static void ProcessPacket(EndPoint Client, Packet Packet, long Ping)
         {
             lock (PacketsToProcess)
             {

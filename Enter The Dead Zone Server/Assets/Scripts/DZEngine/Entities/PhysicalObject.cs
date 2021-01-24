@@ -27,7 +27,7 @@ namespace DeadZoneEngine.Entities
             RB.sharedMaterial = Resources.Load<PhysicsMaterial2D>("PhysicsMaterial/Zero");
         }
 
-        public PhysicalObject(ulong ID) : base(ID)
+        public PhysicalObject(ushort ID) : base(ID)
         {
             Self = new GameObject();
             RB = Self.AddComponent<Rigidbody2D>();

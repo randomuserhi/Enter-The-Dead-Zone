@@ -17,7 +17,7 @@ public abstract class AbstractCreature : AbstractWorldEntity, IUpdatable, IRende
     public DistanceJoint[] BodyChunkConnections;
 
     public AbstractCreature() { }
-    public AbstractCreature(ulong ID) : base(ID) { }
+    public AbstractCreature(ushort ID) : base(ID) { }
 
     public virtual void Update() { }
     public virtual void BodyPhysicsUpdate() { }

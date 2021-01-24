@@ -27,7 +27,7 @@ public class ServerHandler : MonoBehaviour
         switch(Job)
         {
             case ServerCode.ClientPing:
-                Debug.Log(Packet.ReadByte() + " number of players");
+                //Debug.Log(Packet.ReadByte() + " number of players");
                 break;
 
             default:

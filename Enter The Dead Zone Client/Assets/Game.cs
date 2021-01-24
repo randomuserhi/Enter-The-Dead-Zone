@@ -66,16 +66,16 @@ public class Game
 
         if (PrevSnapshot.Ticks >= ServerTick)
         {
+            Debug.LogWarning("Received a late packet");
             return;
         }
 
         ConversionRate = (float)ServerTickRate / ClientTickRate;
 
         int NumSnapshotItems = Packet.ReadInt();
-        Debug.Log("NumSnapShot: " + NumSnapshotItems);
         for (int i = 0; i < NumSnapshotItems; i++)
         {
-            ulong ID = Packet.ReadULong();
+            ushort ID = Packet.ReadUShort();
             _IInstantiatableDeletable Item = EntityID.GetObject(ID);
             bool FlaggedToDelete = Packet.ReadBool();
             if (FlaggedToDelete)
@@ -123,7 +123,7 @@ public class Game
         PrevSnapshot.Ticks = ServerTick;
     }
 
-    private static IServerSendable Parse(Packet P, ulong ID, DZSettings.EntityType Type)
+    private static IServerSendable Parse(Packet P, ushort ID, DZSettings.EntityType Type)
     {
         switch (Type)
         {

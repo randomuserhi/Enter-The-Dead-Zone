@@ -13,7 +13,7 @@ namespace DeadZoneEngine.Entities
     {
         public PhysicalJoint() { }
 
-        public PhysicalJoint(ulong ID) : base(ID) { }
+        public PhysicalJoint(ushort ID) : base(ID) { }
 
         public virtual void PreUpdate() { }
         public virtual void IteratedUpdate() { }

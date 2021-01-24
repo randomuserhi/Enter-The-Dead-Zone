@@ -37,7 +37,7 @@ public class PlayerCreature : AbstractCreature, IServerSendable
 
     private float[] DynamicRunSpeed; //Controls Speed of each bodychunk
 
-    public PlayerCreature(ulong ID) : base(ID)
+    public PlayerCreature(ushort ID) : base(ID)
     {
         Initialize();
     }

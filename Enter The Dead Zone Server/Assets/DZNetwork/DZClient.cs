@@ -14,9 +14,9 @@ namespace DZNetwork
         public Action DisconnectHandle;
         private bool DisconnectTrigger = true;
         public Action ConnectHandle;
-
         public const int ConnectionLifeTime = 150;
         public uint TicksSinceLastConnection = 0;
+        public Action<SentPacketWrapper> PacketLostHandle;
 
         public bool Connected = false;
         public bool SocketConnected
@@ -32,6 +32,8 @@ namespace DZNetwork
 
         public void FixedUpdate()
         {
+            Tick();
+
             TicksSinceLastConnection++;
             if (TicksSinceLastConnection > ConnectionLifeTime)
             {
@@ -57,9 +59,9 @@ namespace DZNetwork
 
         public void Send(Packet Packet)
         {
-            byte[][] PacketData = PacketHandler.GeneratePackets(Packet);
-            for (int i = 0; i < PacketData.Length; i++)
-                Send(PacketData[i]);
+            PacketHandler.PacketGroup PacketGroup = PacketHandler.GeneratePackets(Packet);
+            for (int i = 0; i < PacketGroup.Packets.Length; i++)
+                Send((ushort)(PacketGroup.StartingPacketSequence + i), PacketGroup.Packets[i]);
         }
 
         Dictionary<long, PacketReconstructor> PacketsToReconstruct = new Dictionary<long, PacketReconstructor>();
@@ -81,9 +83,14 @@ namespace DZNetwork
             }
         }
 
-        protected override void OnReceiveConstructedPacket(Packet Data, long Ping)
+        protected override void OnReceiveConstructedPacket(EndPoint Client, Packet Data, long Ping)
         {
             PacketHandle?.Invoke(Data, Ping);
+        }
+
+        protected override void OnPacketLost(SentPacketWrapper Packet)
+        {
+            PacketLostHandle(Packet);
         }
     }
 }
