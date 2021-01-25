@@ -6,17 +6,16 @@ using System.Threading.Tasks;
 
 using UnityEngine;
 using DeadZoneEngine;
-using Templates;
+using ClientHandle;
 using DZNetwork;
 using DeadZoneEngine.Entities;
+using System.Net;
 
 /// <summary>
 /// Manages the server connection and game functionality
 /// </summary>
 public class Game
 {
-    public static Dictionary<System.Net.EndPoint, Client> ConnectedClients = new Dictionary<System.Net.EndPoint, Client>();
-
     public static ulong ServerTicks = 0;
     public static int ServerTickRate = 30;
 
@@ -34,7 +33,6 @@ public class Game
     private static void SendSnapshot() //Sends world snapshot to given client
     {
         Packet SnapshotPacket = new Packet();
-        SnapshotPacket.Write((int)ServerCode.SnapshotData);
         SnapshotPacket.Write(ServerTickRate);
         SnapshotPacket.Write(ServerTicks);
 
@@ -44,23 +42,24 @@ public class Game
             SnapshotPacket.Write(DZEngine.GetBytes(DZEngine.ServerSendableObjects[i]));
         }
 
-        Loader.Socket.Send(SnapshotPacket);
+        Loader.Socket.Send(SnapshotPacket, ServerCode.ServerSnapshot);
     }
 
     
-    public static void AddConnection(System.Net.EndPoint EndPoint)
+    public static void AddConnection(EndPoint EndPoint)
     {
-        System.Net.IPEndPoint IP = (System.Net.IPEndPoint)EndPoint;
+        IPEndPoint IP = (IPEndPoint)EndPoint;
         Debug.Log("Client Connected: " + IP.Address + ":" + IP.Port);
 
-        if (!ConnectedClients.ContainsKey(EndPoint))
-            ConnectedClients.Add(EndPoint, new Client());
+        new Client(EndPoint);
     }
 
-    public static void RemoveConnection(System.Net.EndPoint EndPoint)
+    public static void RemoveConnection(EndPoint EndPoint)
     {
-        System.Net.IPEndPoint IP = (System.Net.IPEndPoint)EndPoint;
+        IPEndPoint IP = (IPEndPoint)EndPoint;
         Debug.Log("Client Disconnected: " + IP.Address + ":" + IP.Port);
+
+        Client.Remove(Client.EndPointToID[EndPoint]);
     }
 
     /// <summary>

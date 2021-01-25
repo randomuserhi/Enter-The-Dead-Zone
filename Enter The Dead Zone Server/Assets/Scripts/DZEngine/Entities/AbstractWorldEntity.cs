@@ -12,7 +12,6 @@ namespace DeadZoneEngine.Entities
     {
         public static Dictionary<ushort, _IInstantiatableDeletable> IDToObject = new Dictionary<ushort, _IInstantiatableDeletable>();
 
-        private static HashSet<ushort> TakenIDs = new HashSet<ushort>();
         public static ushort StaticID = 0;
 
         public AbstractWorldEntity Self;
@@ -37,18 +36,17 @@ namespace DeadZoneEngine.Entities
         private void AssignNewID()
         {
             ushort Next = StaticID++;
-            if (TakenIDs.Count >= ushort.MaxValue - 100)
+            if (IDToObject.Count >= ushort.MaxValue - 100)
             {
                 Debug.LogError("No more IDs to give!");
                 return;
             }
-            while (TakenIDs.Contains(Next))
+            while (IDToObject.ContainsKey(Next))
             {
                 Next = StaticID++;
             }
             Value = Next;
             IDToObject.Add(Value, Self);
-            TakenIDs.Add(Value);
         }
 
         public void ChangeID()
@@ -76,6 +74,7 @@ namespace DeadZoneEngine.Entities
                 IDToObject.Add(New, IDToObject[Value]);
                 Remove(this);
             }
+            Value = New;
         }
 
         public static void Remove(EntityID ID)
@@ -83,7 +82,6 @@ namespace DeadZoneEngine.Entities
             if (IDToObject.ContainsKey(ID))
             {
                 IDToObject.Remove(ID);
-                TakenIDs.Remove(ID);
             }
             else
                 Debug.LogError("EntityID.Remove(EntityID ID) => ID " + ID + " does not exist!");

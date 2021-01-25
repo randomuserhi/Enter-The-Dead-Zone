@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
+using ClientHandle;
 using UnityEngine;
 using DeadZoneEngine;
 using DeadZoneEngine.Entities;
@@ -13,6 +14,7 @@ using DZNetwork;
 public class Game
 {
     public static byte NumLocalPlayers = 0;
+    public static Client Client;
 
     public static DZEngine.ManagedList<IServerSendable> ServerItems = new DZEngine.ManagedList<IServerSendable>();
     public static int ServerTickRate = 30;
@@ -48,19 +50,23 @@ public class Game
         Loader.Socket.FixedUpdate();
 
         if (Loader.Socket.SocketConnected)
-        {
-            Packet PingPacket = new Packet();
-            PingPacket.Write((int)ServerCode.ClientPing);
-            PingPacket.Write(NumLocalPlayers);
-            Loader.Socket.Send(PingPacket);
-        }
+            SendSnapshot();
 
         if (!Loader.Socket.Connected)
             return;
     }
 
+    private static void SendSnapshot()
+    {
+        Packet SnapshotPacket = new Packet();
+        SnapshotPacket.Write(NumLocalPlayers);
+        Loader.Socket.Send(SnapshotPacket, ServerCode.ClientSnapshot);
+    }
+
     public static void UnWrapSnapshot(Packet Packet)
     {
+        //if (Client == null || !Client.PlayerSetup) return;
+
         ServerTickRate = Packet.ReadInt();
         ulong ServerTick = Packet.ReadULong();
 

@@ -14,16 +14,28 @@ namespace DZNetwork
         public static int Ping = -1;
 
         public static Action<Packet> PacketHandle = null;
+        public static Action<DZUDPSocket.SentPacketWrapper> LostPacketHandle = null;
 
         private static readonly List<Packet> PacketsToProcess = new List<Packet>();
         private static readonly Queue<Packet> PacketsProcessing = new Queue<Packet>();
 
-        public static void ProcessPacket(EndPoint Client, Packet Packet, long Ping)
+        private static readonly List<DZUDPSocket.SentPacketWrapper> LostPacketsToProcess = new List<DZUDPSocket.SentPacketWrapper>();
+        private static readonly Queue<DZUDPSocket.SentPacketWrapper> LostPacketsProcessing = new Queue<DZUDPSocket.SentPacketWrapper>();
+
+        public static void ProcessPacket(Packet Packet, long Ping)
         {
             lock (PacketsToProcess)
             {
                 ServerHandle.Ping = (int)Ping;
                 PacketsToProcess.Add(Packet);
+            }
+        }
+
+        public static void HandleLostPacket(DZUDPSocket.SentPacketWrapper Packet)
+        {
+            lock (LostPacketsToProcess)
+            {
+                LostPacketsToProcess.Add(Packet);
             }
         }
 
@@ -39,9 +51,24 @@ namespace DZNetwork
                 }
             }
 
+            lock (LostPacketsToProcess)
+            {
+                if (LostPacketsToProcess.Count > 0)
+                {
+                    for (int i = 0; i < LostPacketsToProcess.Count; i++)
+                        LostPacketsProcessing.Enqueue(LostPacketsToProcess[i]);
+                    LostPacketsToProcess.Clear();
+                }
+            }
+
             while (PacketsProcessing.Count > 0)
             {
                 PacketHandle?.Invoke(PacketsProcessing.Dequeue());
+            }
+
+            while (LostPacketsProcessing.Count > 0)
+            {
+                LostPacketHandle?.Invoke(LostPacketsProcessing.Dequeue());
             }
         }
     }

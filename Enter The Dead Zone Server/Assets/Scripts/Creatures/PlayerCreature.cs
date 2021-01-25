@@ -5,14 +5,10 @@ using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
 
+using ClientHandle;
 using DeadZoneEngine;
 using DeadZoneEngine.Entities;
 using DeadZoneEngine.Entities.Components;
-
-public class PlayerController
-{
-    public Vector2 Direction;
-}
 
 public class PlayerCreature : AbstractCreature, IServerSendable
 {

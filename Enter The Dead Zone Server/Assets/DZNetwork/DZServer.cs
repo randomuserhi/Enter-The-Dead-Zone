@@ -10,7 +10,7 @@ namespace DZNetwork
 {
     public class DZServer : DZUDPSocket
     {
-        public Action<EndPoint, Packet, long> PacketHandle; //Delegate that is called on recieving a packet
+        public Action<Packet, long> PacketHandle; //Delegate that is called on recieving a packet
         public Action<EndPoint> DisconnectHandle;
         public Action<EndPoint> ConnectHandle;
         public Action<SentPacketWrapper> PacketLostHandle;
@@ -53,23 +53,23 @@ namespace DZNetwork
             BeginReceive();
         }
 
-        public void Send(Packet Packet)
+        public void Send(Packet Packet, ServerCode ServerCode)
         {
             List<EndPoint> Connections = ConnectedDevices.Keys.ToList();
             if (Connections.Count == 0) return;
 
-            PacketHandler.PacketGroup PacketGroup = PacketHandler.GeneratePackets(Packet);
+            PacketHandler.PacketGroup PacketGroup = PacketHandler.GeneratePackets(Packet, ServerCode);
             foreach (EndPoint EndPoint in Connections)
                 if (EndPoint != null)
                     for (int i = 0; i < PacketGroup.Packets.Length; i++)
-                        SendTo((ushort)(PacketGroup.StartingPacketSequence + i), PacketGroup.Packets[i], EndPoint);
+                        SendTo((ushort)(PacketGroup.StartingPacketSequence + i), ServerCode, PacketGroup.Packets[i], EndPoint);
         }
 
-        public void SendTo(Packet Packet, EndPoint EndPoint)
+        public void SendTo(Packet Packet, ServerCode ServerCode, EndPoint EndPoint)
         {
-            PacketHandler.PacketGroup PacketGroup = PacketHandler.GeneratePackets(Packet);
+            PacketHandler.PacketGroup PacketGroup = PacketHandler.GeneratePackets(Packet, ServerCode);
             for (int i = 0; i < PacketGroup.Packets.Length; i++)
-                SendTo((ushort)(PacketGroup.StartingPacketSequence + i), PacketGroup.Packets[i], EndPoint);
+                SendTo((ushort)(PacketGroup.StartingPacketSequence + i), ServerCode, PacketGroup.Packets[i], EndPoint);
         }
 
         protected override void OnReceive(EndPoint ReceivedEndPoint)
@@ -88,7 +88,7 @@ namespace DZNetwork
 
         protected override void OnReceiveConstructedPacket(EndPoint Client, Packet Data, long Ping)
         {
-            PacketHandle?.Invoke(Client, Data, Ping);
+            PacketHandle?.Invoke(Data, Ping);
         }
 
         protected override void OnPacketLost(SentPacketWrapper Packet)

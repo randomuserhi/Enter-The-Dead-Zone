@@ -19,12 +19,11 @@ public class Loader
         Time.fixedDeltaTime = 1f / Game.ClientTickRate;
         Physics2D.simulationMode = SimulationMode2D.Script;
 
-        ServerHandler.Initialise();
-
         //Remove later
         Socket.ConnectHandle += Game.Connected;
         Socket.DisconnectHandle += Game.Disconnected;
         Socket.PacketHandle += ServerHandle.ProcessPacket;
+        Socket.PacketLostHandle += ServerHandle.HandleLostPacket;
         Socket.Connect(ServerIP, ServerPort);
     }
 

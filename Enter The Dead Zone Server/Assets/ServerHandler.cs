@@ -6,8 +6,9 @@ using DZNetwork;
 
 public enum ServerCode //TODO somehow implement / catch disconnection => its not a packet so not sure how to do this
 {
-    ClientPing,
-    SnapshotData
+    Null,
+    ClientSnapshot,
+    ServerSnapshot
 }
 
 public class ServerHandler : MonoBehaviour
@@ -20,13 +21,31 @@ public class ServerHandler : MonoBehaviour
             ServerCode Job = (ServerCode)Packet.ReadInt();
             PerformServerAction(Packet, Job);
         };
+
+        ServerHandle.LostPacketHandle = (SentPacketWrapper) =>
+        {
+            HandleLostPacket(SentPacketWrapper.Code);
+        };
+    }
+
+    private void HandleLostPacket(ServerCode Job)
+    {
+        switch (Job)
+        {
+            case ServerCode.Null:
+                break;
+
+            default:
+                Debug.LogWarning("Unknown ServerCode: " + Job);
+                break;
+        }
     }
 
     private void PerformServerAction(Packet Packet, ServerCode Job)
     {
         switch(Job)
         {
-            case ServerCode.ClientPing:
+            case ServerCode.ClientSnapshot:
                 //Debug.Log(Packet.ReadByte() + " number of players");
                 break;
 

@@ -52,7 +52,7 @@ namespace DZNetwork
             public EndPoint Client;
             public int Lifetime = 0;
             public ushort PacketSequence = 0;
-            public byte[] Data;
+            public ServerCode Code = ServerCode.Null;
         }
         private Dictionary<ushort, SentPacketWrapper> SentPackets = new Dictionary<ushort, SentPacketWrapper>();
         private void UpdateAcknowledgedPackets()
@@ -208,22 +208,22 @@ namespace DZNetwork
 
         protected virtual void OnReceiveConstructedPacket(EndPoint Client, Packet Data, long Ping) { }
 
-        public void Send(ushort PacketSequence, byte[] Bytes)
+        public void Send(ushort PacketSequence, ServerCode ServerCode, byte[] Bytes)
         {
             SentPackets.Add(PacketSequence, new SentPacketWrapper()
             {
                 PacketSequence = PacketSequence,
-                Data = Bytes
+                Code = ServerCode
             });
             Socket.BeginSend(Bytes, 0, Bytes.Length, SocketFlags.None, null, null);
         }
 
-        public void SendTo(ushort PacketSequence, byte[] Bytes, EndPoint Destination)
+        public void SendTo(ushort PacketSequence, ServerCode ServerCode, byte[] Bytes, EndPoint Destination)
         {
             SentPackets.Add(PacketSequence, new SentPacketWrapper()
             {
                 PacketSequence = PacketSequence,
-                Data = Bytes
+                Code = ServerCode
             });
             Socket.BeginSendTo(Bytes, 0, Bytes.Length, SocketFlags.None, Destination, SendToCallback, null);
         }

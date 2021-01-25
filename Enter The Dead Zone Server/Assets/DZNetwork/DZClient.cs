@@ -57,11 +57,11 @@ namespace DZNetwork
             BeginReceive();
         }
 
-        public void Send(Packet Packet)
+        public void Send(Packet Packet, ServerCode ServerCode)
         {
-            PacketHandler.PacketGroup PacketGroup = PacketHandler.GeneratePackets(Packet);
+            PacketHandler.PacketGroup PacketGroup = PacketHandler.GeneratePackets(Packet, ServerCode);
             for (int i = 0; i < PacketGroup.Packets.Length; i++)
-                Send((ushort)(PacketGroup.StartingPacketSequence + i), PacketGroup.Packets[i]);
+                Send((ushort)(PacketGroup.StartingPacketSequence + i), ServerCode, PacketGroup.Packets[i]);
         }
 
         Dictionary<long, PacketReconstructor> PacketsToReconstruct = new Dictionary<long, PacketReconstructor>();
@@ -90,7 +90,7 @@ namespace DZNetwork
 
         protected override void OnPacketLost(SentPacketWrapper Packet)
         {
-            PacketLostHandle(Packet);
+            PacketLostHandle?.Invoke(Packet);
         }
     }
 }

@@ -15,8 +15,6 @@ public static class Main
     }
     private static DZEngine.ManagedList<IRenderer<SpriteRenderer>> SpriteRenderers = new DZEngine.ManagedList<IRenderer<SpriteRenderer>>(); //List of SpriteRenderers
 
-    public static Client Client;
-
     // Start is called before the first frame update
     public static void Start()
     {
@@ -26,14 +24,8 @@ public static class Main
     public static void LoadMenu()
     {
         DZEngine.ReleaseResources();
-        Client = new Client();
-        AddPlayer();
-    }
-
-    public static void AddPlayer()
-    {
-        Game.NumLocalPlayers = 1;
-        Client.Players.Add(new Player());
+        if (Game.Client == null)
+            Game.Client = new Client();
     }
 
     // Update is called once per frame

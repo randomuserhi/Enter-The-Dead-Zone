@@ -11,7 +11,6 @@ namespace DZNetwork
         public static int ProtocolID = 0;
         private static int PacketHeaderSize = sizeof(int) + sizeof(long) + sizeof(ushort);
         public static int HeaderSize = PacketHeaderSize + sizeof(ushort) * 2 + sizeof(int) * 3;
-        public static int FullHeaderSize = PacketHeaderSize + HeaderSize;
 
         public static ushort PacketID = 0;
         public static ushort LocalPacketSequence = 0;
@@ -24,8 +23,10 @@ namespace DZNetwork
             public byte[][] Packets;
         }
 
-        public static PacketGroup GeneratePackets(Packet P)
+        public static PacketGroup GeneratePackets(Packet P, ServerCode ServerCode)
         {
+            P.InsertServerCode(ServerCode);
+
             long Epoch = (DateTime.Now - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).Ticks / 10000;
 
             byte[] Data = P.GetBytes();
@@ -106,6 +107,16 @@ namespace DZNetwork
         public Packet(byte[] Buffer)
         {
             ReadableBuffer = Buffer;
+        }
+
+        public void InsertServerCode(ServerCode Code)
+        {
+            Buffer.InsertRange(0, BitConverter.GetBytes((int)Code));
+        }
+
+        public void SeekHeader()
+        {
+            ReadPosition = PacketHandler.HeaderSize;
         }
 
         /// <summary>
