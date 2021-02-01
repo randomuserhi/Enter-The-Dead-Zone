@@ -10,7 +10,7 @@ namespace DZNetwork
 {
     public class DZServer : DZUDPSocket
     {
-        public Action<EndPoint, Packet, long> PacketHandle; //Delegate that is called on recieving a packet
+        public Action<RecievePacketWrapper, long> PacketHandle; //Delegate that is called on recieving a packet
         public Action<EndPoint> DisconnectHandle;
         public Action<EndPoint> ConnectHandle;
         public Action<SentPacketWrapper> PacketLostHandle;
@@ -86,9 +86,9 @@ namespace DZNetwork
             }
         }
 
-        protected override void OnReceiveConstructedPacket(EndPoint Client, Packet Data, long Ping)
+        protected override void OnReceiveConstructedPacket(RecievePacketWrapper Packet, long Ping)
         {
-            PacketHandle?.Invoke(Client, Data, Ping);
+            PacketHandle?.Invoke(Packet, Ping);
         }
 
         protected override void OnPacketLost(SentPacketWrapper Packet)

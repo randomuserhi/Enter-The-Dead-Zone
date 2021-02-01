@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -12,16 +13,16 @@ namespace DZNetwork
     {
         public static int Ping = -1;
 
-        public static Action<Packet> PacketHandle = null;
+        public static Action<DZUDPSocket.RecievePacketWrapper> PacketHandle = null;
         public static Action<DZUDPSocket.SentPacketWrapper> LostPacketHandle = null;
 
-        private static readonly List<Packet> PacketsToProcess = new List<Packet>();
-        private static readonly Queue<Packet> PacketsProcessing = new Queue<Packet>();
+        private static readonly List<DZUDPSocket.RecievePacketWrapper> PacketsToProcess = new List<DZUDPSocket.RecievePacketWrapper>();
+        private static readonly Queue<DZUDPSocket.RecievePacketWrapper> PacketsProcessing = new Queue<DZUDPSocket.RecievePacketWrapper>();
 
         private static readonly List<DZUDPSocket.SentPacketWrapper> LostPacketsToProcess = new List<DZUDPSocket.SentPacketWrapper>();
         private static readonly Queue<DZUDPSocket.SentPacketWrapper> LostPacketsProcessing = new Queue<DZUDPSocket.SentPacketWrapper>();
 
-        public static void ProcessPacket(Packet Packet, long Ping)
+        public static void ProcessPacket(DZUDPSocket.RecievePacketWrapper Packet, long Ping)
         {
             lock (PacketsToProcess)
             {

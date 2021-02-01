@@ -47,6 +47,11 @@ namespace DZNetwork
             UpdateAcknowledgedPackets();
         }
 
+        public class RecievePacketWrapper
+        {
+            public EndPoint Client;
+            public Packet Data;
+        }
         public class SentPacketWrapper
         {
             public EndPoint Client;
@@ -54,13 +59,13 @@ namespace DZNetwork
             public ushort PacketSequence = 0;
             public ServerCode Code = ServerCode.Null;
         }
-        private Dictionary<ushort, SentPacketWrapper> SentPackets = new Dictionary<ushort, SentPacketWrapper>();
+        private Dictionary<PacketIdentifier, SentPacketWrapper> SentPackets = new Dictionary<PacketIdentifier, SentPacketWrapper>();
         private void UpdateAcknowledgedPackets()
         {
             lock (SentPackets)
             {
-                List<ushort> Keys = SentPackets.Keys.ToList();
-                foreach (ushort Key in Keys)
+                List<PacketIdentifier> Keys = SentPackets.Keys.ToList();
+                foreach (PacketIdentifier Key in Keys)
                 {
                     SentPackets[Key].Lifetime++;
                     if (SentPackets[Key].Lifetime > PacketLifetime)
@@ -74,9 +79,35 @@ namespace DZNetwork
 
         protected virtual void OnPacketLost(SentPacketWrapper Packet) { }
 
+        private struct PacketIdentifier
+        {
+            public EndPoint Client;
+            public ushort ID;
+
+            public override bool Equals(object Obj)
+            {
+                return Obj is PacketIdentifier && this == (PacketIdentifier)Obj;
+            }
+            public static bool operator ==(PacketIdentifier A, PacketIdentifier B)
+            {
+                if (ReferenceEquals(A, null) && ReferenceEquals(B, null))
+                    return true;
+                else if (ReferenceEquals(A, null) || ReferenceEquals(B, null))
+                    return false;
+                return A.ID == B.ID && A.Client.Equals(B.Client);
+            }
+            public static bool operator !=(PacketIdentifier A, PacketIdentifier B)
+            {
+                if (ReferenceEquals(A, null) && ReferenceEquals(B, null))
+                    return false;
+                else if (ReferenceEquals(A, null) || ReferenceEquals(B, null))
+                    return true;
+                return A.ID != B.ID || !A.Client.Equals(B.Client);
+            }
+        }
         private int ReconstructedPacketsClear = 0;
-        private HashSet<ushort> ReconstructedPackets = new HashSet<ushort>();
-        private Dictionary<ushort, PacketReconstructor> PacketsToReconstruct = new Dictionary<ushort, PacketReconstructor>();
+        private HashSet<PacketIdentifier> ReconstructedPackets = new HashSet<PacketIdentifier>();
+        private Dictionary<PacketIdentifier, PacketReconstructor> PacketsToReconstruct = new Dictionary<PacketIdentifier, PacketReconstructor>();
         private void UpdateReconstructedPackets()
         {
             ReconstructedPacketsClear++;
@@ -84,8 +115,8 @@ namespace DZNetwork
                 ReconstructedPackets.Clear();
             lock (PacketsToReconstruct)
             {
-                List<ushort> Keys = PacketsToReconstruct.Keys.ToList();
-                foreach (ushort Key in Keys)
+                List<PacketIdentifier> Keys = PacketsToReconstruct.Keys.ToList();
+                foreach (PacketIdentifier Key in Keys)
                 {
                     PacketsToReconstruct[Key].Lifetime++;
                     if (PacketsToReconstruct[Key].Lifetime > PacketLifetime)
@@ -122,6 +153,12 @@ namespace DZNetwork
             long ReceivedEpoch = Data.ReadLong();
 
             ushort PacketID = Data.ReadUShort();
+            PacketIdentifier PacketIdentifier = new PacketIdentifier()
+            {
+                Client = EndPoint,
+                ID = PacketID
+            };
+
 
             ushort RemotePacketSequence = Data.ReadUShort();
             ushort PacketAcknowledgement = Data.ReadUShort();
@@ -154,18 +191,23 @@ namespace DZNetwork
             //Update packet queue to check what packets were lost
             lock (SentPackets)
             {
-                if (SentPackets.ContainsKey(PacketAcknowledgement))
-                    SentPackets.Remove(PacketAcknowledgement);
-                ushort Sequence = PacketAcknowledgement;
+                PacketIdentifier Identifier = new PacketIdentifier()
+                {
+                    ID = PacketAcknowledgement,
+                    Client = EndPoint
+                };
+
+                if (SentPackets.ContainsKey(Identifier))
+                    SentPackets.Remove(Identifier);
                 for (int i = 0; i < 32; i++)
                 {
-                    Sequence--;
-                    if (SentPackets.ContainsKey(Sequence) && ((PacketAcknowledgementBitField & (1 << i)) != 0))
-                        SentPackets.Remove(Sequence);
+                    Identifier.ID--;
+                    if (SentPackets.ContainsKey(Identifier) && ((PacketAcknowledgementBitField & (1 << i)) != 0))
+                        SentPackets.Remove(Identifier);
                 }
             }
 
-            if (ReconstructedPackets.Contains(PacketID))
+            if (ReconstructedPackets.Contains(PacketIdentifier))
                 return; //Duplicate Packet
 
             int PacketByteCount = Data.ReadInt();
@@ -176,7 +218,7 @@ namespace DZNetwork
 
             lock (PacketsToReconstruct)
             {
-                if (!PacketsToReconstruct.ContainsKey(PacketID))
+                if (!PacketsToReconstruct.ContainsKey(PacketIdentifier))
                 {
                     PacketReconstructor Reconstructor = new PacketReconstructor()
                     {
@@ -184,19 +226,24 @@ namespace DZNetwork
                         Data = new byte[PacketByteCount]
                     };
 
-                    PacketsToReconstruct.Add(PacketID, Reconstructor);
+                    PacketsToReconstruct.Add(PacketIdentifier, Reconstructor);
                 }
-                if (PacketsToReconstruct[PacketID].PacketIndex[PacketIndex] == 0)
+                if (PacketsToReconstruct[PacketIdentifier].PacketIndex[PacketIndex] == 0)
                 {
-                    PacketsToReconstruct[PacketID].PacketIndex[PacketIndex] = 1;
-                    PacketsToReconstruct[PacketID].ProcessedPacketCount += 1;
-                    Buffer.BlockCopy(ByteData, 0, PacketsToReconstruct[PacketID].Data, PacketIndex * BufferStride, ByteData.Length);
+                    PacketsToReconstruct[PacketIdentifier].PacketIndex[PacketIndex] = 1;
+                    PacketsToReconstruct[PacketIdentifier].ProcessedPacketCount += 1;
+                    Buffer.BlockCopy(ByteData, 0, PacketsToReconstruct[PacketIdentifier].Data, PacketIndex * BufferStride, ByteData.Length);
 
-                    if (PacketsToReconstruct[PacketID].ProcessedPacketCount == PacketsToReconstruct[PacketID].PacketIndex.Length)
+                    if (PacketsToReconstruct[PacketIdentifier].ProcessedPacketCount == PacketsToReconstruct[PacketIdentifier].PacketIndex.Length)
                     {
-                        OnReceiveConstructedPacket(EndPoint, new Packet(PacketsToReconstruct[PacketID].Data, 0, PacketByteCount), CurrentEpoch - ReceivedEpoch);
-                        PacketsToReconstruct.Remove(PacketID);
-                        ReconstructedPackets.Add(PacketID);
+                        OnReceiveConstructedPacket(new RecievePacketWrapper()
+                        {
+                            Client = EndPoint,
+                            Data = new Packet(PacketsToReconstruct[PacketIdentifier].Data, 0, PacketByteCount)
+                        }, CurrentEpoch - ReceivedEpoch);
+
+                        PacketsToReconstruct.Remove(PacketIdentifier);
+                        ReconstructedPackets.Add(PacketIdentifier);
                     }
                 }
             }
@@ -206,11 +253,15 @@ namespace DZNetwork
 
         protected virtual void OnReceive(EndPoint ReceivedEndPoint) { }
 
-        protected virtual void OnReceiveConstructedPacket(EndPoint Client, Packet Data, long Ping) { }
+        protected virtual void OnReceiveConstructedPacket(RecievePacketWrapper ReconstructedPacket, long Ping) { }
 
         public void Send(ushort PacketSequence, ServerCode ServerCode, byte[] Bytes)
         {
-            SentPackets.Add(PacketSequence, new SentPacketWrapper()
+            SentPackets.Add(new PacketIdentifier()
+            {
+                ID = PacketSequence,
+                Client = Socket.RemoteEndPoint
+            }, new SentPacketWrapper()
             {
                 PacketSequence = PacketSequence,
                 Code = ServerCode
@@ -220,7 +271,11 @@ namespace DZNetwork
 
         public void SendTo(ushort PacketSequence, ServerCode ServerCode, byte[] Bytes, EndPoint Destination)
         {
-            SentPackets.Add(PacketSequence, new SentPacketWrapper()
+            SentPackets.Add(new PacketIdentifier()
+            {
+                ID = PacketSequence,
+                Client = Destination
+            }, new SentPacketWrapper()
             {
                 PacketSequence = PacketSequence,
                 Code = ServerCode

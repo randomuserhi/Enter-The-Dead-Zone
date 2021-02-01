@@ -26,8 +26,26 @@ public class Game
     {
         Loader.Socket.FixedUpdate();
 
+        UpdateClients();
+
         ServerTicks++;
         SendSnapshot();
+    }
+
+    private static void UpdateClients()
+    {
+        List<Client> Clients = ClientID.ConnectedClients.Values.ToList();
+        foreach (Client C in Clients)
+        {
+            if (C.LostConnection)
+            {
+                if (C.TicksSinceConnectionLoss > Client.TicksToTimeout)
+                    C.Destroy();
+                C.TicksSinceConnectionLoss++;
+            }
+            else
+                C.TicksSinceConnectionLoss = 0;
+        }
     }
 
     private static void SendSnapshot() //Sends world snapshot to given client
@@ -45,13 +63,41 @@ public class Game
         Loader.Socket.Send(SnapshotPacket, ServerCode.ServerSnapshot);
     }
 
+    public static void SyncClient(EndPoint EndPoint, Packet Data)
+    {
+        Client C = Client.GetClient(EndPoint);
+        byte NumPlayers = Data.ReadByte();
+        if (!C.Setup)
+        {
+            for (int i = 0; i < NumPlayers; i++)
+                C.AddPlayer();
+
+            C.Setup = true;
+        }
+        else
+            while (C.NumPlayers < NumPlayers)
+                C.AddPlayer();
+
+        Packet SyncPacket = new Packet();
+        SyncPacket.Write(NumPlayers);
+        SyncPacket.Write(C.ID);
+        for (int i = 0; i < C.NumPlayers; i++)
+        {
+            if (C.Players[i] == null)
+                SyncPacket.Write((byte)255);
+            else
+                SyncPacket.Write(C.Players[i].GetBytes());
+        }
+        Loader.Socket.SendTo(SyncPacket, ServerCode.InitializeConnection, EndPoint);
+    }
     
     public static void AddConnection(EndPoint EndPoint)
     {
         IPEndPoint IP = (IPEndPoint)EndPoint;
         Debug.Log("Client Connected: " + IP.Address + ":" + IP.Port);
 
-        new Client(EndPoint);
+        Client ConnectedClient = Client.GetClient(EndPoint);
+        ConnectedClient.LostConnection = false;
     }
 
     public static void RemoveConnection(EndPoint EndPoint)
@@ -59,16 +105,8 @@ public class Game
         IPEndPoint IP = (IPEndPoint)EndPoint;
         Debug.Log("Client Disconnected: " + IP.Address + ":" + IP.Port);
 
-        Client.Remove(Client.EndPointToID[EndPoint]);
-    }
-
-    /// <summary>
-    /// Remove a client from the game world
-    /// </summary>
-    /// <param name="ClientIndex"></param>
-    public static void RemoveClient(int ClientIndex) //On Client disconnect
-    {
-        throw new NotImplementedException();
+        Client DisconnectedClient = Client.GetClient(EndPoint);
+        DisconnectedClient.LostConnection = true;
     }
 }
 

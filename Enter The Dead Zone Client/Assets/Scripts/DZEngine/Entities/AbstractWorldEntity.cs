@@ -14,8 +14,8 @@ namespace DeadZoneEngine.Entities
 
         public static ushort StaticID = 0;
 
-        public AbstractWorldEntity Self;
-        public ushort Value;
+        public AbstractWorldEntity Self { get; private set; }
+        public ushort Value { get; private set; }
         public EntityID(AbstractWorldEntity Self)
         {
             this.Self = Self;
@@ -59,14 +59,17 @@ namespace DeadZoneEngine.Entities
         {
             if (IDToObject.ContainsKey(New))
             {
-                if (Replace && IDToObject[New] != Self)
+                if (IDToObject[New] != Self)
                 {
-                    DZEngine.Destroy(IDToObject[New]);
-                    IDToObject[New] = Self;
-                }
-                else
-                {
-                    Debug.LogError("Could not change ID as an object at that ID already exists...");
+                    if (Replace)
+                    {
+                        DZEngine.Destroy(IDToObject[New]);
+                        IDToObject[New] = Self;
+                    }
+                    else
+                    {
+                        Debug.LogError("Could not change ID as an object at that ID already exists...");
+                    }
                 }
             }
             else

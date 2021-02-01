@@ -25,7 +25,15 @@ public static class Main
     {
         DZEngine.ReleaseResources();
         if (Game.Client == null)
-            Game.Client = new Client();
+        {
+            Game.Client = Client.GetClient();
+            Game.Client.AddPlayer();
+        }
+        //Set client player positions to somewhere approapriate
+        for (int i = 0; i < Game.Client.Players.Length; i++)
+        {
+            //Game.Client.Players[i].Entity.SetPosition(new Vector3(0, 0)); //TODO::
+        }
     }
 
     // Update is called once per frame

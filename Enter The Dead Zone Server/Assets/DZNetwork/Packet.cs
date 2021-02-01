@@ -57,7 +57,6 @@ namespace DZNetwork
                 Buffer.BlockCopy(BitConverter.GetBytes(LocalPacketSequence), 0, Packets[i], HeaderIndex, sizeof(ushort)); HeaderIndex += sizeof(ushort);
                 Buffer.BlockCopy(BitConverter.GetBytes(PacketAcknowledgement), 0, Packets[i], HeaderIndex, sizeof(ushort)); HeaderIndex += sizeof(ushort);
                 Buffer.BlockCopy(BitConverter.GetBytes(PacketAcknowledgementBitField), 0, Packets[i], HeaderIndex, sizeof(int)); HeaderIndex += sizeof(int);
-                UnityEngine.Debug.Log(PacketAcknowledgement + ") " + Convert.ToString(PacketAcknowledgementBitField, 2));
                 Buffer.BlockCopy(BitConverter.GetBytes(Data.Length), 0, Packets[i], HeaderIndex, sizeof(int)); HeaderIndex += sizeof(int);
                 Buffer.BlockCopy(BitConverter.GetBytes(i), 0, Packets[i], HeaderIndex, sizeof(int));
 
@@ -178,7 +177,7 @@ namespace DZNetwork
         /// <param name="Data"></param>
         public void Write(byte Value)
         {
-            Buffer.AddRange(BitConverter.GetBytes(Value));
+            Buffer.Add(Value);
         }
 
         /// <summary>
@@ -186,6 +185,15 @@ namespace DZNetwork
         /// </summary>
         /// <param name="Data"></param>
         public void Write(int Value)
+        {
+            Buffer.AddRange(BitConverter.GetBytes(Value));
+        }
+
+        /// <summary>
+        /// Writes an ushort without setting ReadableBuffer
+        /// </summary>
+        /// <param name="Data"></param>
+        public void Write(ushort Value)
         {
             Buffer.AddRange(BitConverter.GetBytes(Value));
         }

@@ -6,43 +6,70 @@ using System.Text;
 using System.Threading.Tasks;
 
 using UnityEngine;
+using DeadZoneEngine;
+using DeadZoneEngine.Entities;
 
 namespace ClientHandle
 {
-    /// <summary>
-    /// Contains information on each player and which client they refer to
-    /// </summary>
-    public class Client
+    public class ClientID
     {
-        public static Dictionary<ushort, Client> ConnectedClients = new Dictionary<ushort, Client>();
-        public static Dictionary<EndPoint, ushort> EndPointToID = new Dictionary<EndPoint, ushort>();
-        private static ushort StaticID = 0;
+        private class EndPointComparer : IEqualityComparer<EndPoint>
+        {
+            public bool Equals(EndPoint A, EndPoint B)
+            {
+                return A.Equals(B);
+            }
 
-        private ushort _ClientID;
-        public ushort ClientID
+            public int GetHashCode(EndPoint A)
+            {
+                return A.GetHashCode();
+            }
+        }
+
+        public static Dictionary<ushort, Client> ConnectedClients = new Dictionary<ushort, Client>();
+        public static Dictionary<EndPoint, ushort> EndPointToID = new Dictionary<EndPoint, ushort>(new EndPointComparer());
+        private static ushort StaticID = 0;
+        public Client Self { get; private set; }
+        public EndPoint EndPoint { get; private set; }
+        private ushort Value;
+        public ushort ID
         {
             get
             {
-                return _ClientID;
+                return Value;
             }
             private set
             {
-                _ClientID = value;
+                Value = value;
                 if (EndPoint != null)
                     if (EndPointToID.ContainsKey(EndPoint))
-                        EndPointToID[EndPoint] = _ClientID;
+                        EndPointToID[EndPoint] = Value;
                     else
-                        EndPointToID.Add(EndPoint, _ClientID);
+                        EndPointToID.Add(EndPoint, Value);
             }
         }
-        public EndPoint EndPoint;
-        public bool PlayerSetup = false;
-        public List<Player> Players;
 
-        public Client(EndPoint EndPoint = null)
+        public ClientID(Client Self, EndPoint EndPoint)
         {
+            this.Self = Self;
             this.EndPoint = EndPoint;
             AssignNewID();
+        }
+
+        public static Client GetClient(EndPoint EndPoint)
+        {
+            if (EndPoint == null)
+                return null;
+            if (EndPointToID.ContainsKey(EndPoint))
+                return ConnectedClients[EndPointToID[EndPoint]];
+            return null;
+        }
+
+        public static Client GetClient(ushort ID)
+        {
+            if (ConnectedClients.ContainsKey(ID))
+                return ConnectedClients[ID];
+            return null;
         }
 
         private void AssignNewID()
@@ -57,13 +84,13 @@ namespace ClientHandle
             {
                 Next = StaticID++;
             }
-            ClientID = Next;
-            ConnectedClients.Add(ClientID, this);
+            ID = Next;
+            ConnectedClients.Add(ID, Self);
         }
 
         public void ChangeID()
         {
-            Remove(ClientID);
+            Remove(ID);
             AssignNewID();
         }
 
@@ -71,32 +98,106 @@ namespace ClientHandle
         {
             if (ConnectedClients.ContainsKey(New))
             {
-                if (Replace && ConnectedClients[New] != this)
+                if (ConnectedClients[New] != Self)
                 {
-                    ConnectedClients[New] = this;
-                }
-                else
-                {
-                    Debug.LogError("Could not change ClientID as an object at that ClientID already exists...");
+                    if (Replace)
+                        ConnectedClients[New] = Self;
+                    else
+                        Debug.LogError("Could not change ClientID as an object at that ClientID already exists...");
                 }
             }
             else
             {
-                ConnectedClients.Add(New, this);
-                Remove(ClientID);
+                ConnectedClients.Add(New, Self);
+                Remove(ID);
             }
-            ClientID = New;
+            ID = New;
+        }
+
+        public static implicit operator ushort(ClientID ID)
+        {
+            return ID.ID;
         }
 
         public static void Remove(ushort ID)
         {
             if (ConnectedClients.ContainsKey(ID))
             {
-                EndPointToID.Remove(ConnectedClients[ID].EndPoint);
+                if (ConnectedClients[ID].EndPoint != null)
+                    EndPointToID.Remove(ConnectedClients[ID].EndPoint);
                 ConnectedClients.Remove(ID);
             }
             else
                 Debug.LogError("ClientID.Remove(ClientID ID) => ID " + ID + " does not exist!");
+        }
+
+        public static void Remove(EndPoint EndPoint)
+        {
+            if (EndPointToID.ContainsKey(EndPoint))
+            {
+                Remove(EndPointToID[EndPoint]);
+            }
+            else
+                Debug.LogError("ClientID.Remove(EndPoint EndPoint) => EndPoint does not exist!");
+        }
+    }
+
+    /// <summary>
+    /// Contains information on each player and which client they refer to
+    /// </summary>
+    public class Client
+    {
+        public static int MaxNumPlayers = 8;
+
+        public ClientID ID;
+
+        public EndPoint EndPoint;
+        public bool Setup = false;
+        public Player[] Players;
+        public byte NumPlayers = 0;
+
+        private Client(EndPoint EndPoint = null)
+        {
+            this.EndPoint = EndPoint;
+            ID = new ClientID(this, EndPoint);
+            Players = new Player[MaxNumPlayers];
+        }
+
+        public static Client GetClient(EndPoint EndPoint = null)
+        {
+            Client Client = ClientID.GetClient(EndPoint);
+            if (Client == null)
+            {
+                Client = new Client(EndPoint);
+            }
+            return Client;
+        }
+
+        public void AddPlayer()
+        {
+            for (byte i = 0; i < Players.Length; i++)
+            {
+                if (Players[i] == null)
+                {
+                    Players[i] = new Player(i);
+                    NumPlayers++;
+                    return;
+                }
+            }
+            Debug.LogError("Max number of players reached");
+        }
+
+        public void RemovePlayer(int PlayerID)
+        {
+            if (Players[PlayerID] == null)
+            {
+                Debug.LogError("Player does not exist");
+                return;
+            }
+
+            Players[PlayerID].Destroy();
+            Players[PlayerID] = null;
+            NumPlayers--;
         }
     }
 
@@ -130,14 +231,30 @@ namespace ClientHandle
 
     public class Player
     {
+        public byte ID { get; private set; }
+
         public KeySnapshot KeySnapshot;
         public PlayerController Controller;
 
         public PlayerCreature Entity;
 
-        public Player()
+        public Player(byte ID)
         {
             Entity = new PlayerCreature();
+            this.ID = ID;
+        }
+
+        public void Destroy()
+        {
+            DZEngine.Destroy(Entity);
+        }
+
+        public byte[] GetBytes()
+        {
+            List<byte> Data = new List<byte>();
+            Data.Add(ID);
+            Data.AddRange(BitConverter.GetBytes(Entity.ID));
+            return Data.ToArray();
         }
     }
 }

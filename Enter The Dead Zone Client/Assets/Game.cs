@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Net;
 
 using ClientHandle;
 using UnityEngine;
@@ -13,7 +14,6 @@ using DZNetwork;
 
 public class Game
 {
-    public static byte NumLocalPlayers = 0;
     public static Client Client;
 
     public static DZEngine.ManagedList<IServerSendable> ServerItems = new DZEngine.ManagedList<IServerSendable>();
@@ -58,14 +58,46 @@ public class Game
 
     private static void SendSnapshot()
     {
+        if (!Client.Setup)
+        {
+            Packet Setup = new Packet();
+            Setup.Write(Client.NumPlayers);
+            Loader.Socket.Send(Setup, ServerCode.InitializeConnection);
+            return;
+        }
+
         Packet SnapshotPacket = new Packet();
-        SnapshotPacket.Write(NumLocalPlayers);
+        SnapshotPacket.Write(Client.NumPlayers);
         Loader.Socket.Send(SnapshotPacket, ServerCode.ClientSnapshot);
+    }
+
+    public static void SyncClient(Packet Data)
+    {
+        if (Client.Setup == false)
+        {
+            int NumPlayers = Data.ReadByte();
+            if (NumPlayers != Client.NumPlayers)
+            {
+                Debug.LogWarning("Sync failed due to inconsistent player count");
+                return;
+            }
+            Client.ID.ChangeID(Data.ReadUShort());
+            for (int i = 0; i < NumPlayers; i++)
+            {
+                int ID = Data.ReadByte();
+                if (ID == 255)
+                    continue;
+                ushort PlayerEntityID = Data.ReadUShort();
+                Debug.Log(PlayerEntityID);
+                Client.Players[i].Entity.ID.ChangeID(PlayerEntityID);
+            }
+            Client.Setup = true;
+        }
     }
 
     public static void UnWrapSnapshot(Packet Packet)
     {
-        //if (Client == null || !Client.PlayerSetup) return;
+        if (Client == null || !Client.Setup) return;
 
         ServerTickRate = Packet.ReadInt();
         ulong ServerTick = Packet.ReadULong();
@@ -93,7 +125,7 @@ public class Game
             IServerSendable ServerItem = Item as IServerSendable;
             DZSettings.EntityType Type = (DZSettings.EntityType)Packet.ReadInt();
             if (ServerItem == null)
-                ServerItem = Parse(Packet, ID, Type);
+                ServerItem = Parse(ID, Type);
             if (ServerItem == null)
             {
                 Debug.LogWarning("Unable to Parse item from server snapshot");
@@ -108,7 +140,7 @@ public class Game
                 Item = EntityID.GetObject(ID);
                 ServerItem = Item as IServerSendable;
                 if (ServerItem == null)
-                    ServerItem = Parse(Packet, ID, Type);
+                    ServerItem = Parse(ID, Type);
                 if (ServerItem == null)
                 {
                     Debug.LogWarning("Unable to Parse item from server snapshot");
@@ -129,7 +161,7 @@ public class Game
         PrevSnapshot.Ticks = ServerTick;
     }
 
-    private static IServerSendable Parse(Packet P, ushort ID, DZSettings.EntityType Type)
+    private static IServerSendable Parse(ushort ID, DZSettings.EntityType Type)
     {
         switch (Type)
         {
