@@ -4,6 +4,7 @@ using UnityEngine;
 
 using DeadZoneEngine;
 using DeadZoneEngine.Entities;
+using DeadZoneEngine.Controllers;
 
 //Unity Script to update DZEngine
 public class DZScript : MonoBehaviour
@@ -12,6 +13,9 @@ public class DZScript : MonoBehaviour
     {
         DZEngine.Initialize();
         Main.Start();
+
+        if (DZSettings.ActiveControllers) //TODO FIX SUCH THAT THIS CAN BE PLACED IN DZENGINE.INITIALIZE
+            InputMapping.Initialize();
     }
 
     public void FixedUpdate()

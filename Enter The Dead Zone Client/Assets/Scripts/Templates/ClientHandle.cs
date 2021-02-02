@@ -6,8 +6,11 @@ using System.Text;
 using System.Threading.Tasks;
 
 using UnityEngine;
+using UnityEngine.InputSystem;
+
 using DeadZoneEngine;
 using DeadZoneEngine.Entities;
+using DeadZoneEngine.Controllers;
 
 namespace ClientHandle
 {
@@ -148,13 +151,17 @@ namespace ClientHandle
     public class Client
     {
         public static int MaxNumPlayers = 8;
+        public const int TicksToTimeout = 60;
 
         public ClientID ID;
 
         public EndPoint EndPoint;
         public bool Setup = false;
         public Player[] Players;
-        public byte NumPlayers = 0;
+        public byte NumPlayers { get; private set; }
+
+        public bool LostConnection = false;
+        public int TicksSinceConnectionLoss = 0;
 
         private Client(EndPoint EndPoint = null)
         {
@@ -173,13 +180,13 @@ namespace ClientHandle
             return Client;
         }
 
-        public void AddPlayer()
+        public void AddPlayer(PlayerController Controller)
         {
             for (byte i = 0; i < Players.Length; i++)
             {
                 if (Players[i] == null)
                 {
-                    Players[i] = new Player(i);
+                    Players[i] = new Player(i, Controller);
                     NumPlayers++;
                     return;
                 }
@@ -198,6 +205,14 @@ namespace ClientHandle
             Players[PlayerID].Destroy();
             Players[PlayerID] = null;
             NumPlayers--;
+        }
+
+        public void Destroy()
+        {
+            ClientID.Remove(EndPoint);
+            for (int i = 0; i < Players.Length; i++)
+                if (Players[i] != null)
+                    Players[i].Destroy();
         }
     }
 
@@ -224,11 +239,6 @@ namespace ClientHandle
         List<KeyPress> Actions;
     }
 
-    public class PlayerController
-    {
-        public Vector2 Direction;
-    }
-
     public class Player
     {
         public byte ID { get; private set; }
@@ -238,9 +248,9 @@ namespace ClientHandle
 
         public PlayerCreature Entity;
 
-        public Player(byte ID)
+        public Player(byte ID, PlayerController Controller)
         {
-            Entity = new PlayerCreature();
+            Entity = new PlayerCreature(Controller);
             this.ID = ID;
         }
 

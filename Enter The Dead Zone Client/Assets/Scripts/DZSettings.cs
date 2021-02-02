@@ -15,4 +15,5 @@ public static class DZSettings
 
     public static int NumPhysicsIterations = 10;
     public static bool ActiveRenderers = true;
+    public static bool ActiveControllers = true;
 }

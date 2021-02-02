@@ -155,7 +155,7 @@ namespace ClientHandle
         public EndPoint EndPoint;
         public bool Setup = false;
         public Player[] Players;
-        public byte NumPlayers = 0;
+        public byte NumPlayers { get; private set; }
 
         public bool LostConnection = false;
         public int TicksSinceConnectionLoss = 0;

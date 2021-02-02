@@ -38,14 +38,14 @@ public class PlayerCreature : AbstractCreature, IServerSendable
         Initialize();
     }
 
-    public PlayerCreature()
+    public PlayerCreature(PlayerController Controller)
     {
+        this.Controller = Controller;
         Initialize();
     }
 
     private void Initialize()
     {
-        Controller = new PlayerController();
         State = BodyState.Standing;
         Stats.RunSpeed = 2f;
 
@@ -66,10 +66,6 @@ public class PlayerCreature : AbstractCreature, IServerSendable
 
     public override void Update()
     {
-        //Test movement
-        Controller.Direction.x = Input.GetAxis("Horizontal");
-        Controller.Direction.y = Input.GetAxis("Vertical");
-
         UpdateBodyState();
         UpdateMovement();
     }
@@ -96,10 +92,13 @@ public class PlayerCreature : AbstractCreature, IServerSendable
                             BodyChunkConnections[0].ARatio = 0;
                     }
 
-                    DynamicRunSpeed[0] = 1f;
-                    DynamicRunSpeed[1] = 3f;
-                    BodyChunks[0].Velocity += new Vector2(Stats.RunSpeed * DynamicRunSpeed[0] * Controller.Direction.x, 0);
-                    BodyChunks[1].Velocity += new Vector2(Stats.RunSpeed * DynamicRunSpeed[1] * Controller.Direction.x, 0);
+                    if (Controller != null)
+                    {
+                        DynamicRunSpeed[0] = 1f;
+                        DynamicRunSpeed[1] = 3f;
+                        BodyChunks[0].Velocity += new Vector2(Stats.RunSpeed * DynamicRunSpeed[0] * Controller.MovementDirection.x, 0);
+                        BodyChunks[1].Velocity += new Vector2(Stats.RunSpeed * DynamicRunSpeed[1] * Controller.MovementDirection.x, 0);
+                    }
 
                     BodyChunks[0].Velocity *= new Vector2(0.8f, 1);
                     BodyChunks[1].Velocity *= new Vector2(0.8f, 1);
@@ -114,10 +113,13 @@ public class PlayerCreature : AbstractCreature, IServerSendable
                 {
                     DynamicRunSpeed[0] = 1f;
                     DynamicRunSpeed[1] = 3f;
-                    BodyChunks[0].Velocity += new Vector2(Stats.RunSpeed * DynamicRunSpeed[0] * Controller.Direction.x, 0);
-                    BodyChunks[0].Velocity += new Vector2(0, Stats.RunSpeed * DynamicRunSpeed[0] * Controller.Direction.y);
-                    BodyChunks[1].Velocity += new Vector2(Stats.RunSpeed * DynamicRunSpeed[1] * Controller.Direction.x, 0);
-                    BodyChunks[1].Velocity += new Vector2(0, Stats.RunSpeed * DynamicRunSpeed[1] * Controller.Direction.y);
+                    if (Controller != null)
+                    {
+                        BodyChunks[0].Velocity += new Vector2(Stats.RunSpeed * DynamicRunSpeed[0] * Controller.MovementDirection.x, 0);
+                        BodyChunks[0].Velocity += new Vector2(0, Stats.RunSpeed * DynamicRunSpeed[0] * Controller.MovementDirection.y);
+                        BodyChunks[1].Velocity += new Vector2(Stats.RunSpeed * DynamicRunSpeed[1] * Controller.MovementDirection.x, 0);
+                        BodyChunks[1].Velocity += new Vector2(0, Stats.RunSpeed * DynamicRunSpeed[1] * Controller.MovementDirection.y);
+                    }
 
                     BodyChunks[0].Velocity *= 0.8f;
                     BodyChunks[1].Velocity *= 0.8f;

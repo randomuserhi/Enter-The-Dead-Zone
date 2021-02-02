@@ -5,6 +5,7 @@ using UnityEngine;
 using DeadZoneEngine;
 using DeadZoneEngine.Entities;
 using ClientHandle;
+using DeadZoneEngine.Controllers;
 
 public static class Main
 {
@@ -18,6 +19,8 @@ public static class Main
     // Start is called before the first frame update
     public static void Start()
     {
+        InputManager.Initialize();
+
         LoadMenu();
     }
 
@@ -27,7 +30,6 @@ public static class Main
         if (Game.Client == null)
         {
             Game.Client = Client.GetClient();
-            Game.Client.AddPlayer();
         }
         //Set client player positions to somewhere approapriate
         for (int i = 0; i < Game.Client.Players.Length; i++)

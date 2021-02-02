@@ -88,7 +88,6 @@ public class Game
                 if (ID == 255)
                     continue;
                 ushort PlayerEntityID = Data.ReadUShort();
-                Debug.Log(PlayerEntityID);
                 Client.Players[i].Entity.ID.ChangeID(PlayerEntityID);
             }
             Client.Setup = true;
