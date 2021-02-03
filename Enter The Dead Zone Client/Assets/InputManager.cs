@@ -11,7 +11,7 @@ using DeadZoneEngine.Controllers;
 
 public class PlayerController : Controller
 {
-    public Vector2 MovementDirection;
+    public PlayerCreature.Control PlayerControl;
 
     public PlayerController(InputDevice Device) : base(Device)
     {
@@ -33,8 +33,10 @@ public class PlayerController : Controller
 
     public void MoveAction(InputAction.CallbackContext Context)
     {
-        MovementDirection = Context.ReadValue<Vector2>();
-        Debug.Log(MovementDirection);
+        if (PlayerControl == null) return;
+
+        PlayerControl.MovementDirection = Context.ReadValue<Vector2>();
+        Debug.Log(PlayerControl.MovementDirection);
     }
 }
 
@@ -50,10 +52,12 @@ public static class InputManager
 
     public static void OnDeviceAdd(InputDevice Device)
     {
-        InputMapping.DeviceController DC = InputMapping.Devices[Device];
+        ClientHandle.Player P = Game.Client.AddPlayer();
         PlayerController PC = new PlayerController(Device);
-        DC.Controllers.Add(PC);
-        Game.Client.AddPlayer(PC);
+        InputMapping.Devices[Device].Controllers.Add(PC);
+        P.Controller = PC;
+        PC.PlayerControl = P.Entity.Controller;
+        P.Entity.Controller.Owner = PC;
     }
 
     public static void OnDeviceDisconnect(InputDevice Device)

@@ -41,6 +41,7 @@ namespace DZNetwork
                 if (!DisconnectTrigger)
                 {
                     DisconnectHandle();
+                    PacketHandler.RemoveAcknowledgement(Socket.RemoteEndPoint);
                     DisconnectTrigger = true;
                 }
             }
@@ -59,7 +60,7 @@ namespace DZNetwork
 
         public void Send(Packet Packet, ServerCode ServerCode)
         {
-            PacketHandler.PacketGroup PacketGroup = PacketHandler.GeneratePackets(Packet, ServerCode);
+            PacketHandler.PacketGroup PacketGroup = PacketHandler.GeneratePackets(Packet, ServerCode, Socket.RemoteEndPoint);
             for (int i = 0; i < PacketGroup.Packets.Length; i++)
                 Send((ushort)(PacketGroup.StartingPacketSequence + i), ServerCode, PacketGroup.Packets[i]);
         }

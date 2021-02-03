@@ -88,6 +88,13 @@ namespace DZNetwork
             {
                 return Obj is PacketIdentifier && this == (PacketIdentifier)Obj;
             }
+            public override int GetHashCode()
+            {
+                int Hash = 27;
+                Hash = (13 * Hash) + Client.GetHashCode();
+                Hash = (13 * Hash) + ID.GetHashCode();
+                return Hash;
+            }
             public static bool operator ==(PacketIdentifier A, PacketIdentifier B)
             {
                 if (ReferenceEquals(A, null) && ReferenceEquals(B, null))
@@ -164,27 +171,29 @@ namespace DZNetwork
             ushort PacketAcknowledgement = Data.ReadUShort();
             int PacketAcknowledgementBitField = Data.ReadInt();
 
+            PacketHandler.Acknowledgement Ack = PacketHandler.GetAcknowledgement(EndPoint);
+
             //Update Acknowledgements to return
-            if (RemotePacketSequence > PacketHandler.PacketAcknowledgement)
+            if (RemotePacketSequence > Ack.PacketAcknowledgement)
             {
-                int SkippedSequences = RemotePacketSequence - PacketHandler.PacketAcknowledgement;
-                PacketHandler.PacketAcknowledgement = RemotePacketSequence;
-                PacketHandler.PacketAcknowledgementBitField = (PacketHandler.PacketAcknowledgementBitField << SkippedSequences) | (1 << (SkippedSequences - 1));
+                int SkippedSequences = RemotePacketSequence - Ack.PacketAcknowledgement;
+                Ack.PacketAcknowledgement = RemotePacketSequence;
+                Ack.PacketAcknowledgementBitField = (Ack.PacketAcknowledgementBitField << SkippedSequences) | (1 << (SkippedSequences - 1));
             }
-            else if (RemotePacketSequence < PacketHandler.PacketAcknowledgement)
+            else if (RemotePacketSequence < Ack.PacketAcknowledgement)
             {
-                int Difference = PacketHandler.PacketAcknowledgement - RemotePacketSequence;
+                int Difference = Ack.PacketAcknowledgement - RemotePacketSequence;
                 if (Difference < ushort.MaxValue / 2)
                 {
-                    int AcknowledgementPosition = PacketHandler.PacketAcknowledgement - RemotePacketSequence;
-                    PacketHandler.PacketAcknowledgementBitField = PacketHandler.PacketAcknowledgementBitField | (1 << (AcknowledgementPosition));
+                    int AcknowledgementPosition = Ack.PacketAcknowledgement - RemotePacketSequence;
+                    Ack.PacketAcknowledgementBitField = Ack.PacketAcknowledgementBitField | (1 << (AcknowledgementPosition));
                 }
                 else //Sequence number wrap around
                 {
-                    int SkippedSequences = ushort.MaxValue - PacketHandler.PacketAcknowledgement + RemotePacketSequence;
-                    PacketHandler.PacketAcknowledgement = RemotePacketSequence;
+                    int SkippedSequences = ushort.MaxValue - Ack.PacketAcknowledgement + RemotePacketSequence;
+                    Ack.PacketAcknowledgement = RemotePacketSequence;
                     //its different to the normal update as the skipped sequences calculation does not include 0 so its 1 behind
-                    PacketHandler.PacketAcknowledgementBitField = (PacketHandler.PacketAcknowledgementBitField << (SkippedSequences + 1)) | (1 << SkippedSequences);
+                    Ack.PacketAcknowledgementBitField = (Ack.PacketAcknowledgementBitField << (SkippedSequences + 1)) | (1 << SkippedSequences);
                 }
             }
 

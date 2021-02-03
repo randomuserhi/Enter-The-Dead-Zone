@@ -88,6 +88,7 @@ public class Game
                 if (ID == 255)
                     continue;
                 ushort PlayerEntityID = Data.ReadUShort();
+                Debug.Log(PlayerEntityID);
                 Client.Players[i].Entity.ID.ChangeID(PlayerEntityID);
             }
             Client.Setup = true;
@@ -96,6 +97,8 @@ public class Game
 
     public static void UnWrapSnapshot(Packet Packet)
     {
+        const int MaxRecentUpdate = 30; //Number of snapshot ticks until object is removed for not being updapted
+
         if (Client == null || !Client.Setup) return;
 
         ServerTickRate = Packet.ReadInt();
@@ -115,14 +118,14 @@ public class Game
             ushort ID = Packet.ReadUShort();
             _IInstantiatableDeletable Item = EntityID.GetObject(ID);
             bool FlaggedToDelete = Packet.ReadBool();
+            IServerSendable ServerItem = Item as IServerSendable;
+            DZSettings.EntityType Type = (DZSettings.EntityType)Packet.ReadInt();
             if (FlaggedToDelete)
             {
                 if (Item != null)
                     DZEngine.Destroy(Item);
                 continue;
             }
-            IServerSendable ServerItem = Item as IServerSendable;
-            DZSettings.EntityType Type = (DZSettings.EntityType)Packet.ReadInt();
             if (ServerItem == null)
                 ServerItem = Parse(ID, Type);
             if (ServerItem == null)
@@ -133,7 +136,7 @@ public class Game
 
             if ((DZSettings.EntityType)ServerItem.ServerObjectType != Type)
             {
-                Debug.LogWarning("Entity Types of ID " + ID + " do not match... resetting IDs and re-parsing");
+                Debug.LogWarning("Entity Types of ID " + ID + " do not match... (ServerID = " + Type + ", LocalID = " + (DZSettings.EntityType)ServerItem.ServerObjectType + ") resetting IDs and re-parsing");
                 ServerItem.ID.ChangeID();
 
                 Item = EntityID.GetObject(ID);
@@ -147,14 +150,13 @@ public class Game
                 }
             }
             ServerItem.ParseBytes(Packet, ServerTick);
-            ServerItem.RecentlyUpdated = true;
+            ServerItem.RecentlyUpdated = 0;
         }
         foreach (IServerSendable Item in ServerItems)
         {
-            if (!Item.RecentlyUpdated) //Item was not contained in recent snapshot so remove it
-            {
-                DZEngine.Destroy(Item);
-            }
+            Item.RecentlyUpdated++;
+            if (Item.RecentlyUpdated >= MaxRecentUpdate) //Item was not contained in recent snapshot so remove it
+                DZEngine.Destroy(Item); //This needs a different way of resolving, probably make it a tick timer so after 30 ticks it then is removed
         }
 
         PrevSnapshot.Ticks = ServerTick;

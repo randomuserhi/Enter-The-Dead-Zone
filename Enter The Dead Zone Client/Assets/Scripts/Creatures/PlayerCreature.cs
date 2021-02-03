@@ -13,7 +13,7 @@ using DeadZoneEngine.Entities.Components;
 public class PlayerCreature : AbstractCreature, IServerSendable
 {
     public int ServerObjectType { get; set; } = (int)DZSettings.EntityType.PlayerCreature;
-    public bool RecentlyUpdated { get; set; } = false;
+    public int RecentlyUpdated { get; set; }
 
     public struct PlayerStats
     {
@@ -27,8 +27,14 @@ public class PlayerCreature : AbstractCreature, IServerSendable
         Standing
     }
 
+    public class Control
+    {
+        public PlayerController Owner;
+        public Vector2 MovementDirection;
+    }
+    public Control Controller { get; private set; } //Controller for player movement
+
     private BodyState State; //Ragdoll state
-    private PlayerController Controller; //Controller for player movement
     public PlayerStats Stats; //General player stats
 
     private float[] DynamicRunSpeed; //Controls Speed of each bodychunk
@@ -38,14 +44,14 @@ public class PlayerCreature : AbstractCreature, IServerSendable
         Initialize();
     }
 
-    public PlayerCreature(PlayerController Controller)
+    public PlayerCreature()
     {
-        this.Controller = Controller;
         Initialize();
     }
 
     private void Initialize()
     {
+        Controller = new Control();
         State = BodyState.Standing;
         Stats.RunSpeed = 2f;
 

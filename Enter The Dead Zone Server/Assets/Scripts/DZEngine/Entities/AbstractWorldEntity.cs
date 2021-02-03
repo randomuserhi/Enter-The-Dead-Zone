@@ -111,6 +111,10 @@ namespace DeadZoneEngine.Entities
         {
             return Obj is EntityID && this == (EntityID)Obj;
         }
+        public override int GetHashCode()
+        {
+            return Value.GetHashCode();
+        }
         public static bool operator ==(EntityID A, EntityID B)
         {
             if (ReferenceEquals(A, null) && ReferenceEquals(B, null))

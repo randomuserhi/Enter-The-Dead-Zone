@@ -45,7 +45,7 @@ public class TilePallet
 public class Tilemap : AbstractWorldEntity, IUpdatable, IRenderer, IServerSendable
 {
     public int ServerObjectType { get; set; } = (int)DZSettings.EntityType.Tilemap;
-    public bool RecentlyUpdated { get; set; } = false;
+    public int RecentlyUpdated { get; set; }
 
     public int SortingLayer { get; set; }
 

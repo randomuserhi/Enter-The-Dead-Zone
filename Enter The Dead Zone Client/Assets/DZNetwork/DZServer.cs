@@ -41,6 +41,7 @@ namespace DZNetwork
             }
             for (int i = 0; i < Disconnects.Count; i++)
             {
+                PacketHandler.RemoveAcknowledgement(Disconnects[i]);
                 ConnectedDevices.Remove(Disconnects[i]);
                 DisconnectHandle(Disconnects[i]);
             }
@@ -58,16 +59,18 @@ namespace DZNetwork
             List<EndPoint> Connections = ConnectedDevices.Keys.ToList();
             if (Connections.Count == 0) return;
 
-            PacketHandler.PacketGroup PacketGroup = PacketHandler.GeneratePackets(Packet, ServerCode);
             foreach (EndPoint EndPoint in Connections)
                 if (EndPoint != null)
+                {
+                    PacketHandler.PacketGroup PacketGroup = PacketHandler.GeneratePackets(Packet, ServerCode, EndPoint);
                     for (int i = 0; i < PacketGroup.Packets.Length; i++)
                         SendTo((ushort)(PacketGroup.StartingPacketSequence + i), ServerCode, PacketGroup.Packets[i], EndPoint);
+                }
         }
 
         public void SendTo(Packet Packet, ServerCode ServerCode, EndPoint EndPoint)
         {
-            PacketHandler.PacketGroup PacketGroup = PacketHandler.GeneratePackets(Packet, ServerCode);
+            PacketHandler.PacketGroup PacketGroup = PacketHandler.GeneratePackets(Packet, ServerCode, EndPoint);
             for (int i = 0; i < PacketGroup.Packets.Length; i++)
                 SendTo((ushort)(PacketGroup.StartingPacketSequence + i), ServerCode, PacketGroup.Packets[i], EndPoint);
         }

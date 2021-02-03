@@ -6,6 +6,8 @@ using System.Text;
 using System.Threading.Tasks;
 
 using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.LowLevel;
+using UnityEngine.InputSystem.Controls;
 using UnityEngine;
 
 namespace DeadZoneEngine.Controllers
@@ -20,6 +22,12 @@ namespace DeadZoneEngine.Controllers
         public class DeviceController
         {
             public List<Controller> Controllers = new List<Controller>();
+
+            public void OnInput()
+            {
+                for (int i = 0; i < Controllers.Count; i++)
+                    Controllers[i].OnInput();
+            }
 
             public void Enable()
             {
@@ -51,6 +59,25 @@ namespace DeadZoneEngine.Controllers
 
         public static void Initialize()
         {
+            //Detects any key press https://forum.unity.com/threads/check-if-any-key-is-pressed.763751/
+            InputSystem.onEvent += (eventPtr, device) =>
+            {
+                if (!Devices.ContainsKey(device)) return;
+                if (!eventPtr.IsA<StateEvent>() && !eventPtr.IsA<DeltaStateEvent>()) return;
+                var controls = device.allControls;
+                var buttonPressPoint = InputSystem.settings.defaultButtonPressPoint;
+                for (var i = 0; i < controls.Count; ++i)
+                {
+                    var control = controls[i] as ButtonControl;
+                    if (control == null || control.synthetic || control.noisy)
+                        continue;
+                    if (control.ReadValueFromEvent(eventPtr, out var value) && value >= buttonPressPoint)
+                    {
+                        Devices[device].OnInput();
+                        break;
+                    }
+                }
+            };
             InputSystem.onDeviceChange += OnDeviceChange;
             for (int i = 0; i < InputSystem.devices.Count; i++)
             {
@@ -73,7 +100,7 @@ namespace DeadZoneEngine.Controllers
                     if (!Devices.ContainsKey(Device))
                     {
                         Devices.Add(Device, new DeviceController()); //TODO:: some way of checking if this device has been encountered before to load saved configurations
-                        OnDeviceAdd?.Invoke(Device); //TODO:: this is wrong shouldnt be inside brackets but otherwise it causes addplayer to be caused multiple times due to bad code, refactor required
+                        OnDeviceAdd?.Invoke(Device);
                     }
                     Devices[Device].Enable();
                     break;
@@ -101,25 +128,7 @@ namespace DeadZoneEngine.Controllers
 
         public static void Rebind(InputAction Action, InputDevice Device)
         {
-            Action.Disable();
-            var RebindOperation = Action.PerformInteractiveRebinding()
-                                        .WithControlsHavingToMatchPath(Device.path)
-                                        .WithControlsExcluding("Mouse")
-                                        .OnMatchWaitForAnother(0.1f)
-                                        .WithCancelingThrough("<Keyboard>/escape");
-            RebindOperation.OnComplete((Operation) =>
-            {
-                Debug.Log($"Rebound '" + Action + "' to '" + Operation.selectedControl + "'");
-                Operation.Dispose();
-                Action.Enable();
-            });
-            RebindOperation.OnCancel((Operation) =>
-            {
-                Debug.Log($"Cancelled rebinding of '" + Action + "'");
-                Operation.Dispose();
-                Action.Enable();
-            });
-            RebindOperation.Start();
+            
         }
     }
 
@@ -131,6 +140,11 @@ namespace DeadZoneEngine.Controllers
         public Controller(InputDevice Device)
         {
             this.Device = Device;
+        }
+
+        //Triggered when any button on the device is pressed
+        public virtual void OnInput()
+        {
         }
 
         public void Enable()

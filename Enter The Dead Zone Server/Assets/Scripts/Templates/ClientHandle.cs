@@ -13,21 +13,8 @@ namespace ClientHandle
 {
     public class ClientID
     {
-        private class EndPointComparer : IEqualityComparer<EndPoint>
-        {
-            public bool Equals(EndPoint A, EndPoint B)
-            {
-                return A.Equals(B);
-            }
-
-            public int GetHashCode(EndPoint A)
-            {
-                return A.GetHashCode();
-            }
-        }
-
         public static Dictionary<ushort, Client> ConnectedClients = new Dictionary<ushort, Client>();
-        public static Dictionary<EndPoint, ushort> EndPointToID = new Dictionary<EndPoint, ushort>(new EndPointComparer());
+        public static Dictionary<EndPoint, ushort> EndPointToID = new Dictionary<EndPoint, ushort>(new DZNetwork.EndPointComparer());
         private static ushort StaticID = 0;
         public Client Self { get; private set; }
         public EndPoint EndPoint { get; private set; }

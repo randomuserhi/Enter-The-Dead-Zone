@@ -20,7 +20,7 @@ namespace DeadZoneEngine.Entities
     {
         EntityID ID { get; set; }
         int ServerObjectType { get; set; }
-        bool RecentlyUpdated { get; set; }
+        int RecentlyUpdated { get; set; }
         byte[] GetBytes();
         void ParseBytes(DZNetwork.Packet Data, ulong ServerTick);
     }

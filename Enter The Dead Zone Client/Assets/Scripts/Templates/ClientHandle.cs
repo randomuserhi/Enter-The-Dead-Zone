@@ -180,18 +180,19 @@ namespace ClientHandle
             return Client;
         }
 
-        public void AddPlayer(PlayerController Controller)
+        public Player AddPlayer()
         {
             for (byte i = 0; i < Players.Length; i++)
             {
                 if (Players[i] == null)
                 {
-                    Players[i] = new Player(i, Controller);
+                    Players[i] = new Player(i);
                     NumPlayers++;
-                    return;
+                    return Players[i];
                 }
             }
             Debug.LogError("Max number of players reached");
+            return null;
         }
 
         public void RemovePlayer(int PlayerID)
@@ -248,9 +249,9 @@ namespace ClientHandle
 
         public PlayerCreature Entity;
 
-        public Player(byte ID, PlayerController Controller)
+        public Player(byte ID)
         {
-            Entity = new PlayerCreature(Controller);
+            Entity = new PlayerCreature();
             this.ID = ID;
         }
 

@@ -1,11 +1,25 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace DZNetwork
 {
+    public class EndPointComparer : IEqualityComparer<EndPoint>
+    {
+        public bool Equals(EndPoint A, EndPoint B)
+        {
+            return A.Equals(B);
+        }
+
+        public int GetHashCode(EndPoint A)
+        {
+            return A.GetHashCode();
+        }
+    }
+
     public static class PacketHandler
     {
         public static int ProtocolID = 0;
@@ -14,8 +28,13 @@ namespace DZNetwork
 
         public static ushort PacketID = 0;
         public static ushort LocalPacketSequence = 0;
-        public static ushort PacketAcknowledgement = 0;
-        public static int PacketAcknowledgementBitField = 0;
+
+        public class Acknowledgement
+        {
+            public ushort PacketAcknowledgement = 0;
+            public int PacketAcknowledgementBitField = 0;
+        }
+        public static Dictionary<EndPoint, Acknowledgement> PacketAcknowledgements = new Dictionary<EndPoint, Acknowledgement>(new EndPointComparer());
 
         public struct PacketGroup
         {
@@ -23,7 +42,19 @@ namespace DZNetwork
             public byte[][] Packets;
         }
 
-        public static PacketGroup GeneratePackets(Packet P, ServerCode ServerCode)
+        public static Acknowledgement GetAcknowledgement(EndPoint EndPoint)
+        {
+            if (!PacketAcknowledgements.ContainsKey(EndPoint)) PacketAcknowledgements.Add(EndPoint, new Acknowledgement());
+            return PacketAcknowledgements[EndPoint];
+        }
+
+        public static void RemoveAcknowledgement(EndPoint EndPoint)
+        {
+            if (PacketAcknowledgements.ContainsKey(EndPoint))
+                PacketAcknowledgements.Remove(EndPoint);
+        }
+
+        public static PacketGroup GeneratePackets(Packet P, ServerCode ServerCode, EndPoint EndPoint)
         {
             P.InsertServerCode(ServerCode);
 
@@ -45,6 +76,8 @@ namespace DZNetwork
                 StartingPacketSequence = LocalPacketSequence
             };
 
+            Acknowledgement Ack = GetAcknowledgement(EndPoint);
+
             int RemainingPacketSize = Data.Length;
             int ReadHead = 0;
             for (int i = 0; i < NumPackets; i++)
@@ -55,8 +88,8 @@ namespace DZNetwork
 
                 int HeaderIndex = HeaderBytes.Length;
                 Buffer.BlockCopy(BitConverter.GetBytes(LocalPacketSequence), 0, Packets[i], HeaderIndex, sizeof(ushort)); HeaderIndex += sizeof(ushort);
-                Buffer.BlockCopy(BitConverter.GetBytes(PacketAcknowledgement), 0, Packets[i], HeaderIndex, sizeof(ushort)); HeaderIndex += sizeof(ushort);
-                Buffer.BlockCopy(BitConverter.GetBytes(PacketAcknowledgementBitField), 0, Packets[i], HeaderIndex, sizeof(int)); HeaderIndex += sizeof(int);
+                Buffer.BlockCopy(BitConverter.GetBytes(Ack.PacketAcknowledgement), 0, Packets[i], HeaderIndex, sizeof(ushort)); HeaderIndex += sizeof(ushort);
+                Buffer.BlockCopy(BitConverter.GetBytes(Ack.PacketAcknowledgementBitField), 0, Packets[i], HeaderIndex, sizeof(int)); HeaderIndex += sizeof(int);
                 Buffer.BlockCopy(BitConverter.GetBytes(Data.Length), 0, Packets[i], HeaderIndex, sizeof(int)); HeaderIndex += sizeof(int);
                 Buffer.BlockCopy(BitConverter.GetBytes(i), 0, Packets[i], HeaderIndex, sizeof(int));
 

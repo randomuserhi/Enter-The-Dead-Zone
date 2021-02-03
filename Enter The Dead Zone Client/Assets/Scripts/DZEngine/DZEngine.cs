@@ -331,10 +331,9 @@ namespace DeadZoneEngine
                 return DeleteHandle(I);
             });
 
-            //Remove deleted server entites and reset their recently updated check
+            //Remove deleted server entites
             _ServerSendableObjects.RemoveAll(I =>
             {
-                I.RecentlyUpdated = false;
                 return DeleteHandle(I);
             });
 
