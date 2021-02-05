@@ -6,7 +6,6 @@ using System.Linq;
 using System.Reflection;
 using UnityEngine;
 
-using DeadZoneEngine.Controllers;
 using DeadZoneEngine.Entities;
 using DeadZoneEngine.Entities.Components;
 
@@ -21,7 +20,7 @@ namespace DeadZoneEngine
         /// </summary>
         public static void Initialize()
         {
-            
+
         }
 
         /// <summary>
@@ -301,11 +300,13 @@ namespace DeadZoneEngine
             List<byte> Data = new List<byte>();
             Data.AddRange(BitConverter.GetBytes(Item.ID));
             Data.AddRange(BitConverter.GetBytes(Item.FlaggedToDelete));
-            Data.AddRange(BitConverter.GetBytes(Item.ServerObjectType));
             //Provide actual data if the item is not about to be deleted
             //otherwise this data is redundant
             if (!Item.FlaggedToDelete)
+            {
+                Data.AddRange(BitConverter.GetBytes(Item.ServerObjectType));
                 Data.AddRange(Item.GetBytes());
+            }
             return Data.ToArray();
         }
 

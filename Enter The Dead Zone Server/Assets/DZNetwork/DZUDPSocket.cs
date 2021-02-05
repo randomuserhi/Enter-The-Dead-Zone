@@ -49,12 +49,12 @@ namespace DZNetwork
 
         public class RecievePacketWrapper
         {
-            public EndPoint Client;
+            public IPEndPoint Client;
             public Packet Data;
         }
         public class SentPacketWrapper
         {
-            public EndPoint Client;
+            public IPEndPoint Client;
             public int Lifetime = 0;
             public ushort PacketSequence = 0;
             public ServerCode Code = ServerCode.Null;
@@ -81,7 +81,7 @@ namespace DZNetwork
 
         private struct PacketIdentifier
         {
-            public EndPoint Client;
+            public IPEndPoint Client;
             public ushort ID;
 
             public override bool Equals(object Obj)
@@ -145,16 +145,21 @@ namespace DZNetwork
         {
             Packet Data = null;
             int NumBytesReceived = 0;
+            IPEndPoint IPEP = null;
             lock (ReceiveBufferLock)
             {
                 NumBytesReceived = Socket.EndReceiveFrom(Result, ref EndPoint);
-                Socket.BeginReceiveFrom(ReceiveBuffer, 0, ReceiveBuffer.Length, SocketFlags.None, ref EndPoint, ReceiveCallback, null);
-
+                IPEP = EndPoint as IPEndPoint;
                 Data = new Packet(ReceiveBuffer, 0, NumBytesReceived);
             }
+            Socket.BeginReceiveFrom(ReceiveBuffer, 0, ReceiveBuffer.Length, SocketFlags.None, ref EndPoint, ReceiveCallback, null);
 
             int ReceivedProtocolID = Data.ReadInt();
             if (ReceivedProtocolID != PacketHandler.ProtocolID) return;
+
+            int ReceivedCheckSum = Data.ReadInt();
+            int CalculatedCheckSum = PacketHandler.CalculateCheckSum(Data.ReadableBuffer);
+            if (ReceivedCheckSum != CalculatedCheckSum) return;
 
             long CurrentEpoch = (DateTime.Now - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).Ticks / 10000;
             long ReceivedEpoch = Data.ReadLong();
@@ -162,38 +167,40 @@ namespace DZNetwork
             ushort PacketID = Data.ReadUShort();
             PacketIdentifier PacketIdentifier = new PacketIdentifier()
             {
-                Client = EndPoint,
+                Client = IPEP,
                 ID = PacketID
             };
-
 
             ushort RemotePacketSequence = Data.ReadUShort();
             ushort PacketAcknowledgement = Data.ReadUShort();
             int PacketAcknowledgementBitField = Data.ReadInt();
 
-            PacketHandler.Acknowledgement Ack = PacketHandler.GetAcknowledgement(EndPoint);
+            lock (PacketHandler.PacketAcknowledgements)
+            {
+                PacketHandler.Acknowledgement Ack = PacketHandler.GetAcknowledgement(IPEP);
 
-            //Update Acknowledgements to return
-            if (RemotePacketSequence > Ack.PacketAcknowledgement)
-            {
-                int SkippedSequences = RemotePacketSequence - Ack.PacketAcknowledgement;
-                Ack.PacketAcknowledgement = RemotePacketSequence;
-                Ack.PacketAcknowledgementBitField = (Ack.PacketAcknowledgementBitField << SkippedSequences) | (1 << (SkippedSequences - 1));
-            }
-            else if (RemotePacketSequence < Ack.PacketAcknowledgement)
-            {
-                int Difference = Ack.PacketAcknowledgement - RemotePacketSequence;
-                if (Difference < ushort.MaxValue / 2)
+                //Update Acknowledgements to return
+                if (RemotePacketSequence > Ack.PacketAcknowledgement)
                 {
-                    int AcknowledgementPosition = Ack.PacketAcknowledgement - RemotePacketSequence;
-                    Ack.PacketAcknowledgementBitField = Ack.PacketAcknowledgementBitField | (1 << (AcknowledgementPosition));
-                }
-                else //Sequence number wrap around
-                {
-                    int SkippedSequences = ushort.MaxValue - Ack.PacketAcknowledgement + RemotePacketSequence;
+                    int SkippedSequences = RemotePacketSequence - Ack.PacketAcknowledgement;
                     Ack.PacketAcknowledgement = RemotePacketSequence;
-                    //its different to the normal update as the skipped sequences calculation does not include 0 so its 1 behind
-                    Ack.PacketAcknowledgementBitField = (Ack.PacketAcknowledgementBitField << (SkippedSequences + 1)) | (1 << SkippedSequences);
+                    Ack.PacketAcknowledgementBitField = (Ack.PacketAcknowledgementBitField << SkippedSequences) | (1 << (SkippedSequences - 1));
+                }
+                else if (RemotePacketSequence < Ack.PacketAcknowledgement)
+                {
+                    int Difference = Ack.PacketAcknowledgement - RemotePacketSequence;
+                    if (Difference < ushort.MaxValue / 2)
+                    {
+                        int AcknowledgementPosition = Ack.PacketAcknowledgement - RemotePacketSequence;
+                        Ack.PacketAcknowledgementBitField = Ack.PacketAcknowledgementBitField | (1 << (AcknowledgementPosition));
+                    }
+                    else //Sequence number wrap around
+                    {
+                        int SkippedSequences = ushort.MaxValue - Ack.PacketAcknowledgement + RemotePacketSequence;
+                        Ack.PacketAcknowledgement = RemotePacketSequence;
+                        //its different to the normal update as the skipped sequences calculation does not include 0 so its 1 behind
+                        Ack.PacketAcknowledgementBitField = (Ack.PacketAcknowledgementBitField << (SkippedSequences + 1)) | (1 << SkippedSequences);
+                    }
                 }
             }
 
@@ -203,7 +210,7 @@ namespace DZNetwork
                 PacketIdentifier Identifier = new PacketIdentifier()
                 {
                     ID = PacketAcknowledgement,
-                    Client = EndPoint
+                    Client = IPEP
                 };
 
                 if (SentPackets.ContainsKey(Identifier))
@@ -231,7 +238,7 @@ namespace DZNetwork
                 {
                     PacketReconstructor Reconstructor = new PacketReconstructor()
                     {
-                        PacketIndex = new byte[UnityEngine.Mathf.CeilToInt(PacketByteCount / (float)BufferSize)], //TODO:: buffer size should be client buffer size
+                        PacketIndex = new byte[UnityEngine.Mathf.CeilToInt(PacketByteCount / (float)BufferSize)], //Ensure that the client and server have the same buffer size, otherwise this code doesnt work as the buffersize referenced here is for client
                         Data = new byte[PacketByteCount]
                     };
 
@@ -247,7 +254,7 @@ namespace DZNetwork
                     {
                         OnReceiveConstructedPacket(new RecievePacketWrapper()
                         {
-                            Client = EndPoint,
+                            Client = IPEP,
                             Data = new Packet(PacketsToReconstruct[PacketIdentifier].Data, 0, PacketByteCount)
                         }, CurrentEpoch - ReceivedEpoch);
 
@@ -257,10 +264,10 @@ namespace DZNetwork
                 }
             }
 
-            OnReceive(EndPoint);
+            OnReceive(IPEP);
         }
 
-        protected virtual void OnReceive(EndPoint ReceivedEndPoint) { }
+        protected virtual void OnReceive(IPEndPoint ReceivedEndPoint) { }
 
         protected virtual void OnReceiveConstructedPacket(RecievePacketWrapper ReconstructedPacket, long Ping) { }
 
@@ -269,7 +276,7 @@ namespace DZNetwork
             SentPackets.Add(new PacketIdentifier()
             {
                 ID = PacketSequence,
-                Client = Socket.RemoteEndPoint
+                Client = Socket.RemoteEndPoint as IPEndPoint
             }, new SentPacketWrapper()
             {
                 PacketSequence = PacketSequence,
@@ -278,7 +285,7 @@ namespace DZNetwork
             Socket.BeginSend(Bytes, 0, Bytes.Length, SocketFlags.None, null, null);
         }
 
-        public void SendTo(ushort PacketSequence, ServerCode ServerCode, byte[] Bytes, EndPoint Destination)
+        public void SendTo(ushort PacketSequence, ServerCode ServerCode, byte[] Bytes, IPEndPoint Destination)
         {
             SentPackets.Add(new PacketIdentifier()
             {

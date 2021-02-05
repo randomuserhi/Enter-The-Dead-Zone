@@ -8,7 +8,7 @@ using DZNetwork;
 public enum ServerCode //TODO somehow implement / catch disconnection => its not a packet so not sure how to do this
 {
     Null,
-    InitializeConnection,
+    SyncPlayers,
     ClientSnapshot,
     ServerSnapshot
 }
@@ -43,15 +43,15 @@ public class ServerHandler : MonoBehaviour
         }
     }
 
-    private void PerformServerAction(EndPoint Client, Packet Data, ServerCode Job)
+    private void PerformServerAction(IPEndPoint Client, Packet Data, ServerCode Job)
     {
-        IPEndPoint IP = (IPEndPoint)Client;
         switch(Job)
         {
-            case ServerCode.InitializeConnection:
-                Game.SyncClient(Client, Data);
+            case ServerCode.SyncPlayers:
+                Game.SyncPlayers(Client, Data);
                 break;
             case ServerCode.ClientSnapshot:
+                Game.UnWrapSnapshot(Client, Data);
                 break;
             default:
                 Debug.LogWarning("Unknown ServerCode: " + Job);

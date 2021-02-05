@@ -9,6 +9,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 
 using DeadZoneEngine;
+using DZNetwork;
 using DeadZoneEngine.Entities;
 using DeadZoneEngine.Controllers;
 
@@ -16,24 +17,11 @@ namespace ClientHandle
 {
     public class ClientID
     {
-        private class EndPointComparer : IEqualityComparer<EndPoint>
-        {
-            public bool Equals(EndPoint A, EndPoint B)
-            {
-                return A.Equals(B);
-            }
-
-            public int GetHashCode(EndPoint A)
-            {
-                return A.GetHashCode();
-            }
-        }
-
         public static Dictionary<ushort, Client> ConnectedClients = new Dictionary<ushort, Client>();
-        public static Dictionary<EndPoint, ushort> EndPointToID = new Dictionary<EndPoint, ushort>(new EndPointComparer());
+        public static Dictionary<IPEndPoint, ushort> EndPointToID = new Dictionary<IPEndPoint, ushort>(new IPEndPointComparer());
         private static ushort StaticID = 0;
         public Client Self { get; private set; }
-        public EndPoint EndPoint { get; private set; }
+        public IPEndPoint EndPoint { get; private set; }
         private ushort Value;
         public ushort ID
         {
@@ -52,14 +40,14 @@ namespace ClientHandle
             }
         }
 
-        public ClientID(Client Self, EndPoint EndPoint)
+        public ClientID(Client Self, IPEndPoint EndPoint)
         {
             this.Self = Self;
             this.EndPoint = EndPoint;
             AssignNewID();
         }
 
-        public static Client GetClient(EndPoint EndPoint)
+        public static Client GetClient(IPEndPoint EndPoint)
         {
             if (EndPoint == null)
                 return null;
@@ -134,7 +122,7 @@ namespace ClientHandle
                 Debug.LogError("ClientID.Remove(ClientID ID) => ID " + ID + " does not exist!");
         }
 
-        public static void Remove(EndPoint EndPoint)
+        public static void Remove(IPEndPoint EndPoint)
         {
             if (EndPointToID.ContainsKey(EndPoint))
             {
@@ -155,7 +143,7 @@ namespace ClientHandle
 
         public ClientID ID;
 
-        public EndPoint EndPoint;
+        public IPEndPoint EndPoint;
         public bool Setup = false;
         public Player[] Players;
         public byte NumPlayers { get; private set; }
@@ -163,14 +151,14 @@ namespace ClientHandle
         public bool LostConnection = false;
         public int TicksSinceConnectionLoss = 0;
 
-        private Client(EndPoint EndPoint = null)
+        private Client(IPEndPoint EndPoint = null)
         {
             this.EndPoint = EndPoint;
             ID = new ClientID(this, EndPoint);
             Players = new Player[MaxNumPlayers];
         }
 
-        public static Client GetClient(EndPoint EndPoint = null)
+        public static Client GetClient(IPEndPoint EndPoint = null)
         {
             Client Client = ClientID.GetClient(EndPoint);
             if (Client == null)
@@ -217,35 +205,25 @@ namespace ClientHandle
         }
     }
 
-    public struct KeySnapshot
-    {
-        public struct KeyPress
-        {
-            public enum KeyAction
-            {
-                UpPress,
-                UpRelease,
-                DownPress,
-                DownRelease,
-                LeftPress,
-                LeftRelease,
-                RightPress,
-                RightRelease
-            }
-
-            public KeyAction Action;
-            public ulong Tick;
-        }
-
-        List<KeyPress> Actions;
-    }
-
     public class Player
     {
         public byte ID { get; private set; }
 
-        public KeySnapshot KeySnapshot;
-        public PlayerController Controller;
+        private PlayerController _Controller;
+        public PlayerController Controller
+        {
+            get
+            {
+                return _Controller;
+            }
+            set
+            {
+                _Controller = value;
+                _Controller.Owner = this;
+                if (Entity != null)
+                    _Controller.PlayerControl = Entity.Controller;
+            }
+        }
 
         public PlayerCreature Entity;
 
@@ -258,6 +236,8 @@ namespace ClientHandle
         public void Destroy()
         {
             DZEngine.Destroy(Entity);
+            if (_Controller != null)
+                _Controller.Disable();
         }
 
         public byte[] GetBytes()

@@ -43,7 +43,6 @@ public class PlayerCreature : AbstractCreature, IServerSendable
     {
         Initialize();
     }
-
     public PlayerCreature()
     {
         Initialize();

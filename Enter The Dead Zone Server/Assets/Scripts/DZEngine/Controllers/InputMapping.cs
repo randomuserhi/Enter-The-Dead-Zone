@@ -9,7 +9,7 @@ using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.LowLevel;
 using UnityEngine.InputSystem.Controls;
 using UnityEngine;
-using static DeadZoneEngine.Controllers.InputMapping;
+using DZNetwork;
 
 namespace DeadZoneEngine.Controllers
 {
@@ -27,7 +27,6 @@ namespace DeadZoneEngine.Controllers
 
         public class DeviceController
         {
-            public bool Enabled { get; private set; } = false;
             public List<Controller> Controllers = new List<Controller>();
 
             public byte[] GetBytes()
@@ -58,14 +57,12 @@ namespace DeadZoneEngine.Controllers
 
             public void Enable()
             {
-                Enabled = true;
                 for (int i = 0; i < Controllers.Count; i++)
                     Controllers[i].Enable();
             }
 
             public void Disable()
             {
-                Enabled = false;
                 for (int i = 0; i < Controllers.Count; i++)
                     Controllers[i].Disable();
             }
@@ -132,12 +129,9 @@ namespace DeadZoneEngine.Controllers
         {
             List<byte> Data = new List<byte>();
             List<DeviceController> Controllers = Devices.Values.ToList();
-            Data.AddRange(BitConverter.GetBytes(Controllers.Count));
             foreach (DeviceController DC in Controllers)
             {
-                Data.AddRange(BitConverter.GetBytes(DC.Enabled));
-                if (DC.Enabled)
-                    Data.AddRange(DC.GetBytes());
+                Data.AddRange(DC.GetBytes());
             }
             return Data.ToArray();
         }
@@ -179,21 +173,19 @@ namespace DeadZoneEngine.Controllers
 
         public static void Rebind(InputAction Action, InputDevice Device)
         {
-            
+
         }
     }
 
     public abstract class Controller
     {
-        public DeviceController DC;
         public ControllerType Type;
         private InputDevice Device;
         protected bool IsKeyboard { get; private set; } = true;
         protected InputActionMap ActionMap = new InputActionMap("Controller");
 
-        public Controller(InputDevice Device, DeviceController DC)
+        public Controller(InputDevice Device)
         {
-            this.DC = DC;
             this.Device = Device;
             IsKeyboard = Device is Keyboard;
             SetType();
@@ -259,6 +251,7 @@ namespace DeadZoneEngine.Controllers
 
         }
 
+        public abstract void ParseBytes(Packet Data);
         public abstract byte[] GetBytes();
     }
 }

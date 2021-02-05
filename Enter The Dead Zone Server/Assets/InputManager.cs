@@ -9,15 +9,17 @@ using UnityEngine;
 
 using DeadZoneEngine.Controllers;
 using ClientHandle;
-using static DeadZoneEngine.Controllers.InputMapping;
+using DZNetwork;
 
 public class PlayerController : Controller
 {
     public Player Owner;
     public PlayerCreature.Control PlayerControl;
 
-    public PlayerController(InputDevice Device, DeviceController DC) : base(Device, DC)
+    public PlayerController(InputDevice Device) : base(Device)
     {
+        if (Device == null) return;
+
         InputAction Movement = ActionMap.AddAction("Movement", InputActionType.PassThrough);
         if (Device is Keyboard)
             Movement.AddCompositeBinding("2DVector(mode=2)")
@@ -45,9 +47,9 @@ public class PlayerController : Controller
     {
         if (Owner != null || (IsKeyboard && Control.name != "enter"))
             return;
-        Player P = Game.Client.AddPlayer();
-        P.Controller = this;
-        DC.Enable();
+        //Player P = Game.Client.AddPlayer();
+        //P.Controller = this;
+        Enable();
     }
 
     public override void Tick()
@@ -61,9 +63,7 @@ public class PlayerController : Controller
         if (PlayerControl == null) return;
 
         PlayerControl.MovementDirection = Context.ReadValue<Vector2>();
-        if (Actions.Count == 0)
-            Actions.Push(new PlayerAction(PlayerAction.ActionType.Movement, PlayerControl.MovementDirection));
-        else if (Actions.Peek().Type == PlayerAction.ActionType.Movement)
+        if (Actions.Count > 0 && Actions.Peek().Type == PlayerAction.ActionType.Movement)
         {
             Vector2 Prev = (Vector2)Actions.Peek().Value;
             if (Prev != PlayerControl.MovementDirection)
@@ -71,7 +71,6 @@ public class PlayerController : Controller
                 Actions.Push(new PlayerAction(PlayerAction.ActionType.Movement, PlayerControl.MovementDirection));
             }
         }
-            
         Debug.Log(PlayerControl.MovementDirection);
     }
 
@@ -92,6 +91,23 @@ public class PlayerController : Controller
             this.Value = Value;
         }
 
+        public static void ParseBytes(Player Owner, Packet Bytes, ref ulong Ticks) //TODO:: Use the ticks here for interpolation, and fix client side interpolation of recieving snapshots
+        {
+            ActionType Type = (ActionType)Bytes.ReadInt();
+            Debug.Log("Bruh");
+            switch (Type)
+            {
+                case ActionType.None: break;
+                case ActionType.Movement:
+                    {
+                        Owner.Entity.Controller.MovementDirection = new Vector2(Bytes.ReadFloat(), Bytes.ReadFloat());
+                        Debug.Log(Owner.Entity.Controller.MovementDirection);
+                    }
+                    break;
+                default: break;
+            }
+        }
+
         public byte[] GetBytes()
         {
             List<byte> Data = new List<byte>();
@@ -106,10 +122,21 @@ public class PlayerController : Controller
         }
     }
     private Stack<PlayerAction> Actions = new Stack<PlayerAction>();
+
+    public override void ParseBytes(Packet Data)
+    {
+        int ActionCount = Data.ReadInt();
+        ulong Ticks = Owner.Owner.CurrentServerTick;
+        Debug.Log(ActionCount);
+        for (int i = 0; i < ActionCount; i++)
+        {
+            PlayerAction.ParseBytes(Owner, Data, ref Ticks);
+        }
+    }
     public override byte[] GetBytes()
     {
         List<byte> Data = new List<byte>();
-        Data.Add(Owner.ID);
+        Data.AddRange(BitConverter.GetBytes(Owner.ID));
         Data.AddRange(BitConverter.GetBytes(Actions.Count));
         while (Actions.Count > 0)
         {
@@ -131,7 +158,7 @@ public static class InputManager
 
     public static void OnDeviceAdd(InputDevice Device)
     {
-        InputMapping.Devices[Device].Controllers.Add(new PlayerController(Device, InputMapping.Devices[Device]));
+        InputMapping.Devices[Device].Controllers.Add(new PlayerController(Device));
     }
 
     public static void OnDeviceDisconnect(InputDevice Device)

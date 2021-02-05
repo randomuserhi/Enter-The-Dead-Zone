@@ -11,27 +11,27 @@ namespace DZNetwork
     public class DZServer : DZUDPSocket
     {
         public Action<RecievePacketWrapper, long> PacketHandle; //Delegate that is called on recieving a packet
-        public Action<EndPoint> DisconnectHandle;
-        public Action<EndPoint> ConnectHandle;
+        public Action<IPEndPoint> DisconnectHandle;
+        public Action<IPEndPoint> ConnectHandle;
         public Action<SentPacketWrapper> PacketLostHandle;
 
         public const int ConnectionLifeTime = 150;
         private object DeviceUpdate = new object();
-        public Dictionary<EndPoint, uint> ConnectedDevices;
+        public Dictionary<IPEndPoint, uint> ConnectedDevices;
 
         public DZServer() : base(4096)
         {
-            ConnectedDevices = new Dictionary<EndPoint, uint>();
+            ConnectedDevices = new Dictionary<IPEndPoint, uint>(new IPEndPointComparer());
         }
 
-        private List<EndPoint> Disconnects = new List<EndPoint>();
+        private List<IPEndPoint> Disconnects = new List<IPEndPoint>();
         public void FixedUpdate()
         {
             Tick();
 
             Disconnects.Clear();
-            List<EndPoint> Connections = ConnectedDevices.Keys.ToList();
-            foreach (EndPoint EndPoint in Connections)
+            List<IPEndPoint> Connections = ConnectedDevices.Keys.ToList();
+            foreach (IPEndPoint EndPoint in Connections)
             {
                 ConnectedDevices[EndPoint]++;
                 if (ConnectedDevices[EndPoint] > ConnectionLifeTime)
@@ -56,26 +56,28 @@ namespace DZNetwork
 
         public void Send(Packet Packet, ServerCode ServerCode)
         {
-            List<EndPoint> Connections = ConnectedDevices.Keys.ToList();
+            List<IPEndPoint> Connections = ConnectedDevices.Keys.ToList();
             if (Connections.Count == 0) return;
 
-            foreach (EndPoint EndPoint in Connections)
+            Packet.InsertServerCode(ServerCode);
+            foreach (IPEndPoint EndPoint in Connections)
                 if (EndPoint != null)
                 {
-                    PacketHandler.PacketGroup PacketGroup = PacketHandler.GeneratePackets(Packet, ServerCode, EndPoint);
+                    PacketHandler.PacketGroup PacketGroup = PacketHandler.GeneratePackets(Packet, EndPoint);
                     for (int i = 0; i < PacketGroup.Packets.Length; i++)
                         SendTo((ushort)(PacketGroup.StartingPacketSequence + i), ServerCode, PacketGroup.Packets[i], EndPoint);
                 }
         }
 
-        public void SendTo(Packet Packet, ServerCode ServerCode, EndPoint EndPoint)
+        public void SendTo(Packet Packet, ServerCode ServerCode, IPEndPoint EndPoint)
         {
-            PacketHandler.PacketGroup PacketGroup = PacketHandler.GeneratePackets(Packet, ServerCode, EndPoint);
+            Packet.InsertServerCode(ServerCode);
+            PacketHandler.PacketGroup PacketGroup = PacketHandler.GeneratePackets(Packet, EndPoint);
             for (int i = 0; i < PacketGroup.Packets.Length; i++)
                 SendTo((ushort)(PacketGroup.StartingPacketSequence + i), ServerCode, PacketGroup.Packets[i], EndPoint);
         }
 
-        protected override void OnReceive(EndPoint ReceivedEndPoint)
+        protected override void OnReceive(IPEndPoint ReceivedEndPoint)
         {
             lock (DeviceUpdate)
             {

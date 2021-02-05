@@ -5,30 +5,29 @@ using UnityEngine.UI;
 
 static class CanvasExtensions
 {
-    public static Vector2 SizeToParent(this RawImage image, float padding = 0)
+    public static Vector2 SizeToParent(this RawImage Image, float Padding = 0)
     {
-        var parent = image.transform.parent.GetComponentInParent<RectTransform>();
-        var imageTransform = image.GetComponent<RectTransform>();
-        if (!parent) { return imageTransform.sizeDelta; } //if we don't have a parent, just return our current width;
-        padding = 1 - padding;
-        float w = 0, h = 0;
-        float ratio = image.texture.width / (float)image.texture.height;
-        var bounds = new Rect(0, 0, parent.rect.width, parent.rect.height);
-        if (Mathf.RoundToInt(imageTransform.eulerAngles.z) % 180 == 90)
+        var Parent = Image.transform.parent.GetComponentInParent<RectTransform>();
+        var Transform = Image.GetComponent<RectTransform>();
+        if (!Parent) { return Transform.sizeDelta; } //if we don't have a parent, just return our current width
+        Padding = 1 - Padding;
+        float Ratio = Image.texture.width / (float)Image.texture.height;
+        var Bounds = new Rect(0, 0, Parent.rect.width, Parent.rect.height);
+        if (Mathf.RoundToInt(Transform.eulerAngles.z) % 180 == 90)
         {
             //Invert the bounds if the image is rotated
-            bounds.size = new Vector2(bounds.height, bounds.width);
+            Bounds.size = new Vector2(Bounds.height, Bounds.width);
         }
         //Size by height first
-        h = bounds.height * padding;
-        w = h * ratio;
-        if (w > bounds.width * padding)
-        { //If it doesn't fit, fallback to width;
-            w = bounds.width * padding;
-            h = w / ratio;
+        float Height = Bounds.height * Padding;
+        float Width = Height * Ratio;
+        if (Width > Bounds.width * Padding)
+        { //If it doesn't fit, fallback to width
+            Width = Bounds.width * Padding;
+            Height = Width / Ratio;
         }
-        imageTransform.sizeDelta = new Vector2(w, h);
-        return imageTransform.sizeDelta;
+        Transform.sizeDelta = new Vector2(Width, Height);
+        return Transform.sizeDelta;
     }
 }
 

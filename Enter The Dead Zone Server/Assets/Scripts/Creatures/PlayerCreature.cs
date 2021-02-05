@@ -13,7 +13,7 @@ using DeadZoneEngine.Entities.Components;
 public class PlayerCreature : AbstractCreature, IServerSendable
 {
     public int ServerObjectType { get; set; } = (int)DZSettings.EntityType.PlayerCreature;
-    public bool RecentlyUpdated { get; set; } = false;
+    public int RecentlyUpdated { get; set; }
 
     public struct PlayerStats
     {
@@ -27,8 +27,14 @@ public class PlayerCreature : AbstractCreature, IServerSendable
         Standing
     }
 
+    public class Control
+    {
+        public PlayerController Owner;
+        public Vector2 MovementDirection;
+    }
+    public Control Controller { get; private set; } //Controller for player movement
+
     private BodyState State; //Ragdoll state
-    private PlayerController Controller; //Controller for player movement
     public PlayerStats Stats; //General player stats
 
     private float[] DynamicRunSpeed; //Controls Speed of each bodychunk
@@ -37,7 +43,6 @@ public class PlayerCreature : AbstractCreature, IServerSendable
     {
         Initialize();
     }
-
     public PlayerCreature()
     {
         Initialize();
@@ -45,7 +50,7 @@ public class PlayerCreature : AbstractCreature, IServerSendable
 
     private void Initialize()
     {
-        Controller = new PlayerController();
+        Controller = new Control();
         State = BodyState.Standing;
         Stats.RunSpeed = 2f;
 
@@ -92,10 +97,13 @@ public class PlayerCreature : AbstractCreature, IServerSendable
                             BodyChunkConnections[0].ARatio = 0;
                     }
 
-                    DynamicRunSpeed[0] = 1f;
-                    DynamicRunSpeed[1] = 3f;
-                    BodyChunks[0].Velocity += new Vector2(Stats.RunSpeed * DynamicRunSpeed[0] * Controller.Direction.x, 0);
-                    BodyChunks[1].Velocity += new Vector2(Stats.RunSpeed * DynamicRunSpeed[1] * Controller.Direction.x, 0);
+                    if (Controller != null)
+                    {
+                        DynamicRunSpeed[0] = 1f;
+                        DynamicRunSpeed[1] = 3f;
+                        BodyChunks[0].Velocity += new Vector2(Stats.RunSpeed * DynamicRunSpeed[0] * Controller.MovementDirection.x, 0);
+                        BodyChunks[1].Velocity += new Vector2(Stats.RunSpeed * DynamicRunSpeed[1] * Controller.MovementDirection.x, 0);
+                    }
 
                     BodyChunks[0].Velocity *= new Vector2(0.8f, 1);
                     BodyChunks[1].Velocity *= new Vector2(0.8f, 1);
@@ -110,10 +118,13 @@ public class PlayerCreature : AbstractCreature, IServerSendable
                 {
                     DynamicRunSpeed[0] = 1f;
                     DynamicRunSpeed[1] = 3f;
-                    BodyChunks[0].Velocity += new Vector2(Stats.RunSpeed * DynamicRunSpeed[0] * Controller.Direction.x, 0);
-                    BodyChunks[0].Velocity += new Vector2(0, Stats.RunSpeed * DynamicRunSpeed[0] * Controller.Direction.y);
-                    BodyChunks[1].Velocity += new Vector2(Stats.RunSpeed * DynamicRunSpeed[1] * Controller.Direction.x, 0);
-                    BodyChunks[1].Velocity += new Vector2(0, Stats.RunSpeed * DynamicRunSpeed[1] * Controller.Direction.y);
+                    if (Controller != null)
+                    {
+                        BodyChunks[0].Velocity += new Vector2(Stats.RunSpeed * DynamicRunSpeed[0] * Controller.MovementDirection.x, 0);
+                        BodyChunks[0].Velocity += new Vector2(0, Stats.RunSpeed * DynamicRunSpeed[0] * Controller.MovementDirection.y);
+                        BodyChunks[1].Velocity += new Vector2(Stats.RunSpeed * DynamicRunSpeed[1] * Controller.MovementDirection.x, 0);
+                        BodyChunks[1].Velocity += new Vector2(0, Stats.RunSpeed * DynamicRunSpeed[1] * Controller.MovementDirection.y);
+                    }
 
                     BodyChunks[0].Velocity *= 0.8f;
                     BodyChunks[1].Velocity *= 0.8f;

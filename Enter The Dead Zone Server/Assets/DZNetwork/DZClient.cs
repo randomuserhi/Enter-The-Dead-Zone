@@ -41,7 +41,7 @@ namespace DZNetwork
                 if (!DisconnectTrigger)
                 {
                     DisconnectHandle();
-                    PacketHandler.RemoveAcknowledgement(Socket.RemoteEndPoint);
+                    PacketHandler.RemoveAcknowledgement(Socket.RemoteEndPoint as IPEndPoint);
                     DisconnectTrigger = true;
                 }
             }
@@ -60,7 +60,8 @@ namespace DZNetwork
 
         public void Send(Packet Packet, ServerCode ServerCode)
         {
-            PacketHandler.PacketGroup PacketGroup = PacketHandler.GeneratePackets(Packet, ServerCode, Socket.RemoteEndPoint);
+            Packet.InsertServerCode(ServerCode);
+            PacketHandler.PacketGroup PacketGroup = PacketHandler.GeneratePackets(Packet, Socket.RemoteEndPoint as IPEndPoint);
             for (int i = 0; i < PacketGroup.Packets.Length; i++)
                 Send((ushort)(PacketGroup.StartingPacketSequence + i), ServerCode, PacketGroup.Packets[i]);
         }
@@ -74,7 +75,7 @@ namespace DZNetwork
             public byte[] Data;
         }
 
-        protected override void OnReceive(EndPoint ReceivedEndPoint)
+        protected override void OnReceive(IPEndPoint ReceivedEndPoint)
         {
             TicksSinceLastConnection = 0;
             if (Connected == false)

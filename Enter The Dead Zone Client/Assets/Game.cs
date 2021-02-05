@@ -8,6 +8,7 @@ using System.Net;
 using ClientHandle;
 using UnityEngine;
 using DeadZoneEngine;
+using DeadZoneEngine.Controllers;
 using DeadZoneEngine.Entities;
 using DeadZoneEngine.Entities.Components;
 using DZNetwork;
@@ -25,16 +26,17 @@ public class Game
     private static ulong TrueClientTicks = 0;
     public static ulong ClientTicks = 0;
 
-    private struct Snapshot
+    private class Snapshot
     {
-        public ulong Ticks;
+        public ulong Ticks = 0;
     }
 
-    private static Snapshot PrevSnapshot;
+    private static Snapshot PrevSnapshot = new Snapshot();
 
     public static void FixedUpdate()
     {
         TrueClientTicks++;
+        InputMapping.Tick();
 
         //Framerate of client may not be the same as tick rate, this ensures that tickupdate is called at the correct timings or close to the correct timings
         ulong ClientTickUpdate = (ulong)(TrueClientTicks * ConversionRate);
@@ -62,12 +64,15 @@ public class Game
         {
             Packet Setup = new Packet();
             Setup.Write(Client.NumPlayers);
-            Loader.Socket.Send(Setup, ServerCode.InitializeConnection);
+            Loader.Socket.Send(Setup, ServerCode.SyncPlayers);
             return;
         }
 
         Packet SnapshotPacket = new Packet();
         SnapshotPacket.Write(Client.NumPlayers);
+        SnapshotPacket.Write(ClientTickRate);
+        SnapshotPacket.Write(PrevSnapshot.Ticks);
+        SnapshotPacket.Write(InputMapping.GetBytes());
         Loader.Socket.Send(SnapshotPacket, ServerCode.ClientSnapshot);
     }
 
@@ -85,11 +90,11 @@ public class Game
             for (int i = 0; i < NumPlayers; i++)
             {
                 int ID = Data.ReadByte();
-                if (ID == 255)
+                if (ID == byte.MaxValue)
                     continue;
                 ushort PlayerEntityID = Data.ReadUShort();
                 Debug.Log(PlayerEntityID);
-                Client.Players[i].Entity.ID.ChangeID(PlayerEntityID);
+                Client.Players[i].Entity.ID.ChangeID(PlayerEntityID, true);
             }
             Client.Setup = true;
         }
@@ -97,12 +102,13 @@ public class Game
 
     public static void UnWrapSnapshot(Packet Packet)
     {
-        const int MaxRecentUpdate = 30; //Number of snapshot ticks until object is removed for not being updapted
+        const int MaxRecentUpdate = 10; //Number of snapshot ticks until object is removed for not being updated
 
         if (Client == null || !Client.Setup) return;
 
         ServerTickRate = Packet.ReadInt();
         ulong ServerTick = Packet.ReadULong();
+        int TickDifference = (int)(ServerTick - PrevSnapshot.Ticks);
 
         if (PrevSnapshot.Ticks >= ServerTick)
         {
@@ -118,14 +124,16 @@ public class Game
             ushort ID = Packet.ReadUShort();
             _IInstantiatableDeletable Item = EntityID.GetObject(ID);
             bool FlaggedToDelete = Packet.ReadBool();
-            IServerSendable ServerItem = Item as IServerSendable;
-            DZSettings.EntityType Type = (DZSettings.EntityType)Packet.ReadInt();
             if (FlaggedToDelete)
             {
                 if (Item != null)
                     DZEngine.Destroy(Item);
                 continue;
             }
+
+            IServerSendable ServerItem = Item as IServerSendable;
+            DZSettings.EntityType Type = (DZSettings.EntityType)Packet.ReadInt();
+
             if (ServerItem == null)
                 ServerItem = Parse(ID, Type);
             if (ServerItem == null)
@@ -154,7 +162,7 @@ public class Game
         }
         foreach (IServerSendable Item in ServerItems)
         {
-            Item.RecentlyUpdated++;
+            Item.RecentlyUpdated -= TickDifference;
             if (Item.RecentlyUpdated >= MaxRecentUpdate) //Item was not contained in recent snapshot so remove it
                 DZEngine.Destroy(Item); //This needs a different way of resolving, probably make it a tick timer so after 30 ticks it then is removed
         }

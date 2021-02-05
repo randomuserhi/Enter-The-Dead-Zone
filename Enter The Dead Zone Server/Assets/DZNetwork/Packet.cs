@@ -7,14 +7,14 @@ using System.Threading.Tasks;
 
 namespace DZNetwork
 {
-    public class EndPointComparer : IEqualityComparer<EndPoint>
+    public class IPEndPointComparer : IEqualityComparer<IPEndPoint>
     {
-        public bool Equals(EndPoint A, EndPoint B)
+        public bool Equals(IPEndPoint A, IPEndPoint B)
         {
             return A.Equals(B);
         }
 
-        public int GetHashCode(EndPoint A)
+        public int GetHashCode(IPEndPoint A)
         {
             return A.GetHashCode();
         }
@@ -23,7 +23,7 @@ namespace DZNetwork
     public static class PacketHandler
     {
         public static int ProtocolID = 0;
-        private static int PacketHeaderSize = sizeof(int) + sizeof(long) + sizeof(ushort);
+        private static int PacketHeaderSize = sizeof(int) * 2 + sizeof(long) + sizeof(ushort);
         public static int HeaderSize = PacketHeaderSize + sizeof(ushort) * 2 + sizeof(int) * 3;
 
         public static ushort PacketID = 0;
@@ -34,7 +34,7 @@ namespace DZNetwork
             public ushort PacketAcknowledgement = 0;
             public int PacketAcknowledgementBitField = 0;
         }
-        public static Dictionary<EndPoint, Acknowledgement> PacketAcknowledgements = new Dictionary<EndPoint, Acknowledgement>(new EndPointComparer());
+        public static Dictionary<IPEndPoint, Acknowledgement> PacketAcknowledgements = new Dictionary<IPEndPoint, Acknowledgement>(new IPEndPointComparer());
 
         public struct PacketGroup
         {
@@ -42,22 +42,28 @@ namespace DZNetwork
             public byte[][] Packets;
         }
 
-        public static Acknowledgement GetAcknowledgement(EndPoint EndPoint)
+        public static Acknowledgement GetAcknowledgement(IPEndPoint EndPoint)
         {
             if (!PacketAcknowledgements.ContainsKey(EndPoint)) PacketAcknowledgements.Add(EndPoint, new Acknowledgement());
             return PacketAcknowledgements[EndPoint];
         }
 
-        public static void RemoveAcknowledgement(EndPoint EndPoint)
+        public static void RemoveAcknowledgement(IPEndPoint EndPoint)
         {
             if (PacketAcknowledgements.ContainsKey(EndPoint))
                 PacketAcknowledgements.Remove(EndPoint);
         }
 
-        public static PacketGroup GeneratePackets(Packet P, ServerCode ServerCode, EndPoint EndPoint)
+        public static int CalculateCheckSum(byte[] Data, int Offset = sizeof(int) * 2)
         {
-            P.InsertServerCode(ServerCode);
+            int Sum = 0;
+            for (int i = Offset; i < Data.Length; i++)
+                Sum += Data[i];
+            return Sum;
+        }
 
+        public static PacketGroup GeneratePackets(Packet P, IPEndPoint EndPoint)
+        {
             long Epoch = (DateTime.Now - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).Ticks / 10000;
 
             byte[] Data = P.GetBytes();
@@ -67,7 +73,7 @@ namespace DZNetwork
 
             byte[] HeaderBytes = new byte[PacketHeaderSize];
             int WriteHead = 0;
-            Buffer.BlockCopy(BitConverter.GetBytes(ProtocolID), 0, HeaderBytes, WriteHead, sizeof(int)); WriteHead += sizeof(int);
+            Buffer.BlockCopy(BitConverter.GetBytes(ProtocolID), 0, HeaderBytes, WriteHead, sizeof(int)); WriteHead += sizeof(int) * 2;
             Buffer.BlockCopy(BitConverter.GetBytes(Epoch), 0, HeaderBytes, WriteHead, sizeof(long)); WriteHead += sizeof(long);
             Buffer.BlockCopy(BitConverter.GetBytes(PacketID), 0, HeaderBytes, WriteHead, sizeof(ushort));
 
@@ -76,28 +82,35 @@ namespace DZNetwork
                 StartingPacketSequence = LocalPacketSequence
             };
 
-            Acknowledgement Ack = GetAcknowledgement(EndPoint);
-
-            int RemainingPacketSize = Data.Length;
-            int ReadHead = 0;
-            for (int i = 0; i < NumPackets; i++)
+            lock (PacketAcknowledgements)
             {
-                int PacketSize = Math.Min(RemainingPacketSize, Loader.Socket.BufferSize - HeaderSize);
-                Packets[i] = new byte[PacketSize + HeaderSize];
-                Buffer.BlockCopy(HeaderBytes, 0, Packets[i], 0, HeaderBytes.Length);
+                Acknowledgement Ack = GetAcknowledgement(EndPoint);
 
-                int HeaderIndex = HeaderBytes.Length;
-                Buffer.BlockCopy(BitConverter.GetBytes(LocalPacketSequence), 0, Packets[i], HeaderIndex, sizeof(ushort)); HeaderIndex += sizeof(ushort);
-                Buffer.BlockCopy(BitConverter.GetBytes(Ack.PacketAcknowledgement), 0, Packets[i], HeaderIndex, sizeof(ushort)); HeaderIndex += sizeof(ushort);
-                Buffer.BlockCopy(BitConverter.GetBytes(Ack.PacketAcknowledgementBitField), 0, Packets[i], HeaderIndex, sizeof(int)); HeaderIndex += sizeof(int);
-                Buffer.BlockCopy(BitConverter.GetBytes(Data.Length), 0, Packets[i], HeaderIndex, sizeof(int)); HeaderIndex += sizeof(int);
-                Buffer.BlockCopy(BitConverter.GetBytes(i), 0, Packets[i], HeaderIndex, sizeof(int));
+                int RemainingPacketSize = Data.Length;
+                int ReadHead = 0;
+                for (int i = 0; i < NumPackets; i++)
+                {
+                    int PacketSize = Math.Min(RemainingPacketSize, Loader.Socket.BufferSize - HeaderSize);
+                    Packets[i] = new byte[PacketSize + HeaderSize];
+                    Buffer.BlockCopy(HeaderBytes, 0, Packets[i], 0, HeaderBytes.Length);
 
-                Buffer.BlockCopy(Data, ReadHead, Packets[i], HeaderSize, PacketSize);
-                ReadHead += PacketSize;
-                RemainingPacketSize -= PacketSize;
+                    int HeaderIndex = HeaderBytes.Length;
+                    Buffer.BlockCopy(BitConverter.GetBytes(LocalPacketSequence), 0, Packets[i], HeaderIndex, sizeof(ushort)); HeaderIndex += sizeof(ushort);
+                    Buffer.BlockCopy(BitConverter.GetBytes(Ack.PacketAcknowledgement), 0, Packets[i], HeaderIndex, sizeof(ushort)); HeaderIndex += sizeof(ushort);
+                    Buffer.BlockCopy(BitConverter.GetBytes(Ack.PacketAcknowledgementBitField), 0, Packets[i], HeaderIndex, sizeof(int)); HeaderIndex += sizeof(int);
+                    Buffer.BlockCopy(BitConverter.GetBytes(Data.Length), 0, Packets[i], HeaderIndex, sizeof(int)); HeaderIndex += sizeof(int);
+                    Buffer.BlockCopy(BitConverter.GetBytes(i), 0, Packets[i], HeaderIndex, sizeof(int));
 
-                LocalPacketSequence++;
+                    Buffer.BlockCopy(Data, ReadHead, Packets[i], HeaderSize, PacketSize);
+
+                    int CheckSum = CalculateCheckSum(Packets[i]);
+                    Buffer.BlockCopy(BitConverter.GetBytes(CheckSum), 0, Packets[i], sizeof(int), sizeof(int));
+
+                    ReadHead += PacketSize;
+                    RemainingPacketSize -= PacketSize;
+
+                    LocalPacketSequence++;
+                }
             }
 
             PacketID++;

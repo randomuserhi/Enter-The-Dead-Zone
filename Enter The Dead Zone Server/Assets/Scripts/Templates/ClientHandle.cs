@@ -6,18 +6,22 @@ using System.Text;
 using System.Threading.Tasks;
 
 using UnityEngine;
+using UnityEngine.InputSystem;
+
 using DeadZoneEngine;
+using DZNetwork;
 using DeadZoneEngine.Entities;
+using DeadZoneEngine.Controllers;
 
 namespace ClientHandle
 {
     public class ClientID
     {
         public static Dictionary<ushort, Client> ConnectedClients = new Dictionary<ushort, Client>();
-        public static Dictionary<EndPoint, ushort> EndPointToID = new Dictionary<EndPoint, ushort>(new DZNetwork.EndPointComparer());
+        public static Dictionary<IPEndPoint, ushort> EndPointToID = new Dictionary<IPEndPoint, ushort>(new IPEndPointComparer());
         private static ushort StaticID = 0;
         public Client Self { get; private set; }
-        public EndPoint EndPoint { get; private set; }
+        public IPEndPoint EndPoint { get; private set; }
         private ushort Value;
         public ushort ID
         {
@@ -36,14 +40,14 @@ namespace ClientHandle
             }
         }
 
-        public ClientID(Client Self, EndPoint EndPoint)
+        public ClientID(Client Self, IPEndPoint EndPoint)
         {
             this.Self = Self;
             this.EndPoint = EndPoint;
             AssignNewID();
         }
 
-        public static Client GetClient(EndPoint EndPoint)
+        public static Client GetClient(IPEndPoint EndPoint)
         {
             if (EndPoint == null)
                 return null;
@@ -118,7 +122,7 @@ namespace ClientHandle
                 Debug.LogError("ClientID.Remove(ClientID ID) => ID " + ID + " does not exist!");
         }
 
-        public static void Remove(EndPoint EndPoint)
+        public static void Remove(IPEndPoint EndPoint)
         {
             if (EndPointToID.ContainsKey(EndPoint))
             {
@@ -139,22 +143,24 @@ namespace ClientHandle
 
         public ClientID ID;
 
-        public EndPoint EndPoint;
+        public IPEndPoint EndPoint;
         public bool Setup = false;
         public Player[] Players;
         public byte NumPlayers { get; private set; }
 
         public bool LostConnection = false;
         public int TicksSinceConnectionLoss = 0;
+        public int TickRate = 60;
+        public ulong CurrentServerTick = 0;
 
-        private Client(EndPoint EndPoint = null)
+        private Client(IPEndPoint EndPoint = null)
         {
             this.EndPoint = EndPoint;
             ID = new ClientID(this, EndPoint);
             Players = new Player[MaxNumPlayers];
         }
 
-        public static Client GetClient(EndPoint EndPoint = null)
+        public static Client GetClient(IPEndPoint EndPoint = null)
         {
             Client Client = ClientID.GetClient(EndPoint);
             if (Client == null)
@@ -164,18 +170,19 @@ namespace ClientHandle
             return Client;
         }
 
-        public void AddPlayer()
+        public Player AddPlayer()
         {
             for (byte i = 0; i < Players.Length; i++)
             {
                 if (Players[i] == null)
                 {
-                    Players[i] = new Player(i);
+                    Players[i] = new Player(i, this);
                     NumPlayers++;
-                    return;
+                    return Players[i];
                 }
             }
             Debug.LogError("Max number of players reached");
+            return null;
         }
 
         public void RemovePlayer(int PlayerID)
@@ -223,29 +230,45 @@ namespace ClientHandle
         List<KeyPress> Actions;
     }
 
-    public class PlayerController
-    {
-        public Vector2 Direction;
-    }
-
     public class Player
     {
         public byte ID { get; private set; }
 
+        public Client Owner;
         public KeySnapshot KeySnapshot;
-        public PlayerController Controller;
+        private PlayerController _Controller;
+        public PlayerController Controller
+        {
+            get
+            {
+                return _Controller;
+            }
+            set
+            {
+                _Controller = value;
+                _Controller.Owner = this;
+                if (Entity != null)
+                    _Controller.PlayerControl = Entity.Controller;
+            }
+        }
 
         public PlayerCreature Entity;
 
-        public Player(byte ID)
+        public Player(byte ID, Client Owner)
         {
+            this.Owner = Owner;
             Entity = new PlayerCreature();
             this.ID = ID;
+            _Controller = new PlayerController(null);
+            _Controller.Owner = this;
+            _Controller.PlayerControl = Entity.Controller;
         }
 
         public void Destroy()
         {
             DZEngine.Destroy(Entity);
+            if (_Controller != null)
+                _Controller.Disable();
         }
 
         public byte[] GetBytes()
