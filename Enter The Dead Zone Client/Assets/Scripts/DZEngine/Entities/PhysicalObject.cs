@@ -10,33 +10,45 @@ namespace DeadZoneEngine.Entities
 {
     public abstract class PhysicalObject : AbstractWorldEntity, IPhysicsUpdatable
     {
+        public bool PhysicallyActive { get; set; } = !DZSettings.Client;
+
         public GameObject Self;
-        protected Rigidbody2D RB;
         public AbstractWorldEntity Parent;
+        protected Rigidbody2D RB;
 
         public PhysicalObject()
         {
             Self = new GameObject();
             RB = Self.AddComponent<Rigidbody2D>();
-            RB.drag = 0;
             RB.angularDrag = 0;
+            RB.drag = 0;
             RB.gravityScale = 0;
             RB.sharedMaterial = Resources.Load<PhysicsMaterial2D>("PhysicsMaterial/Zero");
+            RB.interpolation = RigidbodyInterpolation2D.None;
+            RB.isKinematic = DZSettings.Client;
         }
 
         public PhysicalObject(ushort ID) : base(ID)
         {
             Self = new GameObject();
             RB = Self.AddComponent<Rigidbody2D>();
-            RB.drag = 0;
             RB.angularDrag = 0;
+            RB.drag = 0;
             RB.gravityScale = 0;
             RB.sharedMaterial = Resources.Load<PhysicsMaterial2D>("PhysicsMaterial/Zero");
+            RB.interpolation = RigidbodyInterpolation2D.None;
+            RB.isKinematic = DZSettings.Client;
         }
 
         protected override void OnDelete()
         {
             GameObject.Destroy(Self);
+        }
+
+        public void PhysicsUpdate(float DeltaTime)
+        {
+            Self.transform.position += (Vector3)Velocity * DeltaTime;
+            Self.transform.eulerAngles += new Vector3(0, 0, AngularVelocity) * DeltaTime;
         }
 
         public virtual void Update() { }
@@ -58,10 +70,11 @@ namespace DeadZoneEngine.Entities
             PreVelocity = Temp;
         }
 
+        public bool Kinematic { get { return RB.isKinematic; } set { RB.isKinematic = value; } }
         public int CollisionLayer { get { return Self.layer; } set { Self.layer = value; } }
-        public Vector2 Position { get { return RB.position; } set { RB.position = value; } }
+        public Vector2 Position { get { return Self.transform.position; } set { Self.transform.position = value; } }
         public Vector2 Velocity { get { return RB.velocity; } set { RB.velocity = value; } }
-        public float Rotation { get { return RB.rotation * Mathf.Deg2Rad; } set { RB.rotation = value * Mathf.Rad2Deg; } }
+        public float Rotation { get { return Self.transform.eulerAngles.z * Mathf.Deg2Rad; } set { Self.transform.eulerAngles = new Vector3(0, value * Mathf.Rad2Deg, 0); } }
         public float AngularVelocity { get { return RB.angularVelocity * Mathf.Deg2Rad; } set { RB.angularVelocity = value * Mathf.Rad2Deg; } }
 
         public float _InvMass = 0;

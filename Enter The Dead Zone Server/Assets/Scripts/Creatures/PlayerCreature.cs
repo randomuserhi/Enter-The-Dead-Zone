@@ -13,7 +13,8 @@ using DeadZoneEngine.Entities.Components;
 public class PlayerCreature : AbstractCreature, IServerSendable
 {
     public int ServerObjectType { get; set; } = (int)DZSettings.EntityType.PlayerCreature;
-    public int RecentlyUpdated { get; set; }
+    public bool RecentlyUpdated { get; set; } = false;
+    public bool ProtectedDeletion { get; set; } = false;
 
     public struct PlayerStats
     {
@@ -31,6 +32,28 @@ public class PlayerCreature : AbstractCreature, IServerSendable
     {
         public PlayerController Owner;
         public Vector2 MovementDirection;
+
+        public struct Snapshot
+        {
+            public ulong InputID;
+            public Vector2 MovementDirection;
+        }
+
+        public ulong InputID;
+
+        public Snapshot GetSnapshot()
+        {
+            return new Snapshot()
+            {
+                InputID = InputID++,
+                MovementDirection = MovementDirection
+            };
+        }
+
+        public void ParseSnapshot(Snapshot Snapshot)
+        {
+            MovementDirection = Snapshot.MovementDirection;
+        }
     }
     public Control Controller { get; private set; } //Controller for player movement
 
@@ -50,6 +73,9 @@ public class PlayerCreature : AbstractCreature, IServerSendable
 
     private void Initialize()
     {
+        if (DZSettings.ClientSidePrediction)
+            Histogram = new DZNetwork.JitterBuffer<PlayerSnapshot>();
+
         Controller = new Control();
         State = BodyState.Standing;
         Stats.RunSpeed = 2f;
@@ -67,6 +93,17 @@ public class PlayerCreature : AbstractCreature, IServerSendable
         Physics2D.IgnoreCollision(BodyChunks[0].Collider, BodyChunks[1].Collider, true); //Ignore collisions between body parts
 
         DynamicRunSpeed = new float[2];
+    }
+
+    public void ServerUpdate()
+    {
+        if (Controller.Owner == null || DZSettings.ClientSidePrediction == false) return;
+
+        UpdateReconcilliation();
+
+        BodyChunks[0].PhysicallyActive = true;
+        BodyChunks[1].PhysicallyActive = true;
+        BodyChunkConnections[0].PhysicallyActive = true;
     }
 
     public override void Update()
@@ -188,16 +225,116 @@ public class PlayerCreature : AbstractCreature, IServerSendable
     public override byte[] GetBytes()
     {
         List<byte> Data = new List<byte>();
+        Data.AddRange(BitConverter.GetBytes(Controller.InputID));
         Data.AddRange(BodyChunks[0].GetBytes());
         Data.AddRange(BodyChunks[1].GetBytes());
         Data.AddRange(BodyChunkConnections[0].GetBytes());
         return Data.ToArray();
     }
 
-    public override void ParseBytes(DZNetwork.Packet Data, ulong ServerTick)
+    public override void ParseBytes(DZNetwork.Packet Data)
     {
-        BodyChunks[0].ParseBytes(Data, ServerTick);
-        BodyChunks[1].ParseBytes(Data, ServerTick);
-        BodyChunkConnections[0].ParseBytes(Data, ServerTick);
+        ParseSnapshot((Data)ParseBytesToData(Data));
+    }
+
+    public struct Data
+    {
+        public ulong InputID;
+        public BodyChunk.Data BodyChunk0;
+        public BodyChunk.Data BodyChunk1;
+        public DistanceJoint.Data BodyChunkConnections0;
+    }
+
+    public static object ParseBytesToData(DZNetwork.Packet Data)
+    {
+        return new Data()
+        {
+            InputID = Data.ReadULong(),
+            BodyChunk0 = (BodyChunk.Data)BodyChunk.ParseBytesToSnapshot(Data),
+            BodyChunk1 = (BodyChunk.Data)BodyChunk.ParseBytesToSnapshot(Data),
+            BodyChunkConnections0 = (DistanceJoint.Data)DistanceJoint.ParseBytesToData(Data)
+        };
+    }
+
+    public override void ParseSnapshot(object ObjectData)
+    {
+        if (Controller.Owner != null && DZSettings.ClientSidePrediction && !Reconcille)
+        {
+            return;
+        }
+        Data Data = (Data)ObjectData;
+        BodyChunks[0].ParseSnapshot(Data.BodyChunk0);
+        BodyChunks[1].ParseSnapshot(Data.BodyChunk1);
+        BodyChunkConnections[0].ParseSnapshot(Data.BodyChunkConnections0);
+    }
+
+    public override object GetSnapshot()
+    {
+        return new Data()
+        {
+            InputID = Controller.InputID,
+            BodyChunk0 = (BodyChunk.Data)BodyChunks[0].GetSnapshot(),
+            BodyChunk1 = (BodyChunk.Data)BodyChunks[1].GetSnapshot(),
+            BodyChunkConnections0 = (DistanceJoint.Data)BodyChunkConnections[0].GetSnapshot()
+        };
+    }
+
+    private class PlayerSnapshot
+    {
+        public Data Snapshot;
+        public Control.Snapshot Controls;
+    }
+    DZNetwork.JitterBuffer<PlayerSnapshot> Histogram = null;
+    private void UpdateReconcilliation()
+    {
+        Histogram.Add(new PlayerSnapshot()
+        {
+            Snapshot = (Data)GetSnapshot(),
+            Controls = Controller.GetSnapshot()
+        });
+    }
+
+    private bool Reconcille = false;
+    private object LastReconcilled = null;
+    public override void Interpolate(object FromData, object ToData, float Time)
+    {
+        if (Controller.Owner != null && DZSettings.ClientSidePrediction && LastReconcilled != FromData)
+        {
+            LastReconcilled = FromData;
+            Data ReconcilleSnapshot = (Data)FromData;
+            PlayerSnapshot Current = null;
+            Histogram.Iterate(S =>
+            {
+                if (S.Value.Controls.InputID >= ReconcilleSnapshot.InputID)
+                {
+                    Current = S.Value;
+                }
+            }, S => S.Value.Controls.InputID >= ReconcilleSnapshot.InputID);
+            Debug.Log("> " + Histogram.Count);
+            if (Current != null)
+            {
+                Histogram.Dequeue(Current);
+                Debug.Log(BodyChunks[0].Position);
+                Reconcille = true;
+                ParseSnapshot(ReconcilleSnapshot);
+                Reconcille = false;
+                Histogram.Iterate(S =>
+                {
+                    Controller.ParseSnapshot(S.Value.Controls);
+                    DZEngine.PhysicsUpdate();
+                });
+                Debug.Log(BodyChunks[0].Position);
+            }
+            else
+            {
+                Histogram.Dequeue(Histogram.Last);
+            }
+            return;
+        }
+        Data From = (Data)FromData;
+        Data To = (Data)ToData;
+        BodyChunks[0].Interpolate(From.BodyChunk0, To.BodyChunk0, Time);
+        BodyChunks[1].Interpolate(From.BodyChunk1, To.BodyChunk1, Time);
+        BodyChunkConnections[0].Interpolate(From.BodyChunkConnections0, To.BodyChunkConnections0, Time);
     }
 }

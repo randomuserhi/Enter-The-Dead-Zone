@@ -9,7 +9,9 @@ using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.LowLevel;
 using UnityEngine.InputSystem.Controls;
 using UnityEngine;
+using static DeadZoneEngine.Controllers.InputMapping;
 using DZNetwork;
+using ClientHandle;
 
 namespace DeadZoneEngine.Controllers
 {
@@ -27,6 +29,7 @@ namespace DeadZoneEngine.Controllers
 
         public class DeviceController
         {
+            public bool Enabled { get; private set; } = false;
             public List<Controller> Controllers = new List<Controller>();
 
             public byte[] GetBytes()
@@ -57,12 +60,14 @@ namespace DeadZoneEngine.Controllers
 
             public void Enable()
             {
+                Enabled = true;
                 for (int i = 0; i < Controllers.Count; i++)
                     Controllers[i].Enable();
             }
 
             public void Disable()
             {
+                Enabled = false;
                 for (int i = 0; i < Controllers.Count; i++)
                     Controllers[i].Disable();
             }
@@ -125,13 +130,38 @@ namespace DeadZoneEngine.Controllers
             }
         }
 
+        public static void ParseBytes(Packet Packet, Client Client)
+        {
+            int NumControllers = Packet.ReadInt();
+            for (int i = 0; i < NumControllers; i++)
+            {
+                bool Enabled = Packet.ReadBool();
+                if (!Enabled) continue;
+                int NumControls = Packet.ReadInt();
+                for (int j = 0; j < NumControls; j++)
+                {
+                    ControllerType ControlType = (ControllerType)Packet.ReadInt();
+                    int PlayerID = Packet.ReadByte();
+                    switch (ControlType)
+                    {
+                        case ControllerType.PlayerController: Client.Players[PlayerID].Controller.ParseBytes(Packet); break;
+                        default:
+                            Debug.LogWarning("Unknown controller type...");
+                            return;
+                    }
+                }
+            }
+        }
         public static byte[] GetBytes()
         {
             List<byte> Data = new List<byte>();
             List<DeviceController> Controllers = Devices.Values.ToList();
+            Data.AddRange(BitConverter.GetBytes(Controllers.Count));
             foreach (DeviceController DC in Controllers)
             {
-                Data.AddRange(DC.GetBytes());
+                Data.AddRange(BitConverter.GetBytes(DC.Enabled));
+                if (DC.Enabled)
+                    Data.AddRange(DC.GetBytes());
             }
             return Data.ToArray();
         }
@@ -173,19 +203,26 @@ namespace DeadZoneEngine.Controllers
 
         public static void Rebind(InputAction Action, InputDevice Device)
         {
-
+            
         }
     }
 
     public abstract class Controller
     {
+        public DeviceController DC;
         public ControllerType Type;
         private InputDevice Device;
         protected bool IsKeyboard { get; private set; } = true;
         protected InputActionMap ActionMap = new InputActionMap("Controller");
 
-        public Controller(InputDevice Device)
+        public Controller()
         {
+            SetType();
+        }
+
+        public Controller(InputDevice Device, DeviceController DC)
+        {
+            this.DC = DC;
             this.Device = Device;
             IsKeyboard = Device is Keyboard;
             SetType();

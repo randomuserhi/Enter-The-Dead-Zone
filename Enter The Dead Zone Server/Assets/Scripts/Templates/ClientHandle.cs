@@ -150,7 +150,6 @@ namespace ClientHandle
 
         public bool LostConnection = false;
         public int TicksSinceConnectionLoss = 0;
-        public int TickRate = 60;
         public ulong CurrentServerTick = 0;
 
         private Client(IPEndPoint EndPoint = null)
@@ -259,9 +258,7 @@ namespace ClientHandle
             this.Owner = Owner;
             Entity = new PlayerCreature();
             this.ID = ID;
-            _Controller = new PlayerController(null);
-            _Controller.Owner = this;
-            _Controller.PlayerControl = Entity.Controller;
+            _Controller = new PlayerController(this, Entity.Controller);
         }
 
         public void Destroy()

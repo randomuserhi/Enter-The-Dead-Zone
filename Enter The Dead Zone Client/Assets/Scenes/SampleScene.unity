@@ -123,24 +123,6 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
---- !u!1 &1282612230 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 7687470950920004585, guid: 7b5e3eede379a0e4a8aafc1194b4cd3f,
-    type: 3}
-  m_PrefabInstance: {fileID: 7687470950812294037}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &1282612231
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1282612230}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5741c7dac3c03d7439606180e2abaad2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!850595691 &1887787089
 LightingSettings:
   m_ObjectHideFlags: 0
@@ -346,58 +328,5 @@ PrefabInstance:
       propertyPath: m_TargetTexture
       value: 
       objectReference: {fileID: 8400000, guid: facfaa9123244cf4dbbb41c6497f5bc1, type: 2}
-    - target: {fileID: 7687470952666713289, guid: 7b5e3eede379a0e4a8aafc1194b4cd3f,
-        type: 3}
-      propertyPath: m_BackGroundColor.r
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7687470952666713289, guid: 7b5e3eede379a0e4a8aafc1194b4cd3f,
-        type: 3}
-      propertyPath: m_BackGroundColor.g
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7687470952666713289, guid: 7b5e3eede379a0e4a8aafc1194b4cd3f,
-        type: 3}
-      propertyPath: m_BackGroundColor.b
-      value: 0
-      objectReference: {fileID: 0}
-    m_RemovedComponents:
-    - {fileID: 125363296, guid: 7b5e3eede379a0e4a8aafc1194b4cd3f, type: 3}
+    m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 7b5e3eede379a0e4a8aafc1194b4cd3f, type: 3}
---- !u!1 &7687470950812294038 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 7687470952666713293, guid: 7b5e3eede379a0e4a8aafc1194b4cd3f,
-    type: 3}
-  m_PrefabInstance: {fileID: 7687470950812294037}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &7687470950812294039
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7687470950812294038}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a79441f348de89743a2939f4d699eac1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_RenderShadows: 1
-  m_RequiresDepthTextureOption: 2
-  m_RequiresOpaqueTextureOption: 2
-  m_CameraType: 0
-  m_Cameras: []
-  m_RendererIndex: -1
-  m_VolumeLayerMask:
-    serializedVersion: 2
-    m_Bits: 1
-  m_VolumeTrigger: {fileID: 0}
-  m_RenderPostProcessing: 0
-  m_Antialiasing: 0
-  m_AntialiasingQuality: 2
-  m_StopNaN: 0
-  m_Dithering: 0
-  m_ClearDepth: 1
-  m_RequiresDepthTexture: 0
-  m_RequiresColorTexture: 0
-  m_Version: 2

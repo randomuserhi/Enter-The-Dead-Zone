@@ -10,6 +10,8 @@ using UnityEngine.InputSystem.LowLevel;
 using UnityEngine.InputSystem.Controls;
 using UnityEngine;
 using static DeadZoneEngine.Controllers.InputMapping;
+using DZNetwork;
+using ClientHandle;
 
 namespace DeadZoneEngine.Controllers
 {
@@ -128,6 +130,28 @@ namespace DeadZoneEngine.Controllers
             }
         }
 
+        public static void ParseBytes(Packet Packet, Client Client)
+        {
+            int NumControllers = Packet.ReadInt();
+            for (int i = 0; i < NumControllers; i++)
+            {
+                bool Enabled = Packet.ReadBool();
+                if (!Enabled) continue;
+                int NumControls = Packet.ReadInt();
+                for (int j = 0; j < NumControls; j++)
+                {
+                    ControllerType ControlType = (ControllerType)Packet.ReadInt();
+                    int PlayerID = Packet.ReadByte();
+                    switch (ControlType)
+                    {
+                        case ControllerType.PlayerController: Client.Players[PlayerID].Controller.ParseBytes(Packet); break;
+                        default:
+                            Debug.LogWarning("Unknown controller type...");
+                            return;
+                    }
+                }
+            }
+        }
         public static byte[] GetBytes()
         {
             List<byte> Data = new List<byte>();
@@ -190,6 +214,11 @@ namespace DeadZoneEngine.Controllers
         private InputDevice Device;
         protected bool IsKeyboard { get; private set; } = true;
         protected InputActionMap ActionMap = new InputActionMap("Controller");
+
+        public Controller()
+        {
+            SetType();
+        }
 
         public Controller(InputDevice Device, DeviceController DC)
         {
@@ -259,6 +288,7 @@ namespace DeadZoneEngine.Controllers
 
         }
 
+        public abstract void ParseBytes(Packet Data);
         public abstract byte[] GetBytes();
     }
 }

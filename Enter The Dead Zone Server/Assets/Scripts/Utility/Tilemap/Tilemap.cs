@@ -45,7 +45,8 @@ public class TilePallet
 public class Tilemap : AbstractWorldEntity, IUpdatable, IRenderer, IServerSendable
 {
     public int ServerObjectType { get; set; } = (int)DZSettings.EntityType.Tilemap;
-    public int RecentlyUpdated { get; set; }
+    public bool RecentlyUpdated { get; set; } = false;
+    public bool ProtectedDeletion { get; set; } = false;
 
     public int SortingLayer { get; set; }
 
@@ -208,6 +209,11 @@ public class Tilemap : AbstractWorldEntity, IUpdatable, IRenderer, IServerSendab
 
         //Initialize renders
         GenerateRenders();
+    }
+
+    public void ServerUpdate()
+    {
+
     }
 
     public void Update() { }
@@ -522,9 +528,9 @@ public class Tilemap : AbstractWorldEntity, IUpdatable, IRenderer, IServerSendab
     {
         //Release buffers
         if (WallBuffer != null)
-            WallBuffer.Release();
+            WallBuffer.Dispose();
         if (FloorBuffer != null)
-            FloorBuffer.Release();
+            FloorBuffer.Dispose();
         //Delete Objects
         if (Rows != null)
         {
@@ -586,52 +592,107 @@ public class Tilemap : AbstractWorldEntity, IUpdatable, IRenderer, IServerSendab
     }
 
     private bool FirstParse = false;
-    public override void ParseBytes(DZNetwork.Packet Data, ulong ServerTick)
+    public override void ParseBytes(DZNetwork.Packet Data)
     {
-        bool UpdateResizeOverNetwork = Data.ReadBool();
-        int TilePalletIndex = Data.ReadInt();
+        Data D = (Data)ParseBytesToData(Data);
+        ParseSnapshot(D);
+    }
+
+    public struct Data
+    {
+        public bool UpdateResizeOverNetwork;
+        public int TilePalletIndex;
+        public Vector2 Position;
+        public Vector2Int TilemapSize;
+        public float TilesPerUnit;
+        public int WallTileHeight;
+        public Tile[] FloorMap;
+        public Tile[] WallMap;
+    }
+
+    public override object GetSnapshot()
+    {
+        Data Snapshot = new Data()
+        {
+            UpdateResizeOverNetwork = UpdateResizeOverNetwork,
+            TilePalletIndex = -1, //TODO:: change
+            Position = Self.transform.position,
+            TilemapSize = TilemapSize,
+            TilesPerUnit = TilesPerUnit,
+            WallTileHeight = WallTileHeight,
+            FloorMap = new Tile[FloorMap.Length],
+            WallMap = new Tile[WallMap.Length]
+        };
+        System.Buffer.BlockCopy(FloorMap, 0, Snapshot.FloorMap, 0, FloorMap.Length);
+        System.Buffer.BlockCopy(WallMap, 0, Snapshot.WallMap, 0, WallMap.Length);
+        return Snapshot;
+    }
+
+    public static object ParseBytesToData(DZNetwork.Packet Data)
+    {
+        Data D = new Data()
+        {
+            UpdateResizeOverNetwork = Data.ReadBool(),
+            TilePalletIndex = Data.ReadInt(),
+            Position = new Vector2(Data.ReadFloat(), Data.ReadFloat()),
+            TilemapSize = new Vector2Int(Data.ReadInt(), Data.ReadInt()),
+            TilesPerUnit = Data.ReadFloat(),
+            WallTileHeight = Data.ReadInt()
+        };
+
+        int NumBytes = Data.ReadInt();
+
+        int Volume = D.TilemapSize.x * D.TilemapSize.y;
+
+        D.FloorMap = new Tile[Volume];
+        for (int i = 0; i < Volume; i++)
+        {
+            int Blank = Data.ReadInt();
+            D.FloorMap[i].Blank = Blank;
+            if (Blank == 1)
+                continue;
+            D.FloorMap[i].Render = Data.ReadInt();
+            D.FloorMap[i].TileIndex = Data.ReadInt();
+            D.FloorMap[i].AnimationFrame = Data.ReadInt();
+        }
+
+        D.WallMap = new Tile[Volume];
+        for (int i = 0; i < Volume; i++)
+        {
+            int Blank = Data.ReadInt();
+            D.WallMap[i].Blank = Blank;
+            if (Blank == 1)
+                continue;
+            D.WallMap[i].Render = Data.ReadInt();
+            D.WallMap[i].TileIndex = Data.ReadInt();
+            D.WallMap[i].AnimationFrame = Data.ReadInt();
+        }
+
+        return D;
+    }
+
+    public override void ParseSnapshot(object ObjectData)
+    {
+        Data Data = (Data)ObjectData;
+        UpdateResizeOverNetwork = Data.UpdateResizeOverNetwork;
+
+        int TilePalletIndex = Data.TilePalletIndex;
         if (TilePalletIndex == -1)
             GenerateDefaultTileData();
 
-        Self.transform.position = new Vector3(Data.ReadFloat(), Data.ReadFloat());
+        Self.transform.position = Data.Position;
+        TilesPerUnit = Data.TilesPerUnit;
+        WallTileHeight = Data.WallTileHeight;
 
-        Vector2Int TilemapSize = new Vector2Int(Data.ReadInt(), Data.ReadInt());
-        TilesPerUnit = Data.ReadFloat();
-        WallTileHeight = Data.ReadInt();
-        int NumMapBytes = Data.ReadInt();
         if (!UpdateResizeOverNetwork && FirstParse)
-        {
-            Data.Skip(NumMapBytes);
             return;
-        }
         FirstParse = true;
 
-        int Volume = TilemapSize.x * TilemapSize.y;
+        Resize(Data.TilemapSize, Data.FloorMap, Data.WallMap);
+    }
 
-        Tile[] FloorMap = new Tile[Volume];
-        for (int i = 0; i < Volume; i++)
-        {
-            int Blank = Data.ReadInt();
-            FloorMap[i].Blank = Blank;
-            if (Blank == 1)
-                continue;
-            FloorMap[i].Render = Data.ReadInt();
-            FloorMap[i].TileIndex = Data.ReadInt();
-            FloorMap[i].AnimationFrame = Data.ReadInt();
-        }
-
-        Tile[] WallMap = new Tile[Volume];
-        for (int i = 0; i < Volume; i++)
-        {
-            int Blank = Data.ReadInt();
-            WallMap[i].Blank = Blank;
-            if (Blank == 1)
-                continue;
-            WallMap[i].Render = Data.ReadInt();
-            WallMap[i].TileIndex = Data.ReadInt();
-            WallMap[i].AnimationFrame = Data.ReadInt();
-        }
-
-        Resize(TilemapSize, FloorMap, WallMap);
+    public override void Interpolate(object FromData, object ToData, float Time)
+    {
+        return;
     }
 }

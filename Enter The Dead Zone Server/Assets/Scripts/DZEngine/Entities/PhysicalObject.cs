@@ -8,21 +8,20 @@ using UnityEngine;
 
 namespace DeadZoneEngine.Entities
 {
-    /// <summary>
-    /// Describes a physics object
-    /// </summary>
     public abstract class PhysicalObject : AbstractWorldEntity, IPhysicsUpdatable
     {
+        public bool PhysicallyActive { get; set; } = !DZSettings.Client;
+
         public GameObject Self;
-        protected Rigidbody2D RB;
         public AbstractWorldEntity Parent;
+        protected Rigidbody2D RB;
 
         public PhysicalObject()
         {
             Self = new GameObject();
             RB = Self.AddComponent<Rigidbody2D>();
-            RB.drag = 0;
             RB.angularDrag = 0;
+            RB.drag = 0;
             RB.gravityScale = 0;
             RB.sharedMaterial = Resources.Load<PhysicsMaterial2D>("PhysicsMaterial/Zero");
         }
@@ -31,15 +30,21 @@ namespace DeadZoneEngine.Entities
         {
             Self = new GameObject();
             RB = Self.AddComponent<Rigidbody2D>();
-            RB.drag = 0;
             RB.angularDrag = 0;
+            RB.drag = 0;
             RB.gravityScale = 0;
             RB.sharedMaterial = Resources.Load<PhysicsMaterial2D>("PhysicsMaterial/Zero");
         }
 
         protected override void OnDelete()
         {
-            GameObject.Destroy(Self); //Destroy unity object
+            GameObject.Destroy(Self);
+        }
+
+        public void PhysicsUpdate(float DeltaTime)
+        {
+            Self.transform.position += (Vector3)Velocity * DeltaTime;
+            Self.transform.eulerAngles += new Vector3(0, 0, AngularVelocity) * DeltaTime;
         }
 
         public virtual void Update() { }
@@ -47,9 +52,6 @@ namespace DeadZoneEngine.Entities
 
 
         private Vector2 PreVelocity;
-        /// <summary>
-        /// Isolate the current velocity and use PreVelocity for physics updates
-        /// </summary>
         public void IsolateVelocity()
         {
             Vector2 Temp = PreVelocity;
@@ -57,9 +59,6 @@ namespace DeadZoneEngine.Entities
             Velocity = Temp;
         }
 
-        /// <summary>
-        /// Restore the current velocity for physics updates
-        /// </summary>
         public void RestoreVelocity()
         {
             Vector2 Temp = Velocity;
@@ -68,9 +67,9 @@ namespace DeadZoneEngine.Entities
         }
 
         public int CollisionLayer { get { return Self.layer; } set { Self.layer = value; } }
-        public Vector2 Position { get { return RB.position; } set { RB.position = value; } }
+        public Vector2 Position { get { return Self.transform.position; } set { Self.transform.position = value; } }
         public Vector2 Velocity { get { return RB.velocity; } set { RB.velocity = value; } }
-        public float Rotation { get { return RB.rotation * Mathf.Deg2Rad; } set { RB.rotation = value * Mathf.Rad2Deg; } }
+        public float Rotation { get { return Self.transform.eulerAngles.z * Mathf.Deg2Rad; } set { Self.transform.eulerAngles = new Vector3(0, value * Mathf.Rad2Deg, 0); } }
         public float AngularVelocity { get { return RB.angularVelocity * Mathf.Deg2Rad; } set { RB.angularVelocity = value * Mathf.Rad2Deg; } }
 
         public float _InvMass = 0;

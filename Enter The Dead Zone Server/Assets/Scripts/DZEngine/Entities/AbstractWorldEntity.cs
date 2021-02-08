@@ -171,6 +171,9 @@ namespace DeadZoneEngine.Entities
         protected virtual void OnDelete() { }
 
         public abstract byte[] GetBytes();
-        public abstract void ParseBytes(DZNetwork.Packet Data, ulong ServerTick);
+        public abstract object GetSnapshot();
+        public abstract void ParseBytes(DZNetwork.Packet Data);
+        public abstract void ParseSnapshot(object ObjectData);
+        public abstract void Interpolate(object FromData, object ToData, float Time);
     }
 }

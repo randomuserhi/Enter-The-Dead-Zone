@@ -221,7 +221,10 @@ namespace ClientHandle
                 _Controller = value;
                 _Controller.Owner = this;
                 if (Entity != null)
+                {
                     _Controller.PlayerControl = Entity.Controller;
+                    Entity.Controller.Owner = _Controller;
+                }
             }
         }
 
@@ -230,6 +233,7 @@ namespace ClientHandle
         public Player(byte ID)
         {
             Entity = new PlayerCreature();
+            Entity.ProtectedDeletion = true;
             this.ID = ID;
         }
 

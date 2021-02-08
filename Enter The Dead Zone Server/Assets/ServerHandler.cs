@@ -13,15 +13,15 @@ public enum ServerCode //TODO somehow implement / catch disconnection => its not
     ServerSnapshot
 }
 
-public class ServerHandler : MonoBehaviour
+public class ServerHandler
 {
     // Start is called before the first frame update
-    void Start()
+    public static void Start()
     {
         ServerHandle.PacketHandle = (Packet) =>
         {
             ServerCode Job = (ServerCode)Packet.Data.ReadInt();
-            PerformServerAction(Packet.Client, Packet.Data, Job);
+            PerformServerAction(Packet, Job);
         };
 
         ServerHandle.LostPacketHandle = (SentPacketWrapper) =>
@@ -30,7 +30,7 @@ public class ServerHandler : MonoBehaviour
         };
     }
 
-    private void HandleLostPacket(ServerCode Job)
+    private static void HandleLostPacket(ServerCode Job)
     {
         switch (Job)
         {
@@ -43,26 +43,19 @@ public class ServerHandler : MonoBehaviour
         }
     }
 
-    private void PerformServerAction(IPEndPoint Client, Packet Data, ServerCode Job)
+    private static void PerformServerAction(DZUDPSocket.RecievePacketWrapper Packet, ServerCode Job)
     {
         switch(Job)
         {
             case ServerCode.SyncPlayers:
-                Game.SyncPlayers(Client, Data);
+                Game.SyncPlayers(Packet);
                 break;
             case ServerCode.ClientSnapshot:
-                Game.UnWrapSnapshot(Client, Data);
+                Game.UnWrapSnapshot(Packet);
                 break;
             default:
                 Debug.LogWarning("Unknown ServerCode: " + Job);
                 break;
         }
-    }
-
-    // Update is called once per frame
-    void FixedUpdate()
-    {
-        ServerHandle.FixedUpdate();
-        Game.FixedUpdate();
     }
 }

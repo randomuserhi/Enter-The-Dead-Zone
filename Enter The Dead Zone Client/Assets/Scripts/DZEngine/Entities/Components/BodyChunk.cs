@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-
 using UnityEngine;
 
 namespace DeadZoneEngine.Entities.Components
@@ -45,6 +44,7 @@ namespace DeadZoneEngine.Entities.Components
 
             InvInertia = 1;
             InvMass = 1;
+            Gravity = 0;
         }
 
         /// <summary>
@@ -71,15 +71,71 @@ namespace DeadZoneEngine.Entities.Components
             return Data.ToArray();
         }
 
-        public override void ParseBytes(DZNetwork.Packet Data, ulong ServerTick)
+        public override void ParseBytes(DZNetwork.Packet Data)
         {
-            Position = new Vector2(Data.ReadFloat(), Data.ReadFloat());
-            Rotation = Data.ReadFloat();
-            Velocity = new Vector2(Data.ReadFloat(), Data.ReadFloat());
-            AngularVelocity = Data.ReadFloat();
-            InvMass = Data.ReadFloat();
-            InvInertia = Data.ReadFloat();
-            Collider.radius = Data.ReadFloat();
+            Data D = (Data)ParseBytesToSnapshot(Data);
+            ParseSnapshot(D);
+        }
+
+        public struct Data
+        {
+            public Vector2 Position;
+            public float Rotation;
+            public Vector2 Velocity;
+            public float AngularVelocity;
+            public float InvMass;
+            public float InvInertia;
+            public float ColliderRadius;
+        }
+
+        public override object GetSnapshot()
+        {
+            return new Data()
+            {
+                Position = Position,
+                Rotation = Rotation,
+                Velocity = Velocity,
+                AngularVelocity = AngularVelocity,
+                InvMass = InvMass,
+                InvInertia = InvInertia,
+                ColliderRadius = Collider.radius
+            };
+        }
+
+        public static object ParseBytesToSnapshot(DZNetwork.Packet Data)
+        {
+            return new Data()
+            {
+                Position = new Vector2(Data.ReadFloat(), Data.ReadFloat()),
+                Rotation = Data.ReadFloat(),
+                Velocity = new Vector2(Data.ReadFloat(), Data.ReadFloat()),
+                AngularVelocity = Data.ReadFloat(),
+                InvMass = Data.ReadFloat(),
+                InvInertia = Data.ReadFloat(),
+                ColliderRadius = Data.ReadFloat()
+            };
+        }
+
+        public override void ParseSnapshot(object ObjectData)
+        {
+            Data Data = (Data)ObjectData;
+            Position = Data.Position;
+            Rotation = Data.Rotation;
+            Velocity = Data.Velocity;
+            AngularVelocity = Data.AngularVelocity;
+            InvMass = Data.InvMass;
+            InvInertia = Data.InvInertia;
+            Collider.radius = Data.ColliderRadius;
+        }
+
+        public override void Interpolate(object FromData, object ToData, float Time)
+        {
+            Data From = (Data)FromData;
+            Data To = (Data)ToData;
+            Position = From.Position + (To.Position - From.Position) * Time;
+            Rotation = From.Rotation + (To.Rotation - From.Rotation) * Time;
+            Velocity = From.Velocity + (To.Velocity - From.Velocity) * Time;
+            AngularVelocity = From.AngularVelocity + (To.AngularVelocity - From.AngularVelocity) * Time;
         }
     }
 }

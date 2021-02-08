@@ -8,6 +8,8 @@ namespace DeadZoneEngine.Entities
 {
     public abstract class PhysicalJoint : AbstractWorldEntity, IIteratableUpdatable
     {
+        public bool PhysicallyActive { get; set; } = !DZSettings.Client;
+
         public PhysicalJoint() { }
 
         public PhysicalJoint(ushort ID) : base(ID) { }

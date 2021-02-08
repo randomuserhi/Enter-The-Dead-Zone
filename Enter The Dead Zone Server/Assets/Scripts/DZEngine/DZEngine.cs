@@ -20,7 +20,7 @@ namespace DeadZoneEngine
         /// </summary>
         public static void Initialize()
         {
-            
+
         }
 
         /// <summary>
@@ -64,7 +64,7 @@ namespace DeadZoneEngine
         private static HashSet<Type> ManagedListTypes = new HashSet<Type>(); //Contains all created managed lists
         private static Dictionary<(Type, Type), Delegate> GetInvokeCache = new Dictionary<(Type, Type), Delegate>(); //Caching delegate functions used for calling relevant add functions
         private static Dictionary<Type, (Delegate, Delegate)> GetManagedInvokeCache = new Dictionary<Type, (Delegate, Delegate)>(); //Caching delegate functions used for clearing and updating managed lists
-        
+
         /// <summary>
         /// Invokes a given delegate on every item that contains the provided interface
         /// </summary>
@@ -74,7 +74,7 @@ namespace DeadZoneEngine
         /// <param name="List">List being checked</param>
         private static void InvokeIfContainsInterface<SearchType, ListType>(Delegate Method, List<ListType> List) where SearchType : class
         {
-            for (int i = 0; i < List.Count; i++) 
+            for (int i = 0; i < List.Count; i++)
             {
                 SearchType Item = List[i] as SearchType;
                 if (Item != null)
@@ -83,7 +83,7 @@ namespace DeadZoneEngine
                 }
             }
         }
-        
+
         /// <summary>
         /// Returns the given delegate to add an item to a managed list
         /// </summary>
@@ -129,14 +129,14 @@ namespace DeadZoneEngine
                 ((Action)ClearListMethod)(); //Clear the managed list of items
                 //Update the managed list with new items
                 GetInvokeFromType<AbstractWorldEntity>(T)(UpdateListMethod, _AbstractWorldEntities);
-                GetInvokeFromType<IPhysicsUpdatable> (T)(UpdateListMethod, _PhysicsUpdatableObjects);
+                GetInvokeFromType<IPhysicsUpdatable>(T)(UpdateListMethod, _PhysicsUpdatableObjects);
                 GetInvokeFromType<IUpdatable>(T)(UpdateListMethod, _UpdatableObjects);
                 GetInvokeFromType<IIteratableUpdatable>(T)(UpdateListMethod, _IteratableUpdatableObjects);
                 GetInvokeFromType<IRenderer>(T)(UpdateListMethod, _RenderableObjects);
                 GetInvokeFromType<IServerSendable>(T)(UpdateListMethod, _ServerSendableObjects);
             }
         }
-        
+
         /// <summary>
         /// Defines a list that is automatically updated to contain all entities of type T assigned to DZEngine
         /// This is useful for simply getting a list of specific IRender<>
@@ -310,6 +310,136 @@ namespace DeadZoneEngine
             return Data.ToArray();
         }
 
+        public static void NonPhysicsUpdate()
+        {
+            UpdateManagedLists(); //Update DZEngine.ManagedLists
+
+            //Push entites into DZEngine
+            EntitiesToPush.RemoveAll(I =>
+            {
+                InstantiateAndAddEntity(I);
+                return true;
+            });
+
+            //Remove deleted AbstractWorldEntities
+            _AbstractWorldEntities.RemoveAll(I =>
+            {
+                return DeleteHandle(I);
+            });
+
+            //Remove deleted server entites
+            _ServerSendableObjects.RemoveAll(I =>
+            {
+                I.RecentlyUpdated = false;
+                I.ServerUpdate();
+                return DeleteHandle(I);
+            });
+
+            //Isolate the general physics updates from creature body physics -> this is specific for maintaining physic objects inside of creature bodies
+            //(the creature body is updated relative to itself without the need to worry about countering general physics (its isolated from general physics))
+            _PhysicsUpdatableObjects.RemoveAll(I =>
+            {
+                return DeleteHandle(I);
+            });
+
+            _UpdatableObjects.RemoveAll(I =>
+            {
+                return DeleteHandle(I);
+            });
+
+            //Check and resolve physics constraints from impulse engine
+            _IteratableUpdatableObjects.RemoveAll(I =>
+            {
+                return DeleteHandle(I);
+            });
+
+            //Render renderable entities
+            _RenderableObjects.RemoveAll(I =>
+            {
+                if (!I.FlaggedToDelete && I.Active)
+                {
+                    if (DZSettings.ActiveRenderers)
+                        I.Render();
+                }
+                return DeleteHandle(I);
+            });
+        }
+
+        public static void PhysicsUpdate()
+        {
+            InvDeltaTime = Game.ServerTickRate;
+
+            //Isolate the general physics updates from creature body physics -> this is specific for maintaining physic objects inside of creature bodies
+            //(the creature body is updated relative to itself without the need to worry about countering general physics (its isolated from general physics))
+            for (int i = 0; i < _PhysicsUpdatableObjects.Count; i++)
+            {
+                if (_PhysicsUpdatableObjects[i].Active && _PhysicsUpdatableObjects[i].PhysicallyActive)
+                    _PhysicsUpdatableObjects[i].IsolateVelocity();
+            }
+
+            _UpdatableObjects.RemoveAll(I =>
+            {
+                if (!I.FlaggedToDelete && I.Active)
+                {
+                    I.BodyPhysicsUpdate(); //This is specific to entites mainly to update self-righting bodies or other body animation specific physics
+                                           //its seperated and run in a seperate physics operation to prevent self-righting body physics from being counteracted from normal physics (such as gravity).
+                                           //In other words this simply isolates the body physics from the standard physics
+                }
+                return DeleteHandle(I);
+            });
+
+            //Check and resolve physics constraints from impulse engine
+            _IteratableUpdatableObjects.RemoveAll(I =>
+            {
+                if (!I.FlaggedToDelete && I.Active && I.PhysicallyActive)
+                {
+                    I.PreUpdate();
+                }
+                return DeleteHandle(I);
+            });
+            for (int j = 0; j < DZSettings.NumPhysicsIterations; j++)
+            {
+                for (int i = 0; i < _IteratableUpdatableObjects.Count; i++)
+                {
+                    if (_IteratableUpdatableObjects[i].Active && _IteratableUpdatableObjects[i].PhysicallyActive)
+                        _IteratableUpdatableObjects[i].IteratedUpdate();
+                }
+            }
+
+            Physics2D.Simulate(Time.fixedDeltaTime / 2);
+
+            //Restore the velocities back to normal, we are no longer considering the entity in an isolated system
+            for (int i = 0; i < _PhysicsUpdatableObjects.Count; i++)
+            {
+                if (_PhysicsUpdatableObjects[i].Active && _PhysicsUpdatableObjects[i].PhysicallyActive)
+                    _PhysicsUpdatableObjects[i].RestoreVelocity();
+            }
+
+            //Update updatable entities
+            for (int i = 0; i < _UpdatableObjects.Count; i++)
+            {
+                if (_UpdatableObjects[i].Active)
+                    _UpdatableObjects[i].Update();
+            }
+
+            //Check and resolve physics constraints from impulse engine
+            for (int i = 0; i < _IteratableUpdatableObjects.Count; i++)
+            {
+                if (_IteratableUpdatableObjects[i].Active && _IteratableUpdatableObjects[i].PhysicallyActive)
+                    _IteratableUpdatableObjects[i].PreUpdate();
+            }
+            for (int j = 0; j < DZSettings.NumPhysicsIterations; j++)
+            {
+                for (int i = 0; i < _IteratableUpdatableObjects.Count; i++)
+                {
+                    if (_IteratableUpdatableObjects[i].Active && _IteratableUpdatableObjects[i].PhysicallyActive)
+                        _IteratableUpdatableObjects[i].IteratedUpdate();
+                }
+            }
+
+            Physics2D.Simulate(Time.fixedDeltaTime / 2);
+        }
+
         /// <summary>
         /// Called once per frame
         /// </summary>
@@ -327,14 +457,16 @@ namespace DeadZoneEngine
             });
 
             //Remove deleted AbstractWorldEntities
-            _AbstractWorldEntities.RemoveAll(I => 
+            _AbstractWorldEntities.RemoveAll(I =>
             {
                 return DeleteHandle(I);
             });
 
-            //Remove deleted server entites and reset their recently updated check
+            //Remove deleted server entites
             _ServerSendableObjects.RemoveAll(I =>
             {
+                I.RecentlyUpdated = false;
+                I.ServerUpdate();
                 return DeleteHandle(I);
             });
 
@@ -342,7 +474,7 @@ namespace DeadZoneEngine
             //(the creature body is updated relative to itself without the need to worry about countering general physics (its isolated from general physics))
             _PhysicsUpdatableObjects.RemoveAll(I =>
             {
-                if (!I.FlaggedToDelete && I.Active)
+                if (!I.FlaggedToDelete && I.Active && I.PhysicallyActive)
                 {
                     I.IsolateVelocity();
                 }
@@ -363,7 +495,7 @@ namespace DeadZoneEngine
             //Check and resolve physics constraints from impulse engine
             _IteratableUpdatableObjects.RemoveAll(I =>
             {
-                if (!I.FlaggedToDelete && I.Active)
+                if (!I.FlaggedToDelete && I.Active && I.PhysicallyActive)
                 {
                     I.PreUpdate();
                 }
@@ -373,17 +505,17 @@ namespace DeadZoneEngine
             {
                 for (int i = 0; i < _IteratableUpdatableObjects.Count; i++)
                 {
-                    if (_IteratableUpdatableObjects[i].Active)
+                    if (_IteratableUpdatableObjects[i].Active && _IteratableUpdatableObjects[i].PhysicallyActive)
                         _IteratableUpdatableObjects[i].IteratedUpdate();
                 }
-
-                Physics2D.Simulate(Time.fixedDeltaTime / 2f / DZSettings.NumPhysicsIterations);
             }
+
+            Physics2D.Simulate(Time.fixedDeltaTime / 2f);
 
             //Restore the velocities back to normal, we are no longer considering the entity in an isolated system
             for (int i = 0; i < _PhysicsUpdatableObjects.Count; i++)
             {
-                if (_PhysicsUpdatableObjects[i].Active)
+                if (_PhysicsUpdatableObjects[i].Active && _PhysicsUpdatableObjects[i].PhysicallyActive)
                     _PhysicsUpdatableObjects[i].RestoreVelocity();
             }
 
@@ -391,25 +523,25 @@ namespace DeadZoneEngine
             for (int i = 0; i < _UpdatableObjects.Count; i++)
             {
                 if (_UpdatableObjects[i].Active)
-                    _UpdatableObjects[i].Update(); 
+                    _UpdatableObjects[i].Update();
             }
 
             //Check and resolve physics constraints from impulse engine
             for (int i = 0; i < _IteratableUpdatableObjects.Count; i++)
             {
-                if (_IteratableUpdatableObjects[i].Active)
+                if (_IteratableUpdatableObjects[i].Active && _IteratableUpdatableObjects[i].PhysicallyActive)
                     _IteratableUpdatableObjects[i].PreUpdate();
             }
             for (int j = 0; j < DZSettings.NumPhysicsIterations; j++)
             {
                 for (int i = 0; i < _IteratableUpdatableObjects.Count; i++)
                 {
-                    if (_IteratableUpdatableObjects[i].Active)
+                    if (_IteratableUpdatableObjects[i].Active && _IteratableUpdatableObjects[i].PhysicallyActive)
                         _IteratableUpdatableObjects[i].IteratedUpdate();
                 }
-
-                Physics2D.Simulate(Time.fixedDeltaTime / 2f / DZSettings.NumPhysicsIterations);
             }
+
+            Physics2D.Simulate(Time.fixedDeltaTime / 2f);
 
             //Render renderable entities
             _RenderableObjects.RemoveAll(I =>

@@ -11,8 +11,6 @@ namespace DZNetwork
 {
     public static class ServerHandle
     {
-        public static int Ping = -1;
-
         public static Action<DZUDPSocket.RecievePacketWrapper> PacketHandle = null;
         public static Action<DZUDPSocket.SentPacketWrapper> LostPacketHandle = null;
 
@@ -22,11 +20,10 @@ namespace DZNetwork
         private static readonly List<DZUDPSocket.SentPacketWrapper> LostPacketsToProcess = new List<DZUDPSocket.SentPacketWrapper>();
         private static readonly Queue<DZUDPSocket.SentPacketWrapper> LostPacketsProcessing = new Queue<DZUDPSocket.SentPacketWrapper>();
 
-        public static void ProcessPacket(DZUDPSocket.RecievePacketWrapper Packet, long Ping)
+        public static void ProcessPacket(DZUDPSocket.RecievePacketWrapper Packet)
         {
             lock (PacketsToProcess)
             {
-                ServerHandle.Ping = (int)Ping;
                 PacketsToProcess.Add(Packet);
             }
         }

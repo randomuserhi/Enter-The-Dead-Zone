@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+using DZNetwork;
 using DeadZoneEngine;
 using DeadZoneEngine.Entities;
 using DeadZoneEngine.Controllers;
@@ -11,6 +12,7 @@ public class DZScript : MonoBehaviour
 {
     public void Start()
     {
+        ServerHandler.Start();
         DZEngine.Initialize();
         Main.Start();
 
@@ -20,7 +22,9 @@ public class DZScript : MonoBehaviour
 
     public void FixedUpdate()
     {
-        DZEngine.FixedUpdate();
+        ServerHandle.FixedUpdate();
+        InputMapping.Tick();
+        Game.FixedUpdate();
         Main.FixedUpdate();
     }
 

@@ -10,6 +10,7 @@ using UnityEngine;
 using DeadZoneEngine.Controllers;
 using ClientHandle;
 using static DeadZoneEngine.Controllers.InputMapping;
+using DZNetwork;
 
 public class PlayerController : Controller
 {
@@ -32,8 +33,6 @@ public class PlayerController : Controller
                     .With("Left", Device.path + "/stick/left")
                     .With("Right", Device.path + "/stick/right");
         Movement.performed += MoveAction;
-
-        Actions.Push(new PlayerAction());
     }
 
     protected override void SetType()
@@ -50,71 +49,30 @@ public class PlayerController : Controller
         DC.Enable();
     }
 
-    public override void Tick()
-    {
-        if (Actions.Count > 0)
-            Actions.Peek().Ticks++;
-    }
-
+    private Vector2 MovementDirection;
     public void MoveAction(InputAction.CallbackContext Context)
     {
-        if (PlayerControl == null) return;
-
-        PlayerControl.MovementDirection = Context.ReadValue<Vector2>();
-        if (Actions.Count == 0)
-            Actions.Push(new PlayerAction(PlayerAction.ActionType.Movement, PlayerControl.MovementDirection));
-        else if (Actions.Peek().Type == PlayerAction.ActionType.Movement)
-        {
-            Vector2 Prev = (Vector2)Actions.Peek().Value;
-            if (Prev != PlayerControl.MovementDirection)
-            {
-                Actions.Push(new PlayerAction(PlayerAction.ActionType.Movement, PlayerControl.MovementDirection));
-            }
-        }
-            
-        Debug.Log(PlayerControl.MovementDirection);
+        MovementDirection = Context.ReadValue<Vector2>();
     }
 
-    private class PlayerAction
+    public override void Tick()
     {
-        public enum ActionType
-        {
-            None,
-            Movement
-        }
-        public ActionType Type = ActionType.None;
-        public object Value;
-        public ushort Ticks = 0;
-
-        public PlayerAction(ActionType Type = ActionType.None, object Value = null)
-        {
-            this.Type = Type;
-            this.Value = Value;
-        }
-
-        public byte[] GetBytes()
-        {
-            List<byte> Data = new List<byte>();
-            Data.AddRange(BitConverter.GetBytes((int)Type));
-            switch (Type)
-            {
-                case ActionType.None: break;
-                case ActionType.Movement: { Vector2 V = (Vector2)Value; Data.AddRange(BitConverter.GetBytes(V.x)); Data.AddRange(BitConverter.GetBytes(V.y)); } break;
-                default: break;
-            }
-            return Data.ToArray();
-        }
+        if (PlayerControl != null)
+            PlayerControl.MovementDirection = MovementDirection;
     }
-    private Stack<PlayerAction> Actions = new Stack<PlayerAction>();
+
+    public override void ParseBytes(Packet Data)
+    {
+        PlayerControl.InputID = Data.ReadULong();
+        PlayerControl.MovementDirection = new Vector2(Data.ReadFloat(), Data.ReadFloat());
+    }
     public override byte[] GetBytes()
     {
         List<byte> Data = new List<byte>();
         Data.Add(Owner.ID);
-        Data.AddRange(BitConverter.GetBytes(Actions.Count));
-        while (Actions.Count > 0)
-        {
-            Data.AddRange(Actions.Pop().GetBytes());
-        }
+        Data.AddRange(BitConverter.GetBytes(PlayerControl.InputID));
+        Data.AddRange(BitConverter.GetBytes(PlayerControl.MovementDirection.x));
+        Data.AddRange(BitConverter.GetBytes(PlayerControl.MovementDirection.y));
         return Data.ToArray();
     }
 }

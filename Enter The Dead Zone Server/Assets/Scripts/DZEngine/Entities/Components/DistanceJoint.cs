@@ -8,9 +8,6 @@ using UnityEngine;
 
 namespace DeadZoneEngine.Entities.Components
 {
-    /// <summary>
-    /// Wrapper containing minimal information about a joint connecting 2 objects
-    /// </summary>
     public struct DistanceJointData
     {
         public PhysicalObject A;
@@ -58,15 +55,13 @@ namespace DeadZoneEngine.Entities.Components
 
         }
 
-        /// <summary>
-        /// Sets the joint with the given parameters
-        /// </summary>
-        public void Set(DistanceJointData Data)
+        public void Set(object Data)
         {
-            Distance = Data.Distance;
-            Anchor = Data.Anchor;
-            A = Data.A;
-            B = Data.B;
+            DistanceJointData DistanceJointWrapper = (DistanceJointData)Data;
+            Distance = DistanceJointWrapper.Distance;
+            Anchor = DistanceJointWrapper.Anchor;
+            A = DistanceJointWrapper.A;
+            B = DistanceJointWrapper.B;
 
             //Compute Anchor information (rotation matrices)
             Mat22 RotA = new Mat22(0);
@@ -80,10 +75,6 @@ namespace DeadZoneEngine.Entities.Components
             Relaxation = 1.0f;
         }
 
-        /// <summary>
-        /// Set the distance of the joint
-        /// </summary>
-        /// <param name="Distance"></param>
         public void SetDistance(float Distance)
         {
             this.Distance = Distance;
@@ -96,9 +87,6 @@ namespace DeadZoneEngine.Entities.Components
             LocalAnchorB = RotBT * (Anchor - new Vector2(Distance, 0));
         }
 
-        /// <summary>
-        /// Calculate physics pre-update loop
-        /// </summary>
         public override void PreUpdate()
         {
             //Pre-compute anchors, mass matrix, and bias => http://twvideo01.ubm-us.net/o1/vault/gdc09/slides/04-GDC09_Catto_Erin_Solver.pdf
@@ -149,9 +137,6 @@ namespace DeadZoneEngine.Entities.Components
             B.AngularVelocity += BInvInertia * Math2D.Cross(RB, AccumulatedImpulse);
         }
 
-        /// <summary>
-        /// Calculate physics using impulse engine algorithm
-        /// </summary>
         public override void IteratedUpdate()
         {
             Vector2 RelativeDeltaVelocity = B.Velocity + Math2D.Cross(B.AngularVelocity, RB) - A.Velocity - Math2D.Cross(A.AngularVelocity, RA);
@@ -177,9 +162,60 @@ namespace DeadZoneEngine.Entities.Components
             return Data.ToArray();
         }
 
-        public override void ParseBytes(DZNetwork.Packet Data, ulong ServerTick)
+        public override void ParseBytes(DZNetwork.Packet Data)
         {
+            Data D = (Data)ParseBytesToData(Data);
+            ParseSnapshot(D);
+        }
 
+        public struct Data
+        {
+            public float Distance;
+            public Vector2 Anchor;
+            public float ARatio;
+            public float BRatio;
+        }
+
+        public override object GetSnapshot()
+        {
+            return new Data()
+            {
+                Distance = Distance,
+                Anchor = Anchor,
+                ARatio = ARatio,
+                BRatio = BRatio
+            };
+        }
+
+        public static object ParseBytesToData(DZNetwork.Packet Data)
+        {
+            return new Data()
+            {
+                Distance = Data.ReadFloat(),
+                Anchor = new Vector2(Data.ReadFloat(), Data.ReadFloat()),
+                ARatio = Data.ReadFloat(),
+                BRatio = Data.ReadFloat()
+            };
+        }
+
+        public override void ParseSnapshot(object ObjectData)
+        {
+            Data Data = (Data)ObjectData;
+            Distance = Data.Distance;
+            Anchor = Data.Anchor;
+            ARatio = Data.ARatio;
+            BRatio = Data.BRatio;
+            SetDistance(Distance);
+        }
+
+        public override void Interpolate(object FromData, object ToData, float Time)
+        {
+            Data From = (Data)FromData;
+            Data To = (Data)ToData;
+            Distance = From.Distance + (To.Distance - From.Distance) * Time;
+            ARatio = From.ARatio + (To.ARatio - From.ARatio) * Time;
+            BRatio = From.BRatio + (To.BRatio - From.BRatio) * Time;
+            SetDistance(Distance);
         }
     }
 }

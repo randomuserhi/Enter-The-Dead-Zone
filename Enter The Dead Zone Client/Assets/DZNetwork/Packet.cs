@@ -23,7 +23,7 @@ namespace DZNetwork
     public static class PacketHandler
     {
         public static int ProtocolID = 0;
-        private static int PacketHeaderSize = sizeof(int) * 2 + sizeof(long) + sizeof(ushort);
+        private static int PacketHeaderSize = sizeof(int) * 2 + sizeof(ushort);
         public static int HeaderSize = PacketHeaderSize + sizeof(ushort) * 2 + sizeof(int) * 3;
 
         public static ushort PacketID = 0;
@@ -62,10 +62,16 @@ namespace DZNetwork
             return Sum;
         }
 
+        public static int CalculateCheckSum(List<byte> Data, int Offset = sizeof(int) * 2)
+        {
+            int Sum = 0;
+            for (int i = Offset; i < Data.Count; i++)
+                Sum += Data[i];
+            return Sum;
+        }
+
         public static PacketGroup GeneratePackets(Packet P, IPEndPoint EndPoint)
         {
-            long Epoch = (DateTime.Now - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).Ticks / 10000;
-
             byte[] Data = P.GetBytes();
             float NumPacketsNoHeader = UnityEngine.Mathf.Ceil((float)Data.Length / Loader.Socket.BufferSize);
             int NumPackets = UnityEngine.Mathf.CeilToInt((Data.Length + NumPacketsNoHeader * HeaderSize) / Loader.Socket.BufferSize);
@@ -74,7 +80,6 @@ namespace DZNetwork
             byte[] HeaderBytes = new byte[PacketHeaderSize];
             int WriteHead = 0;
             Buffer.BlockCopy(BitConverter.GetBytes(ProtocolID), 0, HeaderBytes, WriteHead, sizeof(int)); WriteHead += sizeof(int) * 2;
-            Buffer.BlockCopy(BitConverter.GetBytes(Epoch), 0, HeaderBytes, WriteHead, sizeof(long)); WriteHead += sizeof(long);
             Buffer.BlockCopy(BitConverter.GetBytes(PacketID), 0, HeaderBytes, WriteHead, sizeof(ushort));
 
             PacketGroup PacketGroup = new PacketGroup()
@@ -125,7 +130,7 @@ namespace DZNetwork
         public byte[] ReadableBuffer;
 
         private List<byte> Buffer;
-        private int ReadPosition = 0;
+        public int ReadPosition { get; private set; } = 0;
 
         /// <summary>
         /// Generates a blank packet
@@ -157,6 +162,11 @@ namespace DZNetwork
         public void InsertServerCode(ServerCode Code)
         {
             Buffer.InsertRange(0, BitConverter.GetBytes((int)Code));
+        }
+
+        public void InsertCheckSum(int Offset)
+        {
+            Buffer.InsertRange(0, BitConverter.GetBytes(PacketHandler.CalculateCheckSum(Buffer, Offset)));
         }
 
         public void SeekHeader()

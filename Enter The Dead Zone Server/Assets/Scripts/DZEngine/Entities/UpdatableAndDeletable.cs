@@ -20,9 +20,14 @@ namespace DeadZoneEngine.Entities
     {
         EntityID ID { get; set; }
         int ServerObjectType { get; set; }
-        int RecentlyUpdated { get; set; }
+        bool RecentlyUpdated { get; set; }
+        bool ProtectedDeletion { get; set; }
+        void ServerUpdate();
         byte[] GetBytes();
-        void ParseBytes(DZNetwork.Packet Data, ulong ServerTick);
+        object GetSnapshot();
+        void ParseBytes(DZNetwork.Packet Data);
+        void ParseSnapshot(object Data);
+        void Interpolate(object FromData, object ToData, float Time);
     }
 
     public interface IRenderer : _IInstantiatableDeletable
@@ -47,12 +52,14 @@ namespace DeadZoneEngine.Entities
 
     public interface IPhysicsUpdatable : _IInstantiatableDeletable
     {
+        bool PhysicallyActive { get; set; }
         void IsolateVelocity();
         void RestoreVelocity();
     }
 
     public interface IIteratableUpdatable : _IInstantiatableDeletable
     {
+        bool PhysicallyActive { get; set; }
         void PreUpdate();
         void IteratedUpdate();
     }

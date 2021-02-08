@@ -162,13 +162,59 @@ namespace DeadZoneEngine.Entities.Components
             return Data.ToArray();
         }
 
-        public override void ParseBytes(DZNetwork.Packet Data, ulong ServerTick)
+        public override void ParseBytes(DZNetwork.Packet Data)
         {
-            Distance = Data.ReadFloat();
-            Anchor.x = Data.ReadFloat();
-            Anchor.y = Data.ReadFloat();
-            ARatio = Data.ReadFloat();
-            BRatio = Data.ReadFloat();
+            Data D = (Data)ParseBytesToData(Data);
+            ParseSnapshot(D);
+        }
+
+        public struct Data
+        {
+            public float Distance;
+            public Vector2 Anchor;
+            public float ARatio;
+            public float BRatio;
+        }
+
+        public override object GetSnapshot()
+        {
+            return new Data()
+            {
+                Distance = Distance,
+                Anchor = Anchor,
+                ARatio = ARatio,
+                BRatio = BRatio
+            };
+        }
+
+        public static object ParseBytesToData(DZNetwork.Packet Data)
+        {
+            return new Data()
+            {
+                Distance = Data.ReadFloat(),
+                Anchor = new Vector2(Data.ReadFloat(), Data.ReadFloat()),
+                ARatio = Data.ReadFloat(),
+                BRatio = Data.ReadFloat()
+            };
+        }
+
+        public override void ParseSnapshot(object ObjectData)
+        {
+            Data Data = (Data)ObjectData;
+            Distance = Data.Distance;
+            Anchor = Data.Anchor;
+            ARatio = Data.ARatio;
+            BRatio = Data.BRatio;
+            SetDistance(Distance);
+        }
+
+        public override void Interpolate(object FromData, object ToData, float Time)
+        {
+            Data From = (Data)FromData;
+            Data To = (Data)ToData;
+            Distance = From.Distance + (To.Distance - From.Distance) * Time;
+            ARatio = From.ARatio + (To.ARatio - From.ARatio) * Time;
+            BRatio = From.BRatio + (To.BRatio - From.BRatio) * Time;
             SetDistance(Distance);
         }
     }

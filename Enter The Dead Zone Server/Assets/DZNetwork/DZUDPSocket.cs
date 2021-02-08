@@ -10,7 +10,9 @@ namespace DZNetwork
 {
     public class DZUDPSocket
     {
-        public const int PacketLifetime = 30;
+        public const int PacketLifetime = 60;
+
+        public float RoundTripTime = 0;
 
         public readonly int BufferSize;
         protected readonly int BufferStride;
@@ -49,6 +51,7 @@ namespace DZNetwork
 
         public class RecievePacketWrapper
         {
+            public int PacketID;
             public IPEndPoint Client;
             public Packet Data;
         }
@@ -58,6 +61,7 @@ namespace DZNetwork
             public int Lifetime = 0;
             public ushort PacketSequence = 0;
             public ServerCode Code = ServerCode.Null;
+            public long Epoch = (DateTime.Now - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).Ticks / 10000;
         }
         private Dictionary<PacketIdentifier, SentPacketWrapper> SentPackets = new Dictionary<PacketIdentifier, SentPacketWrapper>();
         private void UpdateAcknowledgedPackets()
@@ -161,9 +165,6 @@ namespace DZNetwork
             int CalculatedCheckSum = PacketHandler.CalculateCheckSum(Data.ReadableBuffer);
             if (ReceivedCheckSum != CalculatedCheckSum) return;
 
-            long CurrentEpoch = (DateTime.Now - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).Ticks / 10000;
-            long ReceivedEpoch = Data.ReadLong();
-
             ushort PacketID = Data.ReadUShort();
             PacketIdentifier PacketIdentifier = new PacketIdentifier()
             {
@@ -207,6 +208,8 @@ namespace DZNetwork
             //Update packet queue to check what packets were lost
             lock (SentPackets)
             {
+                long CurrentEpoch = (DateTime.Now - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).Ticks / 10000;
+
                 PacketIdentifier Identifier = new PacketIdentifier()
                 {
                     ID = PacketAcknowledgement,
@@ -214,12 +217,18 @@ namespace DZNetwork
                 };
 
                 if (SentPackets.ContainsKey(Identifier))
+                {
+                    RoundTripTime += (CurrentEpoch - SentPackets[Identifier].Epoch - RoundTripTime) * 0.1f;
                     SentPackets.Remove(Identifier);
+                }
                 for (int i = 0; i < 32; i++)
                 {
                     Identifier.ID--;
                     if (SentPackets.ContainsKey(Identifier) && ((PacketAcknowledgementBitField & (1 << i)) != 0))
+                    {
+                        RoundTripTime += (CurrentEpoch - SentPackets[Identifier].Epoch - RoundTripTime) * 0.1f;
                         SentPackets.Remove(Identifier);
+                    }
                 }
             }
 
@@ -254,9 +263,10 @@ namespace DZNetwork
                     {
                         OnReceiveConstructedPacket(new RecievePacketWrapper()
                         {
+                            PacketID = PacketIdentifier.ID,
                             Client = IPEP,
                             Data = new Packet(PacketsToReconstruct[PacketIdentifier].Data, 0, PacketByteCount)
-                        }, CurrentEpoch - ReceivedEpoch);
+                        });
 
                         PacketsToReconstruct.Remove(PacketIdentifier);
                         ReconstructedPackets.Add(PacketIdentifier);
@@ -269,7 +279,7 @@ namespace DZNetwork
 
         protected virtual void OnReceive(IPEndPoint ReceivedEndPoint) { }
 
-        protected virtual void OnReceiveConstructedPacket(RecievePacketWrapper ReconstructedPacket, long Ping) { }
+        protected virtual void OnReceiveConstructedPacket(RecievePacketWrapper ReconstructedPacket) { }
 
         public void Send(ushort PacketSequence, ServerCode ServerCode, byte[] Bytes)
         {

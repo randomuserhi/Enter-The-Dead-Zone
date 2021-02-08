@@ -28,9 +28,9 @@ public class Game
         Loader.Socket.FixedUpdate();
 
         UpdateClients();
+        SendSnapshot();
 
         ServerTicks++;
-        SendSnapshot();
     }
 
     private static void UpdateClients()
@@ -61,14 +61,14 @@ public class Game
         {
             SnapshotPacket.Write(DZEngine.GetBytes(DZEngine.ServerSendableObjects[i]));
         }
-
+        SnapshotPacket.InsertCheckSum(sizeof(int) + sizeof(ulong));
         Loader.Socket.Send(SnapshotPacket, ServerCode.ServerSnapshot);
     }
 
-    public static Client SyncPlayers(IPEndPoint EndPoint, Packet Data)
+    public static Client SyncPlayers(DZUDPSocket.RecievePacketWrapper Packet)
     {
-        Client C = Client.GetClient(EndPoint);
-        byte NumPlayers = Data.ReadByte();
+        Client C = Client.GetClient(Packet.Client);
+        byte NumPlayers = Packet.Data.ReadByte();
         if (!C.Setup)
         {
             for (int i = 0; i < NumPlayers; i++)
@@ -92,39 +92,15 @@ public class Game
             else
                 SyncPacket.Write(C.Players[i].GetBytes());
         }
-        Loader.Socket.SendTo(SyncPacket, ServerCode.SyncPlayers, EndPoint);
+        Loader.Socket.SendTo(SyncPacket, ServerCode.SyncPlayers, Packet.Client);
         return C;
     }
     
-    public static void UnWrapSnapshot(IPEndPoint Client, Packet Packet)
+    public static void UnWrapSnapshot(DZUDPSocket.RecievePacketWrapper Packet)
     {
-        Client C = SyncPlayers(Client, Packet);
-        C.TickRate = Packet.ReadInt();
-        C.CurrentServerTick = Packet.ReadULong();
-        int NumControllers = Packet.ReadInt();
-        for (int i = 0; i < NumControllers; i++)
-        {
-            bool Enabled = Packet.ReadBool();
-            Debug.Log(Enabled);
-            if (!Enabled) continue;
-            int NumControls = Packet.ReadInt();
-            for (int j = 0; j < NumControls; j++)
-            {
-                ControllerType ControlType = (ControllerType)Packet.ReadInt();
-                ParseClientActions(ControlType, C, Packet.ReadByte(), Packet);
-            }
-        }
-    }
-
-    private static void ParseClientActions(ControllerType ControlType, Client Client, int PlayerID, Packet Packet)
-    {
-        switch (ControlType)
-        {
-            case ControllerType.PlayerController: Client.Players[PlayerID].Controller.ParseBytes(Packet); break;
-            default:
-                Debug.LogWarning("Unknown controller type...");
-                return;
-        }
+        Client C = SyncPlayers(Packet);
+        C.CurrentServerTick = Packet.Data.ReadULong();
+        InputMapping.ParseBytes(Packet.Data, C);
     }
 
     public static void AddConnection(IPEndPoint EndPoint)
