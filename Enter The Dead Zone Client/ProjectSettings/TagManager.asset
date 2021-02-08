@@ -41,6 +41,9 @@ TagManager:
   - name: Floor
     uniqueID: 4392729
     locked: 0
+  - name: TriggerPlates
+    uniqueID: 1571472145
+    locked: 0
   - name: Default
     uniqueID: 0
     locked: 0

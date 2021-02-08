@@ -150,7 +150,7 @@ namespace DeadZoneEngine.Entities
         }
 
         public bool Active { get; set; } = true;
-        bool PhysicallyActive { get; set; } = !DZSettings.Client;
+        public bool PhysicallyActive { get; set; } = !DZSettings.Client;
         public bool FlaggedToDelete { get; set; } = false;
         public bool Disposed { get; set; } = false;
 
@@ -176,5 +176,6 @@ namespace DeadZoneEngine.Entities
         public abstract void ParseBytes(DZNetwork.Packet Data);
         public abstract void ParseSnapshot(object ObjectData);
         public abstract void Interpolate(object FromData, object ToData, float Time);
+        public abstract void Extrapolate(object FromData, float Time);
     }
 }

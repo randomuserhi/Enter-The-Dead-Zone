@@ -10,8 +10,6 @@ namespace DeadZoneEngine.Entities
 {
     public abstract class PhysicalObject : AbstractWorldEntity, IPhysicsUpdatable
     {
-        public bool PhysicallyActive { get; set; } = !DZSettings.Client;
-
         public GameObject Self;
         public AbstractWorldEntity Parent;
         protected Rigidbody2D RB;
@@ -51,6 +49,7 @@ namespace DeadZoneEngine.Entities
             Self.transform.eulerAngles += new Vector3(0, 0, AngularVelocity) * DeltaTime;
         }
 
+        public virtual void FixedUpdate() { }
         public virtual void Update() { }
         public virtual void BodyPhysicsUpdate() { }
 

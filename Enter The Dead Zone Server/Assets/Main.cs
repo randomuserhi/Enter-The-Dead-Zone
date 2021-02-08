@@ -4,6 +4,8 @@ using UnityEngine;
 
 using DeadZoneEngine;
 using DeadZoneEngine.Entities;
+using ClientHandle;
+using System.Linq;
 
 public static class Main
 {
@@ -14,85 +16,96 @@ public static class Main
     }
     private static DZEngine.ManagedList<IRenderer<SpriteRenderer>> SpriteRenderers = new DZEngine.ManagedList<IRenderer<SpriteRenderer>>(); //List of SpriteRenderers
 
+    private static Tilemap MenuMap;
+    private static TriggerPlate StartPlate;
+    public static bool GameStarted = false;
+
     // Start is called before the first frame update
     public static void Start()
     {
-        /*Tile[] FloorMap = new Tile[]
+        LoadMenu();
+    }
+
+    private static void LoadMenu()
+    {
+        const string MenuFloorMap =
+            @"
+            0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/
+            0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/
+            0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/
+            0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/
+            0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/
+            0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/
+            0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/
+            0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/
+            0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/
+            0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/
+            0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/
+            0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/
+            0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/
+            0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/
+            0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/
+            0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/
+            0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/
+            0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/
+            0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/
+            0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1/0,0,0,1
+            ";
+
+        const string MenuWallMap =
+            @"
+            1,1,0,1/1,1,0,1/1,1,0,1/1,1,0,1/1,1,0,1/1,1,0,1/1,1,0,1/1,1,0,1/1,1,0,1/1,1,0,1/1,1,0,1/1,1,0,1/1,1,0,1/1,1,0,1/1,1,0,1/1,1,0,1/1,1,0,1/1,1,0,1/1,1,0,1/1,1,0,1/
+            1,1,0,1/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/1,1,0,1/
+            1,1,0,1/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/1,1,0,1/
+            1,1,0,1/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/1,1,0,1/
+            1,1,0,1/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/1,1,0,1/
+            1,1,0,1/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/1,1,0,1/
+            1,1,0,1/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/1,1,0,1/
+            1,1,0,1/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/1,1,0,1/
+            1,1,0,1/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/1,1,0,1/
+            1,1,0,1/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/1,1,0,1/
+            1,1,0,1/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/1,1,0,1/
+            1,1,0,1/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/1,1,0,1/
+            1,1,0,1/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/1,1,0,1/
+            1,1,0,1/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/1,1,0,1/
+            1,1,0,1/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/1,1,0,1/
+            1,1,0,1/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/1,1,0,1/
+            1,1,0,1/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/1,1,0,1/
+            1,1,0,1/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/1,1,0,1/
+            1,1,0,1/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/0,0,1,0/1,1,0,1/
+            1,1,0,1/1,1,0,1/1,1,0,1/1,1,0,1/1,1,0,1/1,1,0,1/1,1,0,1/1,1,0,1/1,1,0,1/1,1,0,1/1,1,0,1/1,1,0,1/1,1,0,1/1,1,0,1/1,1,0,1/1,1,0,1/1,1,0,1/1,1,0,1/1,1,0,1/1,1,0,1
+            ";
+
+        if (MenuMap == null)
+            MenuMap = (Tilemap)new Tilemap(32, 64, new Vector2Int(20, 20), Tilemap.TilesFromString(MenuFloorMap), Tilemap.TilesFromString(MenuWallMap)).Create();
+        else
         {
-            new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(1, 1), new Tile(0, 1),
-            new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(1, 1), new Tile(0, 1),
-            new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1),
-            new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1),
-            new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1),
-            new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1),
-            new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1),
-            new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1),
-            new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1),
-            new Tile(1, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1),
-            new Tile(1, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1),
-            new Tile(1, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1),
-            new Tile(1, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(1, 1),
-            new Tile(1, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(1, 1)
-        };
+            MenuMap.Resize(new Vector2Int(20, 20), Tilemap.TilesFromString(MenuFloorMap), Tilemap.TilesFromString(MenuWallMap));
+            MenuMap.ReleaseUnusedResources();
+        }
 
-        Tile[] WallMap = new Tile[]
+        StartPlate = new TriggerPlate(new Vector2(4, 2), new Vector2(0, -3));
+        StartPlate.OnTrigger = StartGame;
+    }
+
+    public static void StartGame()
+    {
+        GameStarted = true;
+        DZEngine.Destroy(StartPlate);
+
+        List<Client> Clients = ClientID.ConnectedClients.Values.ToList();
+        foreach (Client C in Clients)
         {
-            new Tile(1, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1),
-            new Tile(1, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1),
-            new Tile(1, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1),
-            new Tile(1, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1),
-            new Tile(1, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1),
-            new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1),
-            new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1),
-            new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(1, 1), new Tile(0, 1),
-            new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(1, 1), new Tile(0, 1),
-            new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1),
-            new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1),
-            new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1),
-            new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(1, 1),
-            new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(1, 1)
-        };
+            for (int i = 0; i < C.Players.Length; i++)
+            {
+                if (C.Players[i] == null || C.Players[i].Entity == null) continue;
 
-        Tilemap T = (Tilemap)new Tilemap(32, 32, new Vector2Int(14, 14), FloorMap, WallMap, 1).Create();*/
+                C.Players[i].Entity.Position = new Vector2(UnityEngine.Random.Range(-8f, 8f), UnityEngine.Random.Range(-8f, 8f));
+                C.Players[i].Entity.Out = false;
+            }
+        }
 
-        Tile[] WallMap = new Tile[]
-        {
-            new Tile(1, 1), new Tile(1, 1), new Tile(1, 1), new Tile(1, 1), new Tile(1, 1), new Tile(1, 1), new Tile(1, 1), new Tile(1, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(1, 1), new Tile(0, 1),
-            new Tile(1, 1), new Tile(0, 1, 1, 1), new Tile(1, 1), new Tile(0, 1, 1, 1), new Tile(1, 1), new Tile(1, 1), new Tile(1, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(1, 1), new Tile(0, 1),
-            new Tile(1, 1), new Tile(1, 1), new Tile(1, 1), new Tile(1, 1), new Tile(1, 1), new Tile(1, 1), new Tile(1, 1), new Tile(1, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1),
-            new Tile(1, 1), new Tile(0, 1, 1, 1), new Tile(1, 1), new Tile(0, 1, 1, 1), new Tile(1, 1), new Tile(1, 1), new Tile(1, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1),
-            new Tile(1, 1), new Tile(1, 1), new Tile(1, 1), new Tile(1, 1), new Tile(1, 1), new Tile(1, 1), new Tile(1, 1), new Tile(1, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1),
-            new Tile(1, 1), new Tile(0, 1, 1, 1), new Tile(1, 1), new Tile(0, 1, 1, 1), new Tile(1, 1), new Tile(1, 1), new Tile(1, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1),
-            new Tile(1, 1), new Tile(1, 1), new Tile(1, 1), new Tile(1, 1), new Tile(1, 1), new Tile(1, 1), new Tile(1, 1), new Tile(1, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1),
-            new Tile(1, 1), new Tile(0, 1, 1, 1), new Tile(1, 1), new Tile(0, 1, 1, 1), new Tile(1, 1), new Tile(1, 1), new Tile(1, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1),
-            new Tile(1, 1), new Tile(1, 1), new Tile(1, 1), new Tile(1, 1), new Tile(1, 1), new Tile(1, 1), new Tile(1, 1), new Tile(1, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1),
-            new Tile(1, 1), new Tile(0, 1, 1, 1), new Tile(1, 1), new Tile(0, 1, 1, 1), new Tile(1, 1), new Tile(1, 1), new Tile(1, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1),
-            new Tile(1, 1), new Tile(1, 1), new Tile(1, 1), new Tile(1, 1), new Tile(1, 1), new Tile(1, 1), new Tile(1, 1), new Tile(1, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1),
-            new Tile(1, 1), new Tile(0, 1, 1, 1), new Tile(1, 1), new Tile(0, 1, 1, 1), new Tile(1, 1), new Tile(1, 1), new Tile(1, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1),
-            new Tile(1, 1), new Tile(1, 1), new Tile(1, 1), new Tile(1, 1), new Tile(1, 1), new Tile(1, 1), new Tile(1, 1), new Tile(1, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(1, 1),
-            new Tile(1, 1), new Tile(0, 1, 1, 1), new Tile(1, 1), new Tile(0, 1, 1, 1), new Tile(1, 1), new Tile(1, 1), new Tile(1, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(1, 1)
-        };
-
-        Tile[] FloorMap = new Tile[]
-        {
-            new Tile(0, 1), new Tile(0, 0), new Tile(0, 1), new Tile(0, 0), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1),
-            new Tile(0, 1), new Tile(0, 1), new Tile(0, 0), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1),
-            new Tile(0, 1), new Tile(0, 0), new Tile(0, 1), new Tile(0, 0), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1),
-            new Tile(0, 1), new Tile(0, 1), new Tile(0, 0), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1),
-            new Tile(0, 1), new Tile(0, 0), new Tile(0, 1), new Tile(0, 0), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1),
-            new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1),
-            new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1),
-            new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1),
-            new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1),
-            new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1),
-            new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1),
-            new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1),
-            new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1),
-            new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1), new Tile(0, 1)
-        };
-
-        Tilemap T = (Tilemap)new Tilemap(32, 48, new Vector2Int(14, 14), FloorMap, WallMap, 1).Create();
-        new PlayerCreature();
+        new BulletEntity();
     }
 
     // Update is called once per frame
@@ -101,14 +114,7 @@ public static class Main
         foreach (IRenderer<SpriteRenderer> Renderer in SpriteRenderers)
         {
             if (Renderer.SortingLayer == (int)SortingLayers.Default)
-                Renderer.RenderObject.sortingOrder = (int)-Renderer.RenderObject.transform.position.y;
+                Renderer.RenderObject.sortingOrder = Mathf.RoundToInt(-Renderer.RenderObject.transform.parent.position.y * 10);
         }
-
-        /*for (int i = 0; i < DZEngine.AbstractWorldEntities.Count; i++)
-        {
-            Tilemap T = DZEngine.AbstractWorldEntities[i] as Tilemap;
-            if (T != null)
-                Debug.Log((ulong)T.ID + ":" + T.FlaggedToDelete);
-        }*/
     }
 }

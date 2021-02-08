@@ -28,6 +28,11 @@ public class DZScript : MonoBehaviour
         Main.FixedUpdate();
     }
 
+    public void Update()
+    {
+        Game.Update();
+    }
+
     private void OnApplicationQuit()
     {
         DZEngine.ReleaseResources();

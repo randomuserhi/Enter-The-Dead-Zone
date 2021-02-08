@@ -377,26 +377,22 @@ namespace DeadZoneEngine
                     _PhysicsUpdatableObjects[i].IsolateVelocity();
             }
 
-            _UpdatableObjects.RemoveAll(I =>
+            for (int i = 0; i < _UpdatableObjects.Count; i++)
             {
-                if (!I.FlaggedToDelete && I.Active)
-                {
-                    I.BodyPhysicsUpdate(); //This is specific to entites mainly to update self-righting bodies or other body animation specific physics
-                                           //its seperated and run in a seperate physics operation to prevent self-righting body physics from being counteracted from normal physics (such as gravity).
-                                           //In other words this simply isolates the body physics from the standard physics
-                }
-                return DeleteHandle(I);
-            });
+                if (_UpdatableObjects[i].Active)
+                    _UpdatableObjects[i].BodyPhysicsUpdate(); //This is specific to entites mainly to update self-righting bodies or other body animation specific physics
+                                                              //its seperated and run in a seperate physics operation to prevent self-righting body physics from being counteracted from normal physics (such as gravity).
+                                                              //In other words this simply isolates the body physics from the standard physics
+            }
 
             //Check and resolve physics constraints from impulse engine
-            _IteratableUpdatableObjects.RemoveAll(I =>
+            for (int i = 0; i < _IteratableUpdatableObjects.Count; i++)
             {
-                if (!I.FlaggedToDelete && I.Active && I.PhysicallyActive)
+                if (!_IteratableUpdatableObjects[i].FlaggedToDelete && _IteratableUpdatableObjects[i].Active && _IteratableUpdatableObjects[i].PhysicallyActive)
                 {
-                    I.PreUpdate();
+                    _IteratableUpdatableObjects[i].PreUpdate();
                 }
-                return DeleteHandle(I);
-            });
+            }
             for (int j = 0; j < DZSettings.NumPhysicsIterations; j++)
             {
                 for (int i = 0; i < _IteratableUpdatableObjects.Count; i++)
@@ -412,7 +408,10 @@ namespace DeadZoneEngine
             for (int i = 0; i < _PhysicsUpdatableObjects.Count; i++)
             {
                 if (_PhysicsUpdatableObjects[i].Active && _PhysicsUpdatableObjects[i].PhysicallyActive)
+                {
                     _PhysicsUpdatableObjects[i].RestoreVelocity();
+                    _PhysicsUpdatableObjects[i].FixedUpdate();
+                }
             }
 
             //Update updatable entities
@@ -516,7 +515,10 @@ namespace DeadZoneEngine
             for (int i = 0; i < _PhysicsUpdatableObjects.Count; i++)
             {
                 if (_PhysicsUpdatableObjects[i].Active && _PhysicsUpdatableObjects[i].PhysicallyActive)
+                {
                     _PhysicsUpdatableObjects[i].RestoreVelocity();
+                    _PhysicsUpdatableObjects[i].FixedUpdate();
+                }
             }
 
             //Update updatable entities

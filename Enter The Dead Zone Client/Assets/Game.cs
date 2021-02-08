@@ -13,73 +13,11 @@ public class Game
     public static Client Client;
 
     public static DZEngine.ManagedList<IServerSendable> ServerItems = new DZEngine.ManagedList<IServerSendable>();
-    public static int ServerTickRate = 30;
-    public static int ClientSendRate = 30;
+    public static int ServerTickRate = 60;
     public static int ClientTickRate = 60;
-    private static int ClientTicksTillSend = 0;
     public static ulong ClientTicks = 0;
     public static ulong ClientTickAsServerTick = 0;
     public static bool Initialized = false;
-
-    private class ExtrapolatedQueue
-    {
-        private Packet[] ExtrapolatedSnapshots = new Packet[ServerTickRate];
-        private int HeadPosition = 0;
-        private int TailPosition = 0;
-        public int Count = 0;
-        private bool OverwriteTail = false;
-
-        public void Enqueue(Packet Packet)
-        {
-            Count++;
-            ExtrapolatedSnapshots[HeadPosition] = Packet;
-            HeadPosition++;
-            if (OverwriteTail)
-            {
-                Count--;
-                TailPosition++;
-                if (TailPosition == ExtrapolatedSnapshots.Length)
-                    TailPosition = 0;
-                OverwriteTail = false;
-            }
-            if (HeadPosition == ExtrapolatedSnapshots.Length)
-                HeadPosition = 0;
-            if (HeadPosition == TailPosition)
-                OverwriteTail = true;
-        }
-
-        public Packet Dequeue()
-        {
-            if (Count == 0) return null;
-            Count--;
-            Packet P = ExtrapolatedSnapshots[TailPosition];
-            TailPosition++;
-            if (TailPosition == ExtrapolatedSnapshots.Length)
-                TailPosition = 0;
-            return P;
-        }
-
-        public Packet DequeueFromFront()
-        {
-            if (Count == 0) return null;
-            Count--;
-            HeadPosition--;
-            if (HeadPosition < 0)
-                HeadPosition = ExtrapolatedSnapshots.Length - 1;
-            Packet P = ExtrapolatedSnapshots[HeadPosition];
-            return P;
-        }
-
-        public Packet this[int Index]
-        {
-            get
-            {
-                int Seek = HeadPosition - 1 - Index;
-                while (Seek < 0) Seek += ExtrapolatedSnapshots.Length;
-                return ExtrapolatedSnapshots[Seek];
-            }
-        }
-    }
 
     public class ServerSnapshot
     {
@@ -118,6 +56,20 @@ public class Game
                 Initialized = true;
             }
         }
+
+        DZEngine.FixedUpdate();
+
+        SendData();
+
+        Interp = 0;
+        ClientTicks++;
+    }
+
+    private static float Interp = 0;
+    public static void Update()
+    {
+        float ServerToClientTick = (float)ClientTickRate / ServerTickRate;
+        float ClientToServerTick = (float)ServerTickRate / ClientTickRate;
 
         if (Initialized == true)
         {
@@ -174,11 +126,15 @@ public class Game
                     }
                     float FromTick = (From.ServerTick * ServerToClientTick);
                     float Origin = (ClientTicks - FromTick);
-                    float Time = Origin / ((To.ServerTick * ServerToClientTick) - FromTick);
+                    float Time = Origin / ((To.ServerTick * ServerToClientTick) - FromTick) + Interp;
                     Interpolate(From, To, Time);
                 }
                 else
+                {
                     LoadSnapshot(From, true);
+                    float Time = (ClientTicks - From.ServerTick * ServerToClientTick) / ClientTickRate;
+                    Extrapolate(From, Time);
+                }
             }
             else
             {
@@ -197,17 +153,9 @@ public class Game
                 ClientTicks = (ulong)((Histogram.Last.ServerTick - InterpolationRatio) * ServerToClientTick);
             }
             if (InterpolationRatio > IterpolationCap) InterpolationRatio = IterpolationCap;
-        }
 
-        DZEngine.FixedUpdate();
-
-        ClientTicksTillSend++;
-        if (ClientTicksTillSend >= ClientTickRate / ClientSendRate)
-        {
-            SendData();
-            ClientTicksTillSend = 0;
+            Interp += Time.deltaTime;
         }
-        ClientTicks++;
     }
 
     private static void Interpolate(ServerSnapshot From, ServerSnapshot To, float Time)
@@ -235,6 +183,29 @@ public class Game
         }
     }
 
+    private static void Extrapolate(ServerSnapshot From, float Time)
+    {
+        List<ushort> IDs = From.Data.Keys.ToList();
+        foreach (ushort ID in IDs)
+        {
+            if (!From.Data.ContainsKey(ID))
+                continue;
+
+            _IInstantiatableDeletable Item = EntityID.GetObject(ID);
+            ServerSnapshot.Object FromData = From.Data[ID];
+
+            IServerSendable ServerItem = Item as IServerSendable;
+            DZSettings.EntityType FromType = FromData.Type;
+            if (FromData.Data == null || (int)FromType != ServerItem.ServerObjectType)
+                continue;
+
+            if (ServerItem == null)
+                continue;
+
+            ServerItem.Extrapolate(FromData.Data, Time);
+        }
+    }
+
     public static void SendData()
     {
         if (Loader.Socket.SocketConnected)
@@ -256,7 +227,6 @@ public class Game
 
         Packet SnapshotPacket = new Packet();
         SnapshotPacket.Write(Client.NumPlayers);
-        SnapshotPacket.Write(Histogram.Count == 0 ? 0 : Histogram.Last.ServerTick);
         SnapshotPacket.Write(InputMapping.GetBytes());
         Loader.Socket.Send(SnapshotPacket, ServerCode.ClientSnapshot);
     }
@@ -391,8 +361,10 @@ public class Game
     {
         switch (Type)
         {
-            case DZSettings.EntityType.PlayerCreature: return PlayerCreature.ParseBytesToData(Data);
-            case DZSettings.EntityType.Tilemap: return Tilemap.ParseBytesToData(Data);
+            case DZSettings.EntityType.PlayerCreature: return PlayerCreature.ParseBytesToSnapshot(Data);
+            case DZSettings.EntityType.Tilemap: return Tilemap.ParseBytesToSnapshot(Data);
+            case DZSettings.EntityType.TriggerPlate: return TriggerPlate.ParseBytesToSnapshot(Data);
+            case DZSettings.EntityType.BulletEntity: return BulletEntity.ParseBytesToSnapshot(Data);
             case DZSettings.EntityType.Null: return null;
             default: Debug.LogWarning("Parsing unknown entity type");  return null;
         }
@@ -404,6 +376,8 @@ public class Game
         {
             case DZSettings.EntityType.PlayerCreature: return new PlayerCreature(ID);
             case DZSettings.EntityType.Tilemap: return new Tilemap(ID);
+            case DZSettings.EntityType.TriggerPlate: return new TriggerPlate(ID);
+            case DZSettings.EntityType.BulletEntity: return new BulletEntity(ID);
             case DZSettings.EntityType.Null: return null;
             default: Debug.LogWarning("Parsing unknown entity type"); return null;
         }

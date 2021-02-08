@@ -15,6 +15,7 @@ public class Loader
     [RuntimeInitializeOnLoadMethod]
     private static void Start()
     {
+        Physics2D.queriesStartInColliders = false;
         Application.quitting += Dispose;
         Time.fixedDeltaTime = 1f / Game.ClientTickRate;
         Physics2D.simulationMode = SimulationMode2D.Script;

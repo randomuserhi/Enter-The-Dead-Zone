@@ -17,6 +17,19 @@ using DeadZoneEngine.Controllers;
 /// </summary>
 public class Game
 {
+    public class ServerSnapshot
+    {
+        public struct Object
+        {
+            public DZSettings.EntityType Type;
+            public bool FlaggedToDelete;
+            public object Data;
+        }
+
+        public ulong ServerTick;
+        public Dictionary<ushort, Object> Data = new Dictionary<ushort, Object>();
+    }
+
     public static ulong ServerTicks = 0;
     public static int ServerTickRate = 60;
 
@@ -99,7 +112,6 @@ public class Game
     public static void UnWrapSnapshot(DZUDPSocket.RecievePacketWrapper Packet)
     {
         Client C = SyncPlayers(Packet);
-        C.CurrentServerTick = Packet.Data.ReadULong();
         InputMapping.ParseBytes(Packet.Data, C);
     }
 

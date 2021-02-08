@@ -150,7 +150,6 @@ namespace ClientHandle
 
         public bool LostConnection = false;
         public int TicksSinceConnectionLoss = 0;
-        public ulong CurrentServerTick = 0;
 
         private Client(IPEndPoint EndPoint = null)
         {
@@ -175,7 +174,7 @@ namespace ClientHandle
             {
                 if (Players[i] == null)
                 {
-                    Players[i] = new Player(i, this);
+                    Players[i] = new Player(i);
                     NumPlayers++;
                     return Players[i];
                 }
@@ -197,6 +196,19 @@ namespace ClientHandle
             NumPlayers--;
         }
 
+        public void RemoveAllPlayers()
+        {
+            for (int i = 0; i < Players.Length; i++)
+            {
+                if (Players[i] != null)
+                {
+                    Players[i].Destroy();
+                    Players[i] = null;
+                }
+            }
+            NumPlayers = 0;
+        }
+
         public void Destroy()
         {
             ClientID.Remove(EndPoint);
@@ -206,35 +218,10 @@ namespace ClientHandle
         }
     }
 
-    public struct KeySnapshot
-    {
-        public struct KeyPress
-        {
-            public enum KeyAction
-            {
-                UpPress,
-                UpRelease,
-                DownPress,
-                DownRelease,
-                LeftPress,
-                LeftRelease,
-                RightPress,
-                RightRelease
-            }
-
-            public KeyAction Action;
-            public ulong Tick;
-        }
-
-        List<KeyPress> Actions;
-    }
-
     public class Player
     {
         public byte ID { get; private set; }
 
-        public Client Owner;
-        public KeySnapshot KeySnapshot;
         private PlayerController _Controller;
         public PlayerController Controller
         {
@@ -247,18 +234,26 @@ namespace ClientHandle
                 _Controller = value;
                 _Controller.Owner = this;
                 if (Entity != null)
+                {
                     _Controller.PlayerControl = Entity.Controller;
+                    Entity.Controller.Owner = _Controller;
+                }
             }
         }
 
         public PlayerCreature Entity;
 
-        public Player(byte ID, Client Owner)
+        public Player(byte ID)
         {
-            this.Owner = Owner;
             Entity = new PlayerCreature();
-            this.ID = ID;
+            Entity.ProtectedDeletion = true;
             _Controller = new PlayerController(this, Entity.Controller);
+            if (Main.GameStarted)
+            {
+                Vector2 Direction = new Vector2(UnityEngine.Random.Range(-1f, 1f), UnityEngine.Random.Range(-1f, 1f)).normalized;
+                Entity.Position = Direction * UnityEngine.Random.Range(15f, 25f);
+            }
+            this.ID = ID;
         }
 
         public void Destroy()

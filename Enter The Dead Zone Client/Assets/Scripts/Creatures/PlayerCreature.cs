@@ -16,14 +16,11 @@ public class PlayerCreature : AbstractCreature, IServerSendable
     public bool RecentlyUpdated { get; set; } = false;
     public bool ProtectedDeletion { get; set; } = false;
 
-    public struct PlayerStats
-    {
-        public float RunSpeed;
-    }
+    public bool Out;
+    public float RunSpeed;
 
-    private enum BodyState
+    public enum BodyState
     {
-        UprightTest,
         Limp,
         Standing
     }
@@ -32,6 +29,8 @@ public class PlayerCreature : AbstractCreature, IServerSendable
     {
         public PlayerController Owner;
         public Vector2 MovementDirection;
+        public Vector2 ShieldVector;
+        public float Interact;
 
         public struct Snapshot
         {
@@ -58,7 +57,6 @@ public class PlayerCreature : AbstractCreature, IServerSendable
     public Control Controller { get; private set; } //Controller for player movement
 
     private BodyState State; //Ragdoll state
-    public PlayerStats Stats; //General player stats
 
     private float[] DynamicRunSpeed; //Controls Speed of each bodychunk
 
@@ -71,6 +69,7 @@ public class PlayerCreature : AbstractCreature, IServerSendable
         Initialize();
     }
 
+    Color BodyColor;
     private void Initialize()
     {
         if (DZSettings.ClientSidePrediction)
@@ -78,11 +77,15 @@ public class PlayerCreature : AbstractCreature, IServerSendable
 
         Controller = new Control();
         State = BodyState.Standing;
-        Stats.RunSpeed = 2f;
+        RunSpeed = 2f;
 
         BodyChunks = new BodyChunk[2];
         BodyChunks[0] = new BodyChunk(this);
         BodyChunks[1] = new BodyChunk(this);
+        BodyChunks[0].Context = this;
+        BodyChunks[0].ContextType = DZSettings.EntityType.PlayerCreature;
+        BodyChunks[1].Context = this;
+        BodyChunks[1].ContextType = DZSettings.EntityType.PlayerCreature;
         SetGravity(0f);
 
         BodyChunkConnections = new DistanceJoint[1];
@@ -93,6 +96,27 @@ public class PlayerCreature : AbstractCreature, IServerSendable
         Physics2D.IgnoreCollision(BodyChunks[0].Collider, BodyChunks[1].Collider, true); //Ignore collisions between body parts
 
         DynamicRunSpeed = new float[2];
+
+        BodyColor = new Color(UnityEngine.Random.Range(0f, 1f), UnityEngine.Random.Range(0f, 1f), UnityEngine.Random.Range(0f, 1f));
+        BodyChunks[0].RenderColor = BodyColor;
+        BodyChunks[1].RenderColor = BodyColor;
+    }
+
+    public Vector2 Position
+    {
+        get
+        {
+            if (BodyChunks[0] != null)
+                return BodyChunks[0].Position;
+            return Vector2.zero;
+        }
+        set
+        {
+            if (BodyChunks[0] != null)
+                BodyChunks[0].Position = value;
+            if (BodyChunks[1] != null)
+                BodyChunks[1].Position = value;
+        }
     }
 
     public void ServerUpdate()
@@ -124,31 +148,6 @@ public class PlayerCreature : AbstractCreature, IServerSendable
     {
         switch (State)
         {
-            case BodyState.UprightTest:
-                {
-                    BodyChunks[0].Velocity -= new Vector2(0, BodyChunks[0].Gravity);
-                    BodyChunks[1].Velocity -= new Vector2(0, BodyChunks[1].Gravity);
-
-                    int A = BodyChunks[0].GetContacts();
-                    BodyChunkConnections[0].ARatio = 1;
-                    for (int i = 0; i < A; i++)
-                    {
-                        if ((BodyChunks[0].Contacts[i].point - BodyChunks[0].Position).y < 0)
-                            BodyChunkConnections[0].ARatio = 0;
-                    }
-
-                    if (Controller != null)
-                    {
-                        DynamicRunSpeed[0] = 1f;
-                        DynamicRunSpeed[1] = 3f;
-                        BodyChunks[0].Velocity += new Vector2(Stats.RunSpeed * DynamicRunSpeed[0] * Controller.MovementDirection.x, 0);
-                        BodyChunks[1].Velocity += new Vector2(Stats.RunSpeed * DynamicRunSpeed[1] * Controller.MovementDirection.x, 0);
-                    }
-
-                    BodyChunks[0].Velocity *= new Vector2(0.8f, 1);
-                    BodyChunks[1].Velocity *= new Vector2(0.8f, 1);
-                }
-                break;
             case BodyState.Limp:
                 {
 
@@ -160,10 +159,10 @@ public class PlayerCreature : AbstractCreature, IServerSendable
                     DynamicRunSpeed[1] = 3f;
                     if (Controller != null)
                     {
-                        BodyChunks[0].Velocity += new Vector2(Stats.RunSpeed * DynamicRunSpeed[0] * Controller.MovementDirection.x, 0);
-                        BodyChunks[0].Velocity += new Vector2(0, Stats.RunSpeed * DynamicRunSpeed[0] * Controller.MovementDirection.y);
-                        BodyChunks[1].Velocity += new Vector2(Stats.RunSpeed * DynamicRunSpeed[1] * Controller.MovementDirection.x, 0);
-                        BodyChunks[1].Velocity += new Vector2(0, Stats.RunSpeed * DynamicRunSpeed[1] * Controller.MovementDirection.y);
+                        BodyChunks[0].Velocity += new Vector2(RunSpeed * DynamicRunSpeed[0] * Controller.MovementDirection.x, 0);
+                        BodyChunks[0].Velocity += new Vector2(0, RunSpeed * DynamicRunSpeed[0] * Controller.MovementDirection.y);
+                        BodyChunks[1].Velocity += new Vector2(RunSpeed * DynamicRunSpeed[1] * Controller.MovementDirection.x, 0);
+                        BodyChunks[1].Velocity += new Vector2(0, RunSpeed * DynamicRunSpeed[1] * Controller.MovementDirection.y);
                     }
 
                     BodyChunks[0].Velocity *= 0.8f;
@@ -177,27 +176,17 @@ public class PlayerCreature : AbstractCreature, IServerSendable
     {
         switch (State)
         {
-            case BodyState.UprightTest:
-                {
-                    SetGravity(0.3f);
-                    BodyChunkConnections[0].Active = true;
-
-                    BodyChunks[0].Velocity -= new Vector2(0, BodyChunks[0].Gravity);
-                    BodyChunks[1].Velocity += new Vector2(0, BodyChunks[1].Gravity);
-
-                    BodyChunks[0].Velocity *= new Vector2(0.8f, 1);
-                    BodyChunks[1].Velocity *= new Vector2(0.8f, 1);
-                }
-                break;
             case BodyState.Limp:
                 {
                     SetGravity(0f);
+                    BodyChunks[1].SpriteOffset = Vector2.Lerp(BodyChunks[1].SpriteOffset, Vector2.zero, 4 * Time.fixedDeltaTime);
                     BodyChunkConnections[0].Active = true;
                 }
                 break;
             case BodyState.Standing:
                 {
                     SetGravity(0f);
+                    BodyChunks[1].SpriteOffset = Vector2.Lerp(BodyChunks[1].SpriteOffset, new Vector2(0, 0.3f), 4 * Time.fixedDeltaTime);
                     BodyChunkConnections[0].Active = false;
 
                     float Dist = Vector2.Distance(BodyChunks[0].Position, BodyChunks[1].Position);
@@ -229,6 +218,7 @@ public class PlayerCreature : AbstractCreature, IServerSendable
     {
         List<byte> Data = new List<byte>();
         Data.AddRange(BitConverter.GetBytes(Controller.InputID));
+        Data.AddRange(BitConverter.GetBytes((int)State));
         Data.AddRange(BodyChunks[0].GetBytes());
         Data.AddRange(BodyChunks[1].GetBytes());
         Data.AddRange(BodyChunkConnections[0].GetBytes());
@@ -237,22 +227,24 @@ public class PlayerCreature : AbstractCreature, IServerSendable
 
     public override void ParseBytes(DZNetwork.Packet Data)
     {
-        ParseSnapshot((Data)ParseBytesToData(Data));
+        ParseSnapshot((Data)ParseBytesToSnapshot(Data));
     }
 
     public struct Data
     {
         public ulong InputID;
+        public BodyState State;
         public BodyChunk.Data BodyChunk0;
         public BodyChunk.Data BodyChunk1;
         public DistanceJoint.Data BodyChunkConnections0;
     }
 
-    public static object ParseBytesToData(DZNetwork.Packet Data)
+    public static object ParseBytesToSnapshot(DZNetwork.Packet Data)
     {
         return new Data()
         {
             InputID = Data.ReadULong(),
+            State = (BodyState)Data.ReadInt(),
             BodyChunk0 = (BodyChunk.Data)BodyChunk.ParseBytesToSnapshot(Data),
             BodyChunk1 = (BodyChunk.Data)BodyChunk.ParseBytesToSnapshot(Data),
             BodyChunkConnections0 = (DistanceJoint.Data)DistanceJoint.ParseBytesToData(Data)
@@ -261,18 +253,12 @@ public class PlayerCreature : AbstractCreature, IServerSendable
     public override void ParseSnapshot(object ObjectData)
     {
         if (Controller.Owner != null && DZSettings.ClientSidePrediction && !Reconcille)
-        {
-            Debug.Log("NOPARSE: " + (Controller.Owner != null) + "," + DZSettings.ClientSidePrediction + ", " + (!Reconcille));
             return;
-        }
-
         Data Data = (Data)ObjectData;
-        Debug.Log("PARSE");
-        Debug.Log(Data.BodyChunk0.Velocity);
+        State = Data.State;
         BodyChunks[0].ParseSnapshot(Data.BodyChunk0);
         BodyChunks[1].ParseSnapshot(Data.BodyChunk1);
         BodyChunkConnections[0].ParseSnapshot(Data.BodyChunkConnections0);
-        Debug.Log("ENDPARSE");
     }
 
     public override object GetSnapshot()
@@ -280,6 +266,7 @@ public class PlayerCreature : AbstractCreature, IServerSendable
         return new Data()
         {
             InputID = Controller.InputID,
+            State = State,
             BodyChunk0 = (BodyChunk.Data)BodyChunks[0].GetSnapshot(),
             BodyChunk1 = (BodyChunk.Data)BodyChunks[1].GetSnapshot(),
             BodyChunkConnections0 = (DistanceJoint.Data)BodyChunkConnections[0].GetSnapshot()
@@ -303,6 +290,7 @@ public class PlayerCreature : AbstractCreature, IServerSendable
 
     private void LerpReconcilleError()
     {
+        if (!Loader.Socket.Connected) return;
         const float Amount = 4f;
         float Error = (ReconcilledSelf.BodyChunk0.Position - BodyChunks[0].Position).SqrMagnitude();
         if (Error < 1)
@@ -388,5 +376,16 @@ public class PlayerCreature : AbstractCreature, IServerSendable
         BodyChunks[0].Interpolate(From.BodyChunk0, To.BodyChunk0, Time);
         BodyChunks[1].Interpolate(From.BodyChunk1, To.BodyChunk1, Time);
         BodyChunkConnections[0].Interpolate(From.BodyChunkConnections0, To.BodyChunkConnections0, Time);
+    }
+
+    public override void Extrapolate(object FromData, float Time)
+    {
+        if (Controller.Owner != null && DZSettings.ClientSidePrediction)
+            return;
+
+        Data From = (Data)FromData;
+        BodyChunks[0].Extrapolate(From.BodyChunk0, Time);
+        BodyChunks[1].Extrapolate(From.BodyChunk1, Time);
+        BodyChunkConnections[0].Extrapolate(From.BodyChunkConnections0, Time);
     }
 }

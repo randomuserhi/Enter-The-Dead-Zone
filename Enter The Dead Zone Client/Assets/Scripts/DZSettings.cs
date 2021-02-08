@@ -10,7 +10,9 @@ public static class DZSettings
     {
         Null,
         PlayerCreature,
-        Tilemap
+        Tilemap,
+        TriggerPlate,
+        BulletEntity
     }
 
     public static int NumPhysicsIterations = 10;

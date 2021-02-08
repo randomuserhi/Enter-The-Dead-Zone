@@ -217,5 +217,14 @@ namespace DeadZoneEngine.Entities.Components
             BRatio = From.BRatio + (To.BRatio - From.BRatio) * Time;
             SetDistance(Distance);
         }
+
+        public override void Extrapolate(object FromData, float Time)
+        {
+            Data From = (Data)FromData;
+            Distance = From.Distance;
+            ARatio = From.ARatio;
+            BRatio = From.BRatio;
+            SetDistance(Distance);
+        }
     }
 }

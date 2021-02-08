@@ -196,6 +196,16 @@ namespace ClientHandle
             NumPlayers--;
         }
 
+        public void RemoveAllPlayers()
+        {
+            for (int i = 0; i < Players.Length; i++)
+            {
+                Players[i].Destroy();
+                Players[i] = null;
+            }
+            NumPlayers = 0;
+        }
+
         public void Destroy()
         {
             ClientID.Remove(EndPoint);

@@ -5,8 +5,14 @@ using System.Text;
 using System.Threading.Tasks;
 
 using UnityEngine;
+using DeadZoneEngine.Entities;
 
-public abstract class AbstractWorld
+public class AbstractWorld : MonoBehaviour
 {
+    [SerializeField]
+    public DZSettings.EntityType Type;
 
+    public object Self;
+
+    public object Context;
 }

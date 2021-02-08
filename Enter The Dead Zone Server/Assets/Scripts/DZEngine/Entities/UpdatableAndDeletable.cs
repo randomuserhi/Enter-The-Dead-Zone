@@ -53,6 +53,7 @@ namespace DeadZoneEngine.Entities
     public interface IPhysicsUpdatable : _IInstantiatableDeletable
     {
         bool PhysicallyActive { get; set; }
+        void FixedUpdate();
         void IsolateVelocity();
         void RestoreVelocity();
     }

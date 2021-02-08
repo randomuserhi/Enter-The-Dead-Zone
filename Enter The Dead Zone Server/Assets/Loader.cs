@@ -14,6 +14,7 @@ public class Loader
     [RuntimeInitializeOnLoadMethod] //Runs on application start
     private static void Start()
     {
+        Physics2D.queriesStartInColliders = false;
         Application.quitting += Dispose; //Setup dispose to call when game is closed
         Application.targetFrameRate = Game.ServerTickRate; //Limit server tick rate / frame rate
         Time.fixedDeltaTime = 1f / Game.ServerTickRate; //Fixed physics update rate

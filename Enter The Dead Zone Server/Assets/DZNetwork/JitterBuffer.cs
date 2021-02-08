@@ -49,6 +49,21 @@ namespace DZNetwork
             }
         }
 
+        public Key FirstKey
+        {
+            get
+            {
+                return Start;
+            }
+        }
+        public Key LastKey
+        {
+            get
+            {
+                return End;
+            }
+        }
+
         public void Add(T Value)
         {
             _Count++;
@@ -82,6 +97,7 @@ namespace DZNetwork
         {
             while (!EqualityComparer<T>.Default.Equals(Start.Value, From))
             {
+                if (Start.Next == null) return;
                 Start = Start.Next;
                 _Count--;
             }

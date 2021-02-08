@@ -150,6 +150,7 @@ namespace DeadZoneEngine.Entities
         }
 
         public bool Active { get; set; } = true;
+        public bool PhysicallyActive { get; set; } = !DZSettings.Client;
         public bool FlaggedToDelete { get; set; } = false;
         public bool Disposed { get; set; } = false;
 

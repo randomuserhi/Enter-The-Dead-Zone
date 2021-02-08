@@ -9,6 +9,7 @@ using UnityEngine.UI;
 
 using DeadZoneEngine;
 using DeadZoneEngine.Entities;
+using System.Text.RegularExpressions;
 
 /// <summary>
 /// Defines a tile of a tilemap
@@ -135,6 +136,26 @@ public class Tilemap : AbstractWorldEntity, IUpdatable, IRenderer, IServerSendab
         Initialize();
     }
 
+    public static Tile[] TilesFromString(string TilesToParse)
+    {
+        List<Tile> Tiles = new List<Tile>();
+
+        string Formatted = Regex.Replace(TilesToParse, @"[ \n\r\t]", "");
+        string[] TileArray = TilesToParse.Split('/');
+        for (int i = 0; i < TileArray.Length; i++)
+        {
+            string[] Componenets = TileArray[i].Split(',');
+            Tiles.Add(new Tile()
+            {
+                TileIndex = int.Parse(Componenets[0]),
+                AnimationFrame = int.Parse(Componenets[1]),
+                Blank = int.Parse(Componenets[2]),
+                Render = int.Parse(Componenets[3])
+            });
+        }
+        return Tiles.ToArray();
+    }
+
     /// <summary>
     /// Resize tilemap to fit a new floor and wall map
     /// </summary>
@@ -173,7 +194,7 @@ public class Tilemap : AbstractWorldEntity, IUpdatable, IRenderer, IServerSendab
             }
             RawImage[] Temp = Rows;
             Rows = new RawImage[TilemapSize.y];
-            Array.Copy(Temp, 0, Rows, 0, TilemapSize.y);
+            System.Buffer.BlockCopy(Temp, 0, Rows, 0, TilemapSize.y);
         }
         Resources.UnloadUnusedAssets();
     }
@@ -227,9 +248,9 @@ public class Tilemap : AbstractWorldEntity, IUpdatable, IRenderer, IServerSendab
         PrevTilePosition = Self.transform.position;
         for (int i = 0; i < TilemapSize.y; i++)
         {
-            float StrideHeight = (WallTileHeight / TileDimension) / TilesPerUnit;
-            float BaseY = Rows[i].transform.position.y - ((1 / TilesPerUnit - StrideHeight) / 2);
-            Rows[i].canvas.sortingOrder = Mathf.RoundToInt(-BaseY) + 1;
+            float StrideHeight = ((float)WallTileHeight / TileDimension) / TilesPerUnit;
+            float BaseY = Rows[i].transform.position.y - ((StrideHeight - 1 / TilesPerUnit) / 2);
+            Rows[i].canvas.sortingOrder = Mathf.RoundToInt(-(BaseY * 10)) + 1;
         }
     }
 
@@ -444,7 +465,7 @@ public class Tilemap : AbstractWorldEntity, IUpdatable, IRenderer, IServerSendab
         {
             RawImage[] Temp = Rows;
             Rows = new RawImage[TilemapSize.y];
-            Array.Copy(Temp, 0, Rows, 0, Temp.Length);
+            System.Buffer.BlockCopy(Temp, 0, Rows, 0, Temp.Length);
         }
         int i = 0;
         for (; i < CurrentLength; i++) //Loop through number of rows that can be reused
@@ -491,7 +512,7 @@ public class Tilemap : AbstractWorldEntity, IUpdatable, IRenderer, IServerSendab
         {
             RawImage[] Temp = Rows;
             Rows = new RawImage[TilemapSize.y];
-            Array.Copy(Temp, 0, Rows, 0, TilemapSize.y);
+            System.Buffer.BlockCopy(Temp, 0, Rows, 0, TilemapSize.y);
         }
 
         UpdateRenderSortingLayers();
@@ -508,7 +529,7 @@ public class Tilemap : AbstractWorldEntity, IUpdatable, IRenderer, IServerSendab
             {
                 Pallet = Resources.Load<Texture2D>("TilemapPallets/Default"),
                 NumTiles = 2,
-                TileStride = 48, //32 + 16
+                TileStride = 64, //32 + 32
                 FrameCount = new int[2] { 2, 2 }
             };
         }
@@ -518,7 +539,7 @@ public class Tilemap : AbstractWorldEntity, IUpdatable, IRenderer, IServerSendab
             {
                 Pallet = Resources.Load<Texture2D>("TilemapPallets/Default"),
                 NumTiles = 2,
-                TileStride = 48, //32 + 16
+                TileStride = 64, //32 + 32
                 FrameCount = new int[2] { 2, 2 }
             };
         }

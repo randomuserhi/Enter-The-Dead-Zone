@@ -10,8 +10,6 @@ namespace DeadZoneEngine.Entities
 {
     public abstract class PhysicalObject : AbstractWorldEntity, IPhysicsUpdatable
     {
-        public bool PhysicallyActive { get; set; } = !DZSettings.Client;
-
         public GameObject Self;
         public AbstractWorldEntity Parent;
         protected Rigidbody2D RB;
@@ -24,6 +22,8 @@ namespace DeadZoneEngine.Entities
             RB.drag = 0;
             RB.gravityScale = 0;
             RB.sharedMaterial = Resources.Load<PhysicsMaterial2D>("PhysicsMaterial/Zero");
+            RB.interpolation = RigidbodyInterpolation2D.None;
+            RB.isKinematic = DZSettings.Client;
         }
 
         public PhysicalObject(ushort ID) : base(ID)
@@ -34,6 +34,8 @@ namespace DeadZoneEngine.Entities
             RB.drag = 0;
             RB.gravityScale = 0;
             RB.sharedMaterial = Resources.Load<PhysicsMaterial2D>("PhysicsMaterial/Zero");
+            RB.interpolation = RigidbodyInterpolation2D.None;
+            RB.isKinematic = DZSettings.Client;
         }
 
         protected override void OnDelete()
@@ -47,6 +49,7 @@ namespace DeadZoneEngine.Entities
             Self.transform.eulerAngles += new Vector3(0, 0, AngularVelocity) * DeltaTime;
         }
 
+        public virtual void FixedUpdate() { }
         public virtual void Update() { }
         public virtual void BodyPhysicsUpdate() { }
 
@@ -66,6 +69,7 @@ namespace DeadZoneEngine.Entities
             PreVelocity = Temp;
         }
 
+        public bool Kinematic { get { return RB.isKinematic; } set { RB.isKinematic = value; } }
         public int CollisionLayer { get { return Self.layer; } set { Self.layer = value; } }
         public Vector2 Position { get { return Self.transform.position; } set { Self.transform.position = value; } }
         public Vector2 Velocity { get { return RB.velocity; } set { RB.velocity = value; } }

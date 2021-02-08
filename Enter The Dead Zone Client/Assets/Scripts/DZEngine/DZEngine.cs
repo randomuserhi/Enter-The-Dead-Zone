@@ -408,7 +408,10 @@ namespace DeadZoneEngine
             for (int i = 0; i < _PhysicsUpdatableObjects.Count; i++)
             {
                 if (_PhysicsUpdatableObjects[i].Active && _PhysicsUpdatableObjects[i].PhysicallyActive)
+                {
                     _PhysicsUpdatableObjects[i].RestoreVelocity();
+                    _PhysicsUpdatableObjects[i].FixedUpdate();
+                }
             }
 
             //Update updatable entities
@@ -512,7 +515,10 @@ namespace DeadZoneEngine
             for (int i = 0; i < _PhysicsUpdatableObjects.Count; i++)
             {
                 if (_PhysicsUpdatableObjects[i].Active && _PhysicsUpdatableObjects[i].PhysicallyActive)
+                {
                     _PhysicsUpdatableObjects[i].RestoreVelocity();
+                    _PhysicsUpdatableObjects[i].FixedUpdate();
+                }
             }
 
             //Update updatable entities

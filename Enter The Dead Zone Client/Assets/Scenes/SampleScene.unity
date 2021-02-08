@@ -323,6 +323,11 @@ PrefabInstance:
       propertyPath: m_Name
       value: Main Camera
       objectReference: {fileID: 0}
+    - target: {fileID: 7687470950920004586, guid: 7b5e3eede379a0e4a8aafc1194b4cd3f,
+        type: 3}
+      propertyPath: orthographic size
+      value: 15
+      objectReference: {fileID: 0}
     - target: {fileID: 7687470952666713289, guid: 7b5e3eede379a0e4a8aafc1194b4cd3f,
         type: 3}
       propertyPath: m_TargetTexture

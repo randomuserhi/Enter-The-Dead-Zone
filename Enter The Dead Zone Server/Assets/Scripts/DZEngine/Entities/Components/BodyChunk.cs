@@ -9,14 +9,54 @@ namespace DeadZoneEngine.Entities.Components
 {
     public class BodyChunk : PhysicalObject, IRenderer<SpriteRenderer>
     {
+        private AbstractWorld Info;
+        public object Context
+        {
+            get
+            {
+                if (Info != null)
+                    return Info.Context;
+                else
+                    return null;
+            }
+            set
+            {
+                Info.Context = value;
+            }
+        }
+        public DZSettings.EntityType ContextType
+        {
+            get
+            {
+                if (Info != null)
+                    return Info.Type;
+                else
+                    return DZSettings.EntityType.Null;
+            }
+            set
+            {
+                Info.Type = value;
+            }
+        }
+
         public int SortingLayer { get; set; }
         public SpriteRenderer RenderObject { get; set; }
+        private GameObject RenderObj;
+        public Vector3 SpriteOffset = Vector3.zero;
+        public Color RenderColor = new Color(1, 1, 1);
         public virtual void InitializeRenderer()
         {
-            RenderObject = Self.AddComponent<SpriteRenderer>();
+            RenderObj = new GameObject();
+            RenderObj.transform.parent = Self.transform;
+            RenderObj.transform.localPosition = Vector3.zero;
+            RenderObject = RenderObj.AddComponent<SpriteRenderer>();
             RenderObject.sprite = Resources.Load<Sprite>("Sprites/Circle");
         }
-        public virtual void Render() { }
+        public virtual void Render()
+        {
+            RenderObj.transform.localPosition = SpriteOffset;
+            RenderObject.color = RenderColor;
+        }
 
         public CircleCollider2D Collider { get; private set; }
         public ContactPoint2D[] Contacts = new ContactPoint2D[10];
@@ -39,6 +79,8 @@ namespace DeadZoneEngine.Entities.Components
 
         private void Init()
         {
+            Info = Self.AddComponent<AbstractWorld>();
+            Info.Self = this;
             Collider = Self.AddComponent<CircleCollider2D>();
             Collider.radius = 0.5f;
 
@@ -90,16 +132,17 @@ namespace DeadZoneEngine.Entities.Components
 
         public override object GetSnapshot()
         {
-            return new Data()
+            Data D = new Data()
             {
-                Position = Position,
+                Position = new Vector2(Position.x, Position.y),
                 Rotation = Rotation,
-                Velocity = Velocity,
+                Velocity = new Vector2(Velocity.x, Velocity.y),
                 AngularVelocity = AngularVelocity,
                 InvMass = InvMass,
                 InvInertia = InvInertia,
                 ColliderRadius = Collider.radius
             };
+            return D;
         }
 
         public static object ParseBytesToSnapshot(DZNetwork.Packet Data)

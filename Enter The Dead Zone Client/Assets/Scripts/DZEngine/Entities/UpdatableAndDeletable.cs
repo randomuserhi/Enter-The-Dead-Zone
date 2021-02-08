@@ -28,6 +28,7 @@ namespace DeadZoneEngine.Entities
         void ParseBytes(DZNetwork.Packet Data);
         void ParseSnapshot(object Data);
         void Interpolate(object FromData, object ToData, float Time);
+        void Extrapolate(object FromData, float Time);
     }
 
     public interface IRenderer : _IInstantiatableDeletable
@@ -53,6 +54,7 @@ namespace DeadZoneEngine.Entities
     public interface IPhysicsUpdatable : _IInstantiatableDeletable
     {
         bool PhysicallyActive { get; set; }
+        void FixedUpdate();
         void IsolateVelocity();
         void RestoreVelocity();
     }
