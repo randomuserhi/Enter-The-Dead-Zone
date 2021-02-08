@@ -71,6 +71,8 @@ public class Game
         float ServerToClientTick = (float)ClientTickRate / ServerTickRate;
         float ClientToServerTick = (float)ServerTickRate / ClientTickRate;
 
+        Debug.Log(Initialized);
+
         if (Initialized == true)
         {
             ServerSnapshot From = null;
@@ -217,13 +219,9 @@ public class Game
 
     private static void SendSnapshot()
     {
-        if (!Client.Setup)
-        {
-            Packet Setup = new Packet();
-            Setup.Write(Client.NumPlayers);
-            Loader.Socket.Send(Setup, ServerCode.SyncPlayers);
-            return;
-        }
+        Packet Setup = new Packet();
+        Setup.Write(Client.NumPlayers);
+        Loader.Socket.Send(Setup, ServerCode.SyncPlayers);
 
         Packet SnapshotPacket = new Packet();
         SnapshotPacket.Write(Client.NumPlayers);
@@ -233,31 +231,29 @@ public class Game
 
     public static void SyncClient(DZUDPSocket.RecievePacketWrapper Packet)
     {
-        if (Client.Setup == false)
+        int NumPlayers = Packet.Data.ReadByte();
+        if (NumPlayers != Client.NumPlayers)
         {
-            int NumPlayers = Packet.Data.ReadByte();
-            if (NumPlayers != Client.NumPlayers)
-            {
-                Debug.LogWarning("Sync failed due to inconsistent player count");
-                return;
-            }
-            Client.ID.ChangeID(Packet.Data.ReadUShort());
-            for (int i = 0; i < NumPlayers; i++)
-            {
-                int ID = Packet.Data.ReadByte();
-                if (ID == byte.MaxValue)
-                    continue;
-                ushort PlayerEntityID = Packet.Data.ReadUShort();
-                Debug.Log(PlayerEntityID);
+            Debug.LogWarning("Sync failed due to inconsistent player count");
+            return;
+        }
+        ushort CID = Packet.Data.ReadUShort();
+        if (Client.ID != CID)
+            Client.ID.ChangeID(CID);
+        for (int i = 0; i < NumPlayers; i++)
+        {
+            int ID = Packet.Data.ReadByte();
+            if (ID == byte.MaxValue)
+                continue;
+            ushort PlayerEntityID = Packet.Data.ReadUShort();
+            if (Client.Players[i].Entity.ID != PlayerEntityID)
                 Client.Players[i].Entity.ID.ChangeID(PlayerEntityID, true);
-            }
-            Client.Setup = true;
         }
     }
 
     public static void UnWrapSnapshot(DZUDPSocket.RecievePacketWrapper Packet)
     {
-        if (Client == null || !Client.Setup) return;
+        if (Client == null) return;
 
         int CheckSum = Packet.Data.ReadInt();
         ServerTickRate = Packet.Data.ReadInt();

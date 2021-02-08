@@ -144,7 +144,6 @@ namespace ClientHandle
         public ClientID ID;
 
         public IPEndPoint EndPoint;
-        public bool Setup = false;
         public Player[] Players;
         public byte NumPlayers { get; private set; }
 

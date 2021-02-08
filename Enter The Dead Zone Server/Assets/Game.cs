@@ -82,18 +82,11 @@ public class Game
     {
         Client C = Client.GetClient(Packet.Client);
         byte NumPlayers = Packet.Data.ReadByte();
-        if (!C.Setup)
+        if (C.NumPlayers != NumPlayers)
         {
-            for (int i = 0; i < NumPlayers; i++)
-                C.AddPlayer();
-
-            C.Setup = true;
-        }
-        else if (NumPlayers == C.NumPlayers)
-            return C;
-        else
             while (C.NumPlayers < NumPlayers)
                 C.AddPlayer();
+        }
 
         Packet SyncPacket = new Packet();
         SyncPacket.Write(NumPlayers);
