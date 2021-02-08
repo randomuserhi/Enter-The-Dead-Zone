@@ -95,7 +95,8 @@ namespace DZNetwork
             public override int GetHashCode()
             {
                 int Hash = 27;
-                Hash = (13 * Hash) + Client.GetHashCode();
+                if (Client != null)
+                    Hash = (13 * Hash) + Client.GetHashCode();
                 Hash = (13 * Hash) + ID.GetHashCode();
                 return Hash;
             }

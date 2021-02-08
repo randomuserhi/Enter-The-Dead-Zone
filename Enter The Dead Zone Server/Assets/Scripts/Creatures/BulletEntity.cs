@@ -8,6 +8,8 @@ using UnityEngine;
 using DeadZoneEngine.Entities;
 using DeadZoneEngine.Entities.Components;
 using DZNetwork;
+using ClientHandle;
+using DeadZoneEngine;
 
 public class BulletEntity : AbstractWorldEntity, IPhysicsUpdatable, IRenderer, IServerSendable
 {
@@ -17,7 +19,7 @@ public class BulletEntity : AbstractWorldEntity, IPhysicsUpdatable, IRenderer, I
     public bool ProtectedDeletion { get; set; } = false;
 
     BodyChunk Bolt;
-    public float Speed = 10;
+    public float Speed = 5;
     public Vector2 Direction = Vector2.up;
 
     public BulletEntity(ushort ID) : base(ID)
@@ -33,7 +35,7 @@ public class BulletEntity : AbstractWorldEntity, IPhysicsUpdatable, IRenderer, I
     public void Init()
     {
         Bolt = new BodyChunk();
-        Bolt.Collider.radius = 0.2f;
+        Bolt.Collider.radius = 0.1f;
         Bolt.Kinematic = true;
     }
 
@@ -59,7 +61,7 @@ public class BulletEntity : AbstractWorldEntity, IPhysicsUpdatable, IRenderer, I
 
     public void Render()
     {
-
+        Bolt.RenderObject.transform.localScale = new Vector2(0.2f, 0.2f);
     }
 
     public void ServerUpdate()
@@ -102,10 +104,18 @@ public class BulletEntity : AbstractWorldEntity, IPhysicsUpdatable, IRenderer, I
                 if (WorldContext.Type == DZSettings.EntityType.PlayerCreature)
                 {
                     PlayerCreature Player = (PlayerCreature)WorldContext.Context;
-                    Player.ApplyVelocity(-Direction, Speed);
+
+                    Player.Out = true;
+                }
+                else if (WorldContext.Type == DZSettings.EntityType.EnemyCreature)
+                {
+                    EnemyCreature Enemy = (EnemyCreature)WorldContext.Context;
+                    Enemy.ApplyVelocity(-Direction, 10);
+                    Enemy.Health--;
                 }
             }
-            Bolt.Position = NewPosition + Direction * 0.1f + Hit.normal * 0.1f;
+
+            DZEngine.Destroy(this);
         }
         else
         {
@@ -116,6 +126,11 @@ public class BulletEntity : AbstractWorldEntity, IPhysicsUpdatable, IRenderer, I
     public void IsolateVelocity() { }
 
     public void RestoreVelocity() { }
+
+    protected override void OnDelete()
+    {
+        DZEngine.Destroy(Bolt);
+    }
 
     public override byte[] GetBytes()
     {

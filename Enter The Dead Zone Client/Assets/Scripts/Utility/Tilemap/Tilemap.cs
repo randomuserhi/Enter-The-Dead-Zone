@@ -161,7 +161,7 @@ public class Tilemap : AbstractWorldEntity, IUpdatable, IRenderer, IServerSendab
     /// </summary>
     public void Resize(Vector2Int NewTilemapSize, Tile[] FloorMap, Tile[] WallMap)
     {
-        UpdateResizeOverNetwork = true;
+        UpdateResizeOverNetwork++;
         this.FloorMap = FloorMap;
         this.WallMap = WallMap;
         bool SizeChange = NewTilemapSize != TilemapSize;
@@ -564,12 +564,13 @@ public class Tilemap : AbstractWorldEntity, IUpdatable, IRenderer, IServerSendab
     }
 
     private List<byte> MapCache = new List<byte>();
-    private bool UpdateResizeOverNetwork = false;
+    private int UpdateResizeOverNetwork = 1;
+    private int PreviousResizeOverNetwork = 0;
     public override byte[] GetBytes()
     {
-        if (UpdateResizeOverNetwork || !FirstParse)
+        if (UpdateResizeOverNetwork != PreviousResizeOverNetwork)
         {
-            FirstParse = true;
+            PreviousResizeOverNetwork = UpdateResizeOverNetwork;
             int Volume = TilemapSize.x * TilemapSize.y;
             MapCache.Clear();
             for (int i = 0; i < Volume; i++)
@@ -598,7 +599,6 @@ public class Tilemap : AbstractWorldEntity, IUpdatable, IRenderer, IServerSendab
 
         List<byte> Data = new List<byte>();
         Data.AddRange(BitConverter.GetBytes(UpdateResizeOverNetwork));
-        UpdateResizeOverNetwork = false;
         Data.AddRange(BitConverter.GetBytes(-1)); //Tilemap pallet
         Data.AddRange(BitConverter.GetBytes(Self.transform.position.x)); //Tilemap position
         Data.AddRange(BitConverter.GetBytes(Self.transform.position.y));
@@ -612,7 +612,6 @@ public class Tilemap : AbstractWorldEntity, IUpdatable, IRenderer, IServerSendab
         return Data.ToArray();
     }
 
-    private bool FirstParse = false;
     public override void ParseBytes(DZNetwork.Packet Data)
     {
         Data D = (Data)ParseBytesToSnapshot(Data);
@@ -621,7 +620,7 @@ public class Tilemap : AbstractWorldEntity, IUpdatable, IRenderer, IServerSendab
 
     public struct Data
     {
-        public bool UpdateResizeOverNetwork;
+        public int UpdateResizeOverNetwork;
         public int TilePalletIndex;
         public Vector2 Position;
         public Vector2Int TilemapSize;
@@ -653,7 +652,7 @@ public class Tilemap : AbstractWorldEntity, IUpdatable, IRenderer, IServerSendab
     {
         Data D = new Data()
         {
-            UpdateResizeOverNetwork = Data.ReadBool(),
+            UpdateResizeOverNetwork = Data.ReadInt(),
             TilePalletIndex = Data.ReadInt(),
             Position = new Vector2(Data.ReadFloat(), Data.ReadFloat()),
             TilemapSize = new Vector2Int(Data.ReadInt(), Data.ReadInt()),
@@ -705,20 +704,32 @@ public class Tilemap : AbstractWorldEntity, IUpdatable, IRenderer, IServerSendab
         TilesPerUnit = Data.TilesPerUnit;
         WallTileHeight = Data.WallTileHeight;
 
-        if (!UpdateResizeOverNetwork && FirstParse)
-            return;
-        FirstParse = true;
-
-        Resize(Data.TilemapSize, Data.FloorMap, Data.WallMap);
+        if (PreviousResizeOverNetwork != UpdateResizeOverNetwork)
+        {
+            PreviousResizeOverNetwork = UpdateResizeOverNetwork;
+            Resize(Data.TilemapSize, Data.FloorMap, Data.WallMap);
+        }
     }
 
     public override void Interpolate(object FromData, object ToData, float Time)
     {
-        return;
+        Data From = (Data)FromData;
+        Data To = (Data)ToData;
+        Self.transform.position = From.Position + (To.Position) * Time;
+        if (To.UpdateResizeOverNetwork != PreviousResizeOverNetwork)
+        {
+            PreviousResizeOverNetwork = To.UpdateResizeOverNetwork;
+            Resize(To.TilemapSize, To.FloorMap, To.WallMap);
+        }
     }
 
     public override void Extrapolate(object FromData, float Time)
     {
-        return;
+        Data From = (Data)FromData;
+        if (From.UpdateResizeOverNetwork != PreviousResizeOverNetwork)
+        {
+            PreviousResizeOverNetwork = From.UpdateResizeOverNetwork;
+            Resize(From.TilemapSize, From.FloorMap, From.WallMap);
+        }
     }
 }

@@ -8,6 +8,7 @@ using UnityEngine;
 using DeadZoneEngine.Entities;
 using DeadZoneEngine.Entities.Components;
 using DZNetwork;
+using DeadZoneEngine;
 
 public class BulletEntity : AbstractWorldEntity, IPhysicsUpdatable, IRenderer, IServerSendable
 {
@@ -59,7 +60,7 @@ public class BulletEntity : AbstractWorldEntity, IPhysicsUpdatable, IRenderer, I
 
     public void Render()
     {
-
+        Bolt.RenderObject.transform.localScale = new Vector2(0.5f, 0.5f);
     }
 
     public void ServerUpdate()
@@ -120,6 +121,11 @@ public class BulletEntity : AbstractWorldEntity, IPhysicsUpdatable, IRenderer, I
     public void IsolateVelocity() { }
 
     public void RestoreVelocity() { }
+
+    protected override void OnDelete()
+    {
+        DZEngine.Destroy(Bolt);
+    }
 
     public override byte[] GetBytes()
     {

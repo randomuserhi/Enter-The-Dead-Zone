@@ -73,7 +73,7 @@ namespace DeadZoneEngine.Entities
         public int CollisionLayer { get { return Self.layer; } set { Self.layer = value; } }
         public Vector2 Position { get { return Self.transform.position; } set { Self.transform.position = value; } }
         public Vector2 Velocity { get { return RB.velocity; } set { RB.velocity = value; } }
-        public float Rotation { get { return Self.transform.eulerAngles.z * Mathf.Deg2Rad; } set { Self.transform.eulerAngles = new Vector3(0, value * Mathf.Rad2Deg, 0); } }
+        public float Rotation { get { return Self.transform.eulerAngles.z * Mathf.Deg2Rad; } set { Self.transform.eulerAngles = new Vector3(0, 0, value * Mathf.Rad2Deg); } }
         public float AngularVelocity { get { return RB.angularVelocity * Mathf.Deg2Rad; } set { RB.angularVelocity = value * Mathf.Rad2Deg; } }
 
         public float _InvMass = 0;

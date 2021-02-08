@@ -27,7 +27,7 @@ public class TriggerPlate : AbstractWorldEntity, IUpdatable, IRenderer, IServerS
 
     public Vector2 Size = new Vector2(1, 1);
     public float Value = 0;
-    private float Incrementer = 0;
+    public float Incrementer = 0;
     public float MaxValue = 10;
 
     public int RequiredNumPlayers = 0;

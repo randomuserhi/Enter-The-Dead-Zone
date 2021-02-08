@@ -71,8 +71,6 @@ public class Game
         float ServerToClientTick = (float)ClientTickRate / ServerTickRate;
         float ClientToServerTick = (float)ServerTickRate / ClientTickRate;
 
-        Debug.Log(Initialized);
-
         if (Initialized == true)
         {
             ServerSnapshot From = null;
@@ -361,6 +359,7 @@ public class Game
             case DZSettings.EntityType.Tilemap: return Tilemap.ParseBytesToSnapshot(Data);
             case DZSettings.EntityType.TriggerPlate: return TriggerPlate.ParseBytesToSnapshot(Data);
             case DZSettings.EntityType.BulletEntity: return BulletEntity.ParseBytesToSnapshot(Data);
+            case DZSettings.EntityType.EnemyCreature: return EnemyCreature.ParseBytesToSnapshot(Data);
             case DZSettings.EntityType.Null: return null;
             default: Debug.LogWarning("Parsing unknown entity type");  return null;
         }
@@ -374,6 +373,7 @@ public class Game
             case DZSettings.EntityType.Tilemap: return new Tilemap(ID);
             case DZSettings.EntityType.TriggerPlate: return new TriggerPlate(ID);
             case DZSettings.EntityType.BulletEntity: return new BulletEntity(ID);
+            case DZSettings.EntityType.EnemyCreature: return new EnemyCreature(ID);
             case DZSettings.EntityType.Null: return null;
             default: Debug.LogWarning("Parsing unknown entity type"); return null;
         }
@@ -388,6 +388,7 @@ public class Game
     {
         Debug.Log("Client Disconnected");
         Initialized = false;
+        Histogram.Clear();
     }
 }
 

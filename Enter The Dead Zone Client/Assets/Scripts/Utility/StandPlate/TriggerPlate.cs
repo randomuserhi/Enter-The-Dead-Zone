@@ -143,6 +143,7 @@ public class TriggerPlate : AbstractWorldEntity, IUpdatable, IRenderer, IServerS
         Data Data = (Data)ObjectData;
         Self.transform.position = Data.Position;
         Size = Data.Size;
+        Self.transform.localScale = Size;
         Value = Data.Value;
     }
 
@@ -151,8 +152,9 @@ public class TriggerPlate : AbstractWorldEntity, IUpdatable, IRenderer, IServerS
         Data From = (Data)FromData;
         Data To = (Data)ToData;
         Self.transform.position = From.Position + (To.Position - From.Position) * Time;
-        Size = From.Size;
-        Value = From.Value + (To.Value - From.Value) * Time;
+        Size = To.Size;
+        Self.transform.localScale = Size;
+        Value = To.Value + (To.Value - From.Value) * Time;
     }
 
     public override void Extrapolate(object FromData, float Time)
@@ -160,6 +162,7 @@ public class TriggerPlate : AbstractWorldEntity, IUpdatable, IRenderer, IServerS
         Data From = (Data)FromData;
         Self.transform.position = From.Position;
         Size = From.Size;
+        Self.transform.localScale = Size;
         Value = From.Value;
     }
 }

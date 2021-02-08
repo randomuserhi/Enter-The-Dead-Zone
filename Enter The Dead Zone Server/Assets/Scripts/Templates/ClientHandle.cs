@@ -52,7 +52,8 @@ namespace ClientHandle
             if (EndPoint == null)
                 return null;
             if (EndPointToID.ContainsKey(EndPoint))
-                return ConnectedClients[EndPointToID[EndPoint]];
+                if (ConnectedClients.ContainsKey(EndPointToID[EndPoint]))
+                    return ConnectedClients[EndPointToID[EndPoint]];
             return null;
         }
 
