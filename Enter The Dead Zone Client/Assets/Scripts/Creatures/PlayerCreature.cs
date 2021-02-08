@@ -262,13 +262,17 @@ public class PlayerCreature : AbstractCreature, IServerSendable
     {
         if (Controller.Owner != null && DZSettings.ClientSidePrediction && !Reconcille)
         {
+            Debug.Log("NOPARSE: " + (Controller.Owner != null) + "," + DZSettings.ClientSidePrediction + ", " + (!Reconcille));
             return;
         }
 
         Data Data = (Data)ObjectData;
+        Debug.Log("PARSE");
+        Debug.Log(Data.BodyChunk0.Velocity);
         BodyChunks[0].ParseSnapshot(Data.BodyChunk0);
         BodyChunks[1].ParseSnapshot(Data.BodyChunk1);
         BodyChunkConnections[0].ParseSnapshot(Data.BodyChunkConnections0);
+        Debug.Log("ENDPARSE");
     }
 
     public override object GetSnapshot()
@@ -299,7 +303,6 @@ public class PlayerCreature : AbstractCreature, IServerSendable
 
     private void LerpReconcilleError()
     {
-        if (!ValidPredictPass) return;
         const float Amount = 4f;
         float Error = (ReconcilledSelf.BodyChunk0.Position - BodyChunks[0].Position).SqrMagnitude();
         if (Error < 1)
@@ -315,15 +318,21 @@ public class PlayerCreature : AbstractCreature, IServerSendable
     }
 
     private PlayerSnapshot Current = null;
-    private Data CurrentSelf;
-    private Control.Snapshot CurrentMovement;
+    public Data CurrentSelf;
     private bool ValidPredictPass;
+    private bool FinishedPredict;
     public void StartClientPrediction(Game.ServerSnapshot FromData)
     {
         ValidPredictPass = FromData.Data.ContainsKey(ID);
+        CurrentSelf = (Data)GetSnapshot();
+        Reconcille = true;
         if (!ValidPredictPass) return;
         Data ClientPredictBaseline = (Data)FromData.Data[ID].Data;
-        if (LastReconcilled >= ClientPredictBaseline.InputID) return;
+        if (LastReconcilled >= ClientPredictBaseline.InputID)
+        {
+            ValidPredictPass = false;
+            return;
+        }
         LastReconcilled = ClientPredictBaseline.InputID;
         Histogram.Iterate(S =>
         {
@@ -335,10 +344,8 @@ public class PlayerCreature : AbstractCreature, IServerSendable
         if (Current != null)
         {
             Histogram.Dequeue(Current);
-            CurrentSelf = (Data)GetSnapshot();
-            CurrentMovement = Controller.GetSnapshot();
-            Reconcille = true;
             ParseSnapshot(ClientPredictBaseline);
+            FinishedPredict = false;
             CurrentKey = Histogram.FirstKey;
         }
         else
@@ -346,7 +353,6 @@ public class PlayerCreature : AbstractCreature, IServerSendable
             Histogram.Clear();
             ValidPredictPass = false;
         }
-        Debug.Log("," + Histogram.Count);
     }
     private DZNetwork.JitterBuffer<PlayerSnapshot>.Key CurrentKey;
     public void ClientPrediction()
@@ -354,23 +360,18 @@ public class PlayerCreature : AbstractCreature, IServerSendable
         if (!ValidPredictPass) return;
         if (CurrentKey != null)
         {
-            Debug.Log((ushort)ID + " Naisu");
             Controller.ParseSnapshot(CurrentKey.Value.Controls);
+            if (!FinishedPredict && CurrentKey.Next == null)
+            {
+                FinishedPredict = true;
+                ReconcilledSelf = (Data)GetSnapshot();
+            }
             CurrentKey = CurrentKey.Next;
-        }
-        else
-        {
-            Debug.Log((ushort)ID + "Bruh");
-            Controller.MovementDirection = Vector2.zero;
         }
     }
     public void EndClientPrediction()
     {
-        if (!ValidPredictPass) return;
-        ReconcilledSelf = (Data)GetSnapshot();
         ParseSnapshot(CurrentSelf);
-        Controller.ParseSnapshot(CurrentMovement);
-        Debug.Log(Controller.MovementDirection);
         Reconcille = false;
     }
 

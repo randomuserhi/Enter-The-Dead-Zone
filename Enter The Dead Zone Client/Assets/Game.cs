@@ -141,39 +141,41 @@ public class Game
                     {
                         LoadSnapshot(From, false);
                         CurrentLoaded = From;
+
+                        int LargestHistogram = 0;
+                        for (int i = 0; i < Client.Players.Length; i++)
+                        {
+                            if (Client.Players[i] != null)
+                            {
+                                Client.Players[i].Entity.StartClientPrediction(From);
+                                if (Client.Players[i].Entity.Histogram.Count > LargestHistogram)
+                                    LargestHistogram = Client.Players[i].Entity.Histogram.Count;
+                            }
+                        }
+                        for (int j = 0; j < LargestHistogram; j++)
+                        {
+                            for (int i = 0; i < Client.Players.Length; i++)
+                            {
+                                if (Client.Players[i] != null)
+                                {
+                                    Client.Players[i].Entity.ClientPrediction();
+                                }
+                            }
+                            DZEngine.PhysicsUpdate();
+                        }
+
+                        for (int i = 0; i < Client.Players.Length; i++)
+                        {
+                            if (Client.Players[i] != null)
+                            {
+                                Client.Players[i].Entity.EndClientPrediction();
+                            }
+                        }
                     }
                     float FromTick = (From.ServerTick * ServerToClientTick);
                     float Origin = (ClientTicks - FromTick);
                     float Time = Origin / ((To.ServerTick * ServerToClientTick) - FromTick);
                     Interpolate(From, To, Time);
-
-                    int LargestHistogram = 0;
-                    for (int i = 0; i < Client.Players.Length; i++)
-                    {
-                        if (Client.Players[i] != null && Client.Players[i].Entity.Histogram.Count > LargestHistogram)
-                        {
-                            Client.Players[i].Entity.StartClientPrediction(From);
-                            LargestHistogram = Client.Players[i].Entity.Histogram.Count;
-                        }
-                    }
-                    for (int j = 0; j < LargestHistogram; j++)
-                    {
-                        for (int i = 0; i < Client.Players.Length; i++)
-                        {
-                            if (Client.Players[i] != null)
-                            {
-                                Client.Players[i].Entity.ClientPrediction();
-                            }
-                        }
-                        DZEngine.PhysicsUpdate();
-                    }
-                    for (int i = 0; i < Client.Players.Length; i++)
-                    {
-                        if (Client.Players[i] != null)
-                        {
-                            Client.Players[i].Entity.EndClientPrediction();
-                        }
-                    }
                 }
                 else
                     LoadSnapshot(From, true);

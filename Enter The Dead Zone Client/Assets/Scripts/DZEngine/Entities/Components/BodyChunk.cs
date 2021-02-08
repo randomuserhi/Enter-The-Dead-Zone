@@ -90,16 +90,17 @@ namespace DeadZoneEngine.Entities.Components
 
         public override object GetSnapshot()
         {
-            return new Data()
+            Data D = new Data()
             {
-                Position = Position,
+                Position = new Vector2(Position.x, Position.y),
                 Rotation = Rotation,
-                Velocity = Velocity,
+                Velocity = new Vector2(Velocity.x, Velocity.y),
                 AngularVelocity = AngularVelocity,
                 InvMass = InvMass,
                 InvInertia = InvInertia,
                 ColliderRadius = Collider.radius
             };
+            return D;
         }
 
         public static object ParseBytesToSnapshot(DZNetwork.Packet Data)

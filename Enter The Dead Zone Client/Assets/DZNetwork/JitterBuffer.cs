@@ -97,6 +97,7 @@ namespace DZNetwork
         {
             while (!EqualityComparer<T>.Default.Equals(Start.Value, From))
             {
+                if (Start.Next == null) return;
                 Start = Start.Next;
                 _Count--;
             }

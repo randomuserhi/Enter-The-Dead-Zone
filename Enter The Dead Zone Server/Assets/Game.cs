@@ -18,7 +18,7 @@ using DeadZoneEngine.Controllers;
 public class Game
 {
     public static ulong ServerTicks = 0;
-    public static int ServerTickRate = 30;
+    public static int ServerTickRate = 60;
 
     /// <summary>
     /// Called once a frame
