@@ -10,7 +10,7 @@ using DeadZoneEngine.Entities;
 using DeadZoneEngine.Entities.Components;
 using DZNetwork;
 
-public class CoinEntity : AbstractWorldEntity, IPhysicsUpdatable, IRenderer, IServerSendable
+public class CoinEntity : AbstractWorldEntity, IUpdatable, IRenderer, IServerSendable
 {
     public int SortingLayer { get; set; }
     public int ServerObjectType { get; set; } = (int)DZSettings.EntityType.CoinEntity;
@@ -38,7 +38,7 @@ public class CoinEntity : AbstractWorldEntity, IPhysicsUpdatable, IRenderer, ISe
         Coin.Context = this;
         Coin.ContextType = DZSettings.EntityType.CoinEntity;
         Coin.Collider.radius = 0.01f;
-        Coin.Kinematic = true;
+        Coin.Velocity = new Vector2(UnityEngine.Random.Range(-5f, 5f), UnityEngine.Random.Range(-5f, 5f));
     }
 
     public Vector2 Position
@@ -63,11 +63,11 @@ public class CoinEntity : AbstractWorldEntity, IPhysicsUpdatable, IRenderer, ISe
 
     public void Render()
     {
-        Coin.RenderObject.transform.localScale = new Vector2(0.02f, 0.02f);
+        Coin.RenderObject.transform.localScale = new Vector2(0.2f, 0.2f);
         if (Health > 0)
-            Coin.RenderObject.color = Color.red;
+            Coin.RenderColor = Color.red;
         else
-            Coin.RenderObject.color = Color.magenta;
+            Coin.RenderColor = Color.magenta;
     }
 
     public void ServerUpdate()
@@ -75,7 +75,7 @@ public class CoinEntity : AbstractWorldEntity, IPhysicsUpdatable, IRenderer, ISe
 
     }
 
-    public void FixedUpdate()
+    public void Update()
     {
         Decay -= Time.fixedDeltaTime;
         if (Decay < 0)
@@ -106,12 +106,12 @@ public class CoinEntity : AbstractWorldEntity, IPhysicsUpdatable, IRenderer, ISe
                 DZEngine.Destroy(this);
             }
             float Speed = 10;
-            Coin.Velocity += Dir.normalized * Speed;
-            Coin.Velocity *= 0.3f;
+            Coin.Velocity += Dir.normalized * Speed * Time.fixedDeltaTime;
         }
-        if (NearbyCreatures.Count == 0)
-            Coin.Velocity *= 0.9f;
+        Coin.Velocity *= 0.9f;
     }
+
+    public void BodyPhysicsUpdate() { }
 
     public void IsolateVelocity() { }
 

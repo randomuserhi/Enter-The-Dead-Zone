@@ -15,7 +15,8 @@ public static class DZSettings
         BulletEntity,
         EnemyCreature,
         Turret,
-        CoinEntity
+        CoinEntity,
+        CrystalEntity
     }
 
     public static int NumPhysicsIterations = 10;

@@ -62,8 +62,11 @@ public class CoinEntity : AbstractWorldEntity, IPhysicsUpdatable, IRenderer, ISe
 
     public void Render()
     {
-        Coin.RenderObject.transform.localScale = new Vector2(0.02f, 0.02f);
-        Coin.RenderObject.color = Color.magenta;
+        Coin.RenderObject.transform.localScale = new Vector2(0.2f, 0.2f);
+        if (Health > 0)
+            Coin.RenderColor = Color.red;
+        else
+            Coin.RenderColor = Color.magenta;
     }
 
     public void ServerUpdate()

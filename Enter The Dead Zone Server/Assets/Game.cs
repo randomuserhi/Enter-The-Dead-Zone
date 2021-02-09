@@ -68,6 +68,10 @@ public class Game
         Packet SnapshotPacket = new Packet();
         SnapshotPacket.Write(ServerTickRate);
         SnapshotPacket.Write(ServerTicks);
+        SnapshotPacket.Write(Main.LifeForce[0]);
+        SnapshotPacket.Write(Main.LifeForce[1]);
+        SnapshotPacket.Write(Main.LifeForce[2]);
+        SnapshotPacket.Write(Main.Money);
 
         SnapshotPacket.Write(DZEngine.ServerSendableObjects.Count);
         for (int i = 0; i < DZEngine.ServerSendableObjects.Count; i++)

@@ -16,7 +16,7 @@ public class Turret : AbstractCreature, IServerSendable
     public bool ProtectedDeletion { get; set; } = false;
 
     public float Timer = 0;
-    public float FireRate = 4;
+    public float FireRate = 2;
     public float LifeTime = 150;
 
     public Turret(ushort ID) : base(ID)

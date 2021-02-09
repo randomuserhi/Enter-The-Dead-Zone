@@ -105,56 +105,69 @@ public class BulletEntity : AbstractWorldEntity, IPhysicsUpdatable, IRenderer, I
                 Vector2 NewPosition = Bolt.Position + Direction * Distance;
                 AbstractWorld WorldContext = Hit.collider.gameObject.GetComponent<AbstractWorld>();
                 Direction = Vector2.Reflect(Direction, Hit.normal).normalized;
-                if (WorldContext != null)
-                {
-                    if (WorldContext.Type == DZSettings.EntityType.PlayerCreature)
-                    {
-                        PlayerCreature Player = (PlayerCreature)WorldContext.Context;
-                        Main.TakeLifeForce();
-                    }
-                    else if (WorldContext.Type == DZSettings.EntityType.EnemyCreature)
-                    {
-                        EnemyCreature Enemy = (EnemyCreature)WorldContext.Context;
-                        Enemy.ApplyVelocity(-Direction, 10);
-                        Enemy.Health--;
-                        if (Enemy.State == EnemyCreature.BodyState.Limp)
-                        {
-                            Bolt.Position = NewPosition + Direction * Time.fixedDeltaTime;
-                            if (NumBounces > 0)
-                            {
-                                NumBounces--;
-                                return;
-                            }
-                        }
-                    }
-                    else if (WorldContext.Type == DZSettings.EntityType.Turret)
-                    {
-                        ((Turret)WorldContext.Context).LifeTime -= 1;
-                        Bolt.Position = NewPosition + Direction * Time.fixedDeltaTime;
-                        if (NumBounces > 0)
-                        {
-                            NumBounces--;
-                            return;
-                        }
-                    }
-                    else if (WorldContext.Type == DZSettings.EntityType.BulletEntity)
-                    {
-                        Bolt.Position = NewPosition + Direction * Time.fixedDeltaTime;
-                        ((BulletEntity)WorldContext.Context).Direction = -Direction;
-                        if (NumBounces > 0)
-                        {
-                            NumBounces--;
-                            return;
-                        }
-                    }
-                }
+                CheckContext(WorldContext);
             }
 
             DZEngine.Destroy(this);
         }
         else
         {
+            int NumContacts = Bolt.GetContacts();
+            if (NumContacts > 0)
+            {
+                for (int i = 0; i < NumContacts; i++)
+                {
+                    AbstractWorld WorldContext = Bolt.Contacts[i].otherCollider.gameObject.GetComponent<AbstractWorld>();
+                    Direction = Vector2.Reflect(Direction, Vector2.Perpendicular((Vector2)Bolt.Contacts[i].otherCollider.transform.position - Position)).normalized;
+                    CheckContext(WorldContext);
+                }
+            }
+
             Bolt.Position += Direction * ScaledSpeed;
+        }
+    }
+
+    private void CheckContext(AbstractWorld WorldContext)
+    {
+        if (WorldContext != null)
+        {
+            if (WorldContext.Type == DZSettings.EntityType.PlayerCreature)
+            {
+                PlayerCreature Player = (PlayerCreature)WorldContext.Context;
+                Main.TakeLifeForce();
+            }
+            else if (WorldContext.Type == DZSettings.EntityType.EnemyCreature)
+            {
+                EnemyCreature Enemy = (EnemyCreature)WorldContext.Context;
+                Enemy.ApplyVelocity(-Direction, 10);
+                Enemy.Health--;
+                if (Enemy.State == EnemyCreature.BodyState.Limp)
+                {
+                    if (NumBounces > 0)
+                    {
+                        NumBounces--;
+                        return;
+                    }
+                }
+            }
+            else if (WorldContext.Type == DZSettings.EntityType.Turret)
+            {
+                ((Turret)WorldContext.Context).LifeTime -= 1;
+                if (NumBounces > 0)
+                {
+                    NumBounces--;
+                    return;
+                }
+            }
+            else if (WorldContext.Type == DZSettings.EntityType.BulletEntity)
+            {
+                ((BulletEntity)WorldContext.Context).Direction = -Direction;
+                if (NumBounces > 0)
+                {
+                    NumBounces--;
+                    return;
+                }
+            }
         }
     }
 

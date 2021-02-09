@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 using DeadZoneEngine;
 using DeadZoneEngine.Entities;
@@ -21,6 +22,7 @@ public static class Main
     {
         InputManager.Initialize();
 
+        TextBox = GameObject.FindGameObjectWithTag("TextBox").GetComponent<Text>();
         LoadMenu();
     }
 
@@ -86,6 +88,10 @@ public static class Main
         TriggerPlates.Add(new TriggerPlate(new Vector2(4, 2), new Vector2(0, -3)));
     }
 
+    public static int[] LifeForce = new int[3];
+    public static int Money = 0;
+    public static Text TextBox;
+
     // Update is called once per frame
     public static void FixedUpdate()
     {
@@ -94,5 +100,7 @@ public static class Main
             if (Renderer.SortingLayer == (int)SortingLayers.Default)
                 Renderer.RenderObject.sortingOrder = Mathf.RoundToInt(-Renderer.RenderObject.transform.position.y * 10);
         }
+
+        TextBox.text = "[" + string.Format("{0,2:##}", LifeForce[0]) + "] [" + string.Format("{0,2:##}", LifeForce[1]) + "] [" + string.Format("{0,2:##}", LifeForce[2]) + "] | ($10 per Tower) $" + Money;
     }
 }

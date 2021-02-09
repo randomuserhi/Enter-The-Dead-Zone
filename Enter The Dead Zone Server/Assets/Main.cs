@@ -248,7 +248,7 @@ public static class Main
         DZEngine.Destroy(StartPlate);
     }
 
-    private static int[] LifeForce = new int[3] { 5, 5, 5 };
+    public static int[] LifeForce = new int[3] { 10, 10, 10 };
     private static float WaveTimer = 5;
     private static int WaveSize = 10;
     private static int WaveMaxSize = 10;
@@ -259,6 +259,7 @@ public static class Main
     private static int EnemiesToSpawn = 5;
     private static float SpawnTimer = 0;
     public static int Money = 40;
+    public static float Drain = 0;
     private static List<EnemyCreature> Enemies = new List<EnemyCreature>();
     public static List<Turret> Towers = new List<Turret>();
 
@@ -267,7 +268,10 @@ public static class Main
         for (int i = 0; i < LifeForce.Length; i++)
         {
             if (LifeForce[i] > 0)
+            {
                 LifeForce[i]--;
+                break;
+            }
         }
     }
 
@@ -276,10 +280,31 @@ public static class Main
         for (int i = 0; i < LifeForce.Length; i++)
         {
             if (LifeForce[i] != 0)
+            {
                 LifeForce[i] += Health;
-            if (LifeForce[i] > 5)
-                LifeForce[i] = 5;
+                if (LifeForce[i] > 10)
+                    LifeForce[i] = 10;
+                break;
+            }
         }
+    }
+
+    private static void Reset()
+    {
+        Money = 40;
+        for (int i = 0; i < Enemies.Count; i++)
+        {
+            DZEngine.Destroy(Enemies[i]);
+        }
+        Enemies.Clear();
+        for (int i = 0; i < Towers.Count; i++)
+        {
+            DZEngine.Destroy(Towers[i]);
+        }
+        Towers.Clear();
+        LifeForce = new int[3] { 10, 10, 10 };
+        GameStarted = false;
+        LoadMenu();
     }
 
     // Update is called once per frame
@@ -293,6 +318,32 @@ public static class Main
 
         if (GameStarted)
         {
+            if (Drain <= 0)
+            {
+                Drain = 5;
+                TakeLifeForce();
+            }
+            else Drain -= Time.fixedDeltaTime;
+
+            List<Client> Clients = ClientID.ConnectedClients.Values.ToList();
+            int TotalNumPlayers = 0;
+            foreach (Client C in Clients)
+            {
+                if (C == null) continue;
+                if (C.Players == null) continue;
+                for (int i = 0; i < C.Players.Length; i++)
+                {
+                    if (C.Players[i] == null) continue;
+                    if (C.Players[i].Entity == null) continue;
+                    TotalNumPlayers++;
+                }
+            }
+
+            if (TotalNumPlayers == 0)
+            {
+                Reset();
+            }
+
             bool Alive = false;
             for (int i = 0; i < LifeForce.Length; i++)
             {
@@ -300,16 +351,16 @@ public static class Main
                     Alive = true;
             }
 
-            if (WaveTimer > 0 && Enemies.Count == 0)
+            if (WaveTimer > 0)
             {
                 WaveTimer -= Time.fixedDeltaTime;
             }
-            else if (Enemies.Count == 0)
+            else
             {
-                WaveTimer = 5;
+                WaveTimer = Random.Range(4f, 10f);
                 Wave++;
-                EnemiesToSpawn = Random.Range(0, WaveMaxSize);
-
+                EnemiesToSpawn = Random.Range(10, WaveMaxSize);
+                WaveHealth++;
                 WaveSpacing = Random.Range(0.1f, WaveSpacingMax);
                 WaveSpacingMax += Random.Range(-0.5f, 0.5f);
                 if (Random.Range(0f, 1f) < 0.3)
@@ -337,20 +388,7 @@ public static class Main
 
             if (Alive == false)
             {
-                Money = 40;
-                for (int i = 0; i < Enemies.Count; i++)
-                {
-                    DZEngine.Destroy(Enemies[i]);
-                }
-                Enemies.Clear();
-                for (int i = 0; i < Towers.Count; i++)
-                {
-                    DZEngine.Destroy(Towers[i]);
-                }
-                Towers.Clear();
-                LifeForce = new int[3] { 10, 10, 10 };
-                GameStarted = false;
-                LoadMenu();
+                Reset();
             }
         }
     }

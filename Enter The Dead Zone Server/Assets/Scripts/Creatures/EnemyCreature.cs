@@ -155,7 +155,6 @@ public class EnemyCreature : AbstractCreature, IServerSendable
         }
         if (Health < -CorpseHP)
         {
-            Debug.Log("Bruh");
             DZEngine.Destroy(this);
         }
 

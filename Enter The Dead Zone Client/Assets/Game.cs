@@ -256,6 +256,10 @@ public class Game
         int CheckSum = Packet.Data.ReadInt();
         ServerTickRate = Packet.Data.ReadInt();
         ulong ServerTick = Packet.Data.ReadULong();
+        Main.LifeForce[0] = Packet.Data.ReadInt();
+        Main.LifeForce[1] = Packet.Data.ReadInt();
+        Main.LifeForce[2] = Packet.Data.ReadInt();
+        Main.Money = Packet.Data.ReadInt();
         if (ServerTick <= (Histogram.Count == 0 ? 0 : Histogram.Last.ServerTick))
         {
             Debug.LogWarning("Received a late packet");
@@ -362,6 +366,7 @@ public class Game
             case DZSettings.EntityType.EnemyCreature: return EnemyCreature.ParseBytesToSnapshot(Data);
             case DZSettings.EntityType.Turret: return Turret.ParseBytesToSnapshot(Data);
             case DZSettings.EntityType.CoinEntity: return CoinEntity.ParseBytesToSnapshot(Data);
+            case DZSettings.EntityType.CrystalEntity: return CrystalEntity.ParseBytesToSnapshot(Data);
             case DZSettings.EntityType.Null: return null;
             default: Debug.LogWarning("Parsing unknown entity type");  return null;
         }
@@ -378,6 +383,7 @@ public class Game
             case DZSettings.EntityType.EnemyCreature: return new EnemyCreature(ID);
             case DZSettings.EntityType.Turret: return new Turret(ID);
             case DZSettings.EntityType.CoinEntity: return new CoinEntity(ID);
+            case DZSettings.EntityType.CrystalEntity: return new CrystalEntity(ID);
             case DZSettings.EntityType.Null: return null;
             default: Debug.LogWarning("Parsing unknown entity type"); return null;
         }

@@ -254,6 +254,7 @@ public class EnemyCreature : AbstractCreature, IServerSendable
     {
         Data From = (Data)FromData;
         Data To = (Data)ToData;
+        State = From.State;
         BodyChunks[0].Interpolate(From.BodyChunk0, To.BodyChunk0, Time);
         BodyChunks[1].Interpolate(From.BodyChunk1, To.BodyChunk1, Time);
         BodyChunkConnections[0].Interpolate(From.BodyChunkConnections0, To.BodyChunkConnections0, Time);
@@ -262,6 +263,7 @@ public class EnemyCreature : AbstractCreature, IServerSendable
     public override void Extrapolate(object FromData, float Time)
     {
         Data From = (Data)FromData;
+        State = From.State;
         BodyChunks[0].Extrapolate(From.BodyChunk0, Time);
         BodyChunks[1].Extrapolate(From.BodyChunk1, Time);
         BodyChunkConnections[0].Extrapolate(From.BodyChunkConnections0, Time);

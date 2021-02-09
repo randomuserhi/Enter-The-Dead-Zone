@@ -43,7 +43,7 @@ public class PlayerController : Controller
                     .With("Down", Device.path + "/stick/down")
                     .With("Left", Device.path + "/stick/left")
                     .With("Right", Device.path + "/stick/right");
-            Interact.AddBinding(Device.path + "/dpad/up");
+            Interact.AddBinding(Device.path + "/trigger");
         }
         Movement.performed += MoveAction;
     }
