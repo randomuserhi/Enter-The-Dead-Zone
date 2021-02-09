@@ -13,7 +13,9 @@ public static class DZSettings
         Tilemap,
         TriggerPlate,
         BulletEntity,
-        EnemyCreature
+        EnemyCreature,
+        Turret,
+        CoinEntity
     }
 
     public static int NumPhysicsIterations = 10;

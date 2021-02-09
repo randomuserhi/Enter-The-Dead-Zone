@@ -61,6 +61,12 @@ public class PlayerCreature : AbstractCreature, IServerSendable
         Initialize();
     }
 
+    public override void Render()
+    {
+        BodyChunks[0].RenderObject.gameObject.transform.localScale = new Vector2(0.5f, 0.5f);
+        BodyChunks[1].RenderObject.gameObject.transform.localScale = new Vector2(0.5f, 0.5f);
+    }
+
     Color BodyColor;
     private void Initialize()
     {
@@ -73,6 +79,8 @@ public class PlayerCreature : AbstractCreature, IServerSendable
         BodyChunks = new BodyChunk[2];
         BodyChunks[0] = new BodyChunk(this);
         BodyChunks[1] = new BodyChunk(this);
+        BodyChunks[0].Collider.radius = 0.25f;
+        BodyChunks[1].Collider.radius = 0.25f;
         BodyChunks[0].Context = this;
         BodyChunks[0].ContextType = DZSettings.EntityType.PlayerCreature;
         BodyChunks[1].Context = this;

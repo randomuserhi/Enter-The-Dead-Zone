@@ -109,7 +109,7 @@ namespace DeadZoneEngine.Entities.Components
             Data.AddRange(BitConverter.GetBytes(AngularVelocity));
             Data.AddRange(BitConverter.GetBytes(InvMass));
             Data.AddRange(BitConverter.GetBytes(InvInertia));
-            Data.AddRange(BitConverter.GetBytes(0.5f));
+            Data.AddRange(BitConverter.GetBytes(Collider.radius));
             return Data.ToArray();
         }
 

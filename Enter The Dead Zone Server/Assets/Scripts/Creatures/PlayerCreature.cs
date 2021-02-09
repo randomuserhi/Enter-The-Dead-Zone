@@ -61,6 +61,12 @@ public class PlayerCreature : AbstractCreature, IServerSendable
         Initialize();
     }
 
+    public override void Render()
+    {
+        BodyChunks[0].RenderObject.gameObject.transform.localScale = new Vector2(0.5f, 0.5f);
+        BodyChunks[1].RenderObject.gameObject.transform.localScale = new Vector2(0.5f, 0.5f);
+    }
+
     Color BodyColor;
     private void Initialize()
     {
@@ -73,6 +79,8 @@ public class PlayerCreature : AbstractCreature, IServerSendable
         BodyChunks = new BodyChunk[2];
         BodyChunks[0] = new BodyChunk(this);
         BodyChunks[1] = new BodyChunk(this);
+        BodyChunks[0].Collider.radius = 0.25f;
+        BodyChunks[1].Collider.radius = 0.25f;
         BodyChunks[0].Context = this;
         BodyChunks[0].ContextType = DZSettings.EntityType.PlayerCreature;
         BodyChunks[1].Context = this;
@@ -134,8 +142,56 @@ public class PlayerCreature : AbstractCreature, IServerSendable
         BodyChunks[1].Kinematic = false;
     }
 
+    bool Placed = false;
     public override void Update()
     {
+        if (Main.GameStarted)
+        {
+            if (Controller.Interact > 0 && !Placed)
+            {
+                Placed = true;
+                Vector2Int PlacePositionBounds0 = Main.Tilemap.WorldPositionToTilemap(Position + new Vector2(0.3f, 0.3f));
+                Vector2Int PlacePositionBounds1 = Main.Tilemap.WorldPositionToTilemap(Position + new Vector2(0.3f, -0.3f));
+                Vector2Int PlacePositionBounds2 = Main.Tilemap.WorldPositionToTilemap(Position + new Vector2(-0.3f, 0.3f));
+                Vector2Int PlacePositionBounds3 = Main.Tilemap.WorldPositionToTilemap(Position + new Vector2(-0.3f, -0.3f));
+                if (Main.Tilemap.GetFloorTileAtPosition(PlacePositionBounds0).AnimationFrame != 2 &&
+                    Main.Tilemap.GetFloorTileAtPosition(PlacePositionBounds1).AnimationFrame != 2 &&
+                    Main.Tilemap.GetFloorTileAtPosition(PlacePositionBounds2).AnimationFrame != 2 &&
+                    Main.Tilemap.GetFloorTileAtPosition(PlacePositionBounds3).AnimationFrame != 2 &&
+                    Main.Tilemap.GetWallTileAtPosition(PlacePositionBounds0).Blank != 1 &&
+                    Main.Tilemap.GetWallTileAtPosition(PlacePositionBounds1).Blank != 1 &&
+                    Main.Tilemap.GetWallTileAtPosition(PlacePositionBounds2).Blank != 1 &&
+                    Main.Tilemap.GetWallTileAtPosition(PlacePositionBounds3).Blank != 1)
+                {
+                    Collider2D[] C = Physics2D.OverlapCircleAll(Position, 0.5f);
+                    bool ValidPlace = true;
+                    for (int i = 0; i < C.Length; i++)
+                    {
+                        if (C[i] != null)
+                        {
+                            AbstractWorld AW = C[i].GetComponent<AbstractWorld>();
+                            if (AW == null || (AW != null && AW.Type != DZSettings.EntityType.PlayerCreature))
+                            {
+                                ValidPlace = false;
+                            }
+                        }
+                    }
+
+                    if (ValidPlace && Main.Money >= 10)
+                    {
+                        Main.Money -= 10;
+                        Turret T = new Turret();
+                        T.Position = Position;
+                        Main.Towers.Add(T);
+                    }
+                }
+            }
+            else if (Controller.Interact <= 0)
+            {
+                Placed = false;
+            }
+        }
+
         UpdateBodyState();
         UpdateMovement();
     }

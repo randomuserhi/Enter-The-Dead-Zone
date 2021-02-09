@@ -312,8 +312,6 @@ namespace DeadZoneEngine
 
         public static void NonPhysicsUpdate()
         {
-            UpdateManagedLists(); //Update DZEngine.ManagedLists
-
             //Push entites into DZEngine
             EntitiesToPush.RemoveAll(I =>
             {
@@ -363,6 +361,9 @@ namespace DeadZoneEngine
                 }
                 return DeleteHandle(I);
             });
+
+            UpdateManagedLists(); //Update DZEngine.ManagedLists
+
         }
 
         public static void PhysicsUpdate()
@@ -445,8 +446,6 @@ namespace DeadZoneEngine
         public static void FixedUpdate()
         {
             InvDeltaTime = Game.ServerTickRate;
-
-            UpdateManagedLists(); //Update DZEngine.ManagedLists
 
             //Push entites into DZEngine
             EntitiesToPush.RemoveAll(I =>
@@ -555,6 +554,8 @@ namespace DeadZoneEngine
                 }
                 return DeleteHandle(I);
             });
+
+            UpdateManagedLists(); //Update DZEngine.ManagedLists
         }
     }
 }

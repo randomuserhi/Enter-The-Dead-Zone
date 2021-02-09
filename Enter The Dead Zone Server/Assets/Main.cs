@@ -16,7 +16,7 @@ public static class Main
     }
     private static DZEngine.ManagedList<IRenderer<SpriteRenderer>> SpriteRenderers = new DZEngine.ManagedList<IRenderer<SpriteRenderer>>(); //List of SpriteRenderers
 
-    public static Tilemap MenuMap;
+    public static Tilemap Tilemap;
     private static TriggerPlate StartPlate;
     public static bool GameStarted = false;
 
@@ -90,14 +90,14 @@ public static class Main
             }
         }
 
-        if (MenuMap == null)
+        if (Tilemap == null)
         {
-            MenuMap = (Tilemap)new Tilemap(32, 64, new Vector2Int(20, 20), Tilemap.TilesFromString(MenuFloorMap), Tilemap.TilesFromString(MenuWallMap)).Create();
+            Tilemap = (Tilemap)new Tilemap(32, 64, new Vector2Int(20, 20), Tilemap.TilesFromString(MenuFloorMap), Tilemap.TilesFromString(MenuWallMap)).Create();
         }
         else
         {
-            MenuMap.Resize(new Vector2Int(20, 20), Tilemap.TilesFromString(MenuFloorMap), Tilemap.TilesFromString(MenuWallMap));
-            MenuMap.ReleaseUnusedResources();
+            Tilemap.Resize(new Vector2Int(20, 20), Tilemap.TilesFromString(MenuFloorMap), Tilemap.TilesFromString(MenuWallMap));
+            Tilemap.ReleaseUnusedResources();
         }
 
         StartPlate = new TriggerPlate(new Vector2(4, 2), new Vector2(0, -3));
@@ -238,17 +238,48 @@ public static class Main
         };
     }
 
+    private static EnemyCreature.Path CurrentPath;
     public static void StartGame()
     {
-        EnemyCreature.Path P = GeneratePath(20, 20);
-        MenuMap.Resize(new Vector2Int(20, 20), Tilemap.TilesFromString(P.Map), Tilemap.TilesFromString(MenuWallMap));
+        CurrentPath = GeneratePath(20, 20);
+        Tilemap.Resize(new Vector2Int(20, 20), Tilemap.TilesFromString(CurrentPath.Map), Tilemap.TilesFromString(MenuWallMap));
 
         GameStarted = true;
         DZEngine.Destroy(StartPlate);
+    }
 
-        EnemyCreature EC = new EnemyCreature();
-        EC.Traversal = P;
-        EC.Position = MenuMap.TilemapToWorldPosition(P.Traversal[0].Position);
+    private static int[] LifeForce = new int[3] { 5, 5, 5 };
+    private static float WaveTimer = 5;
+    private static int WaveSize = 10;
+    private static int WaveMaxSize = 10;
+    private static int WaveHealth = 1;
+    private static int Wave = 0;
+    private static float WaveSpacing = 0.3f;
+    private static float WaveSpacingMax = 1;
+    private static int EnemiesToSpawn = 5;
+    private static float SpawnTimer = 0;
+    public static int Money = 40;
+    private static List<EnemyCreature> Enemies = new List<EnemyCreature>();
+    public static List<Turret> Towers = new List<Turret>();
+
+    public static void TakeLifeForce()
+    {
+        for (int i = 0; i < LifeForce.Length; i++)
+        {
+            if (LifeForce[i] > 0)
+                LifeForce[i]--;
+        }
+    }
+
+    public static void GainLifeForce(int Health)
+    {
+        for (int i = 0; i < LifeForce.Length; i++)
+        {
+            if (LifeForce[i] != 0)
+                LifeForce[i] += Health;
+            if (LifeForce[i] > 5)
+                LifeForce[i] = 5;
+        }
     }
 
     // Update is called once per frame
@@ -262,7 +293,65 @@ public static class Main
 
         if (GameStarted)
         {
-            
+            bool Alive = false;
+            for (int i = 0; i < LifeForce.Length; i++)
+            {
+                if (LifeForce[i] > 0)
+                    Alive = true;
+            }
+
+            if (WaveTimer > 0 && Enemies.Count == 0)
+            {
+                WaveTimer -= Time.fixedDeltaTime;
+            }
+            else if (Enemies.Count == 0)
+            {
+                WaveTimer = 5;
+                Wave++;
+                EnemiesToSpawn = Random.Range(0, WaveMaxSize);
+
+                WaveSpacing = Random.Range(0.1f, WaveSpacingMax);
+                WaveSpacingMax += Random.Range(-0.5f, 0.5f);
+                if (Random.Range(0f, 1f) < 0.3)
+                {
+                    WaveSpacing = 0.3f;
+                }
+
+                if (WaveSpacing < 0.3)
+                    WaveSpacing = 0.3f;
+            }
+
+            SpawnTimer += Time.fixedDeltaTime;
+            if (WaveTimer <= 0 && EnemiesToSpawn > 0 && SpawnTimer > WaveSpacing)
+            {
+                EnemiesToSpawn--;
+
+                SpawnTimer = 0;
+
+                EnemyCreature EC = new EnemyCreature();
+                EC.Position = Tilemap.TilemapToWorldPosition(CurrentPath.Traversal[0].Position);
+                EC.Health = WaveHealth;
+                EC.Traversal = CurrentPath;
+                Enemies.Add(EC);
+            }
+
+            if (Alive == false)
+            {
+                Money = 40;
+                for (int i = 0; i < Enemies.Count; i++)
+                {
+                    DZEngine.Destroy(Enemies[i]);
+                }
+                Enemies.Clear();
+                for (int i = 0; i < Towers.Count; i++)
+                {
+                    DZEngine.Destroy(Towers[i]);
+                }
+                Towers.Clear();
+                LifeForce = new int[3] { 10, 10, 10 };
+                GameStarted = false;
+                LoadMenu();
+            }
         }
     }
 }

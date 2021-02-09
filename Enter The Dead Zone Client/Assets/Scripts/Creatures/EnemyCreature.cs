@@ -50,12 +50,23 @@ public class EnemyCreature : AbstractCreature, IServerSendable
         Initialize();
     }
 
+    public override void Render()
+    {
+        BodyChunks[0].RenderObject.gameObject.transform.localScale = new Vector2(0.5f, 0.5f);
+        BodyChunks[1].RenderObject.gameObject.transform.localScale = new Vector2(0.5f, 0.5f);
+        if (State == BodyState.Limp) BodyColor = Color.grey;
+        BodyChunks[0].RenderColor = BodyColor;
+        BodyChunks[1].RenderColor = BodyColor;
+    }
+
     Color BodyColor;
     private void Initialize()
     {
         BodyChunks = new BodyChunk[2];
         BodyChunks[0] = new BodyChunk(this);
         BodyChunks[1] = new BodyChunk(this);
+        BodyChunks[0].Collider.radius = 0.25f;
+        BodyChunks[1].Collider.radius = 0.25f;
         BodyChunks[0].Context = this;
         BodyChunks[0].ContextType = DZSettings.EntityType.EnemyCreature;
         BodyChunks[1].Context = this;
@@ -109,11 +120,6 @@ public class EnemyCreature : AbstractCreature, IServerSendable
 
     public override void Update()
     {
-        if (Health < -CorpseHP)
-        {
-            State = BodyState.Limp;
-        }
-
         UpdateBodyState();
         UpdateMovement();
     }

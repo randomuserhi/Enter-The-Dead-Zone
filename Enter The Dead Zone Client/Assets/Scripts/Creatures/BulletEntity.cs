@@ -34,7 +34,7 @@ public class BulletEntity : AbstractWorldEntity, IPhysicsUpdatable, IRenderer, I
     public void Init()
     {
         Bolt = new BodyChunk();
-        Bolt.Collider.radius = 0.2f;
+        Bolt.Collider.radius = 0.1f;
         Bolt.Kinematic = true;
     }
 
@@ -60,7 +60,8 @@ public class BulletEntity : AbstractWorldEntity, IPhysicsUpdatable, IRenderer, I
 
     public void Render()
     {
-        Bolt.RenderObject.transform.localScale = new Vector2(0.5f, 0.5f);
+        Bolt.RenderObject.transform.localScale = new Vector2(0.2f, 0.2f);
+        Bolt.RenderObject.color = Color.red;
     }
 
     public void ServerUpdate()

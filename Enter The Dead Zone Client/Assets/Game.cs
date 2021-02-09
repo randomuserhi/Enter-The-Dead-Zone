@@ -360,6 +360,8 @@ public class Game
             case DZSettings.EntityType.TriggerPlate: return TriggerPlate.ParseBytesToSnapshot(Data);
             case DZSettings.EntityType.BulletEntity: return BulletEntity.ParseBytesToSnapshot(Data);
             case DZSettings.EntityType.EnemyCreature: return EnemyCreature.ParseBytesToSnapshot(Data);
+            case DZSettings.EntityType.Turret: return Turret.ParseBytesToSnapshot(Data);
+            case DZSettings.EntityType.CoinEntity: return CoinEntity.ParseBytesToSnapshot(Data);
             case DZSettings.EntityType.Null: return null;
             default: Debug.LogWarning("Parsing unknown entity type");  return null;
         }
@@ -374,6 +376,8 @@ public class Game
             case DZSettings.EntityType.TriggerPlate: return new TriggerPlate(ID);
             case DZSettings.EntityType.BulletEntity: return new BulletEntity(ID);
             case DZSettings.EntityType.EnemyCreature: return new EnemyCreature(ID);
+            case DZSettings.EntityType.Turret: return new Turret(ID);
+            case DZSettings.EntityType.CoinEntity: return new CoinEntity(ID);
             case DZSettings.EntityType.Null: return null;
             default: Debug.LogWarning("Parsing unknown entity type"); return null;
         }

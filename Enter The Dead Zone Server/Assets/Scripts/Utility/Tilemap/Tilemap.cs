@@ -136,13 +136,32 @@ public class Tilemap : AbstractWorldEntity, IUpdatable, IRenderer, IServerSendab
         Initialize();
     }
 
-    public Vector2 TilemapToWorldPosition(Vector2 Position)
+    public Vector2 TilemapToWorldPosition(Vector2Int Position)
     {
         return new Vector2
         (
             Self.transform.position.x - TilemapSize.x / 2f / TilesPerUnit + Position.x / TilesPerUnit + TilesPerUnit / 2, 
             Self.transform.position.y + TilemapSize.y / 2f / TilesPerUnit - Position.y / TilesPerUnit - TilesPerUnit / 2
         );
+    }
+
+    public Vector2Int WorldPositionToTilemap(Vector2 Position)
+    {
+        return new Vector2Int
+        (
+            Mathf.RoundToInt(TilesPerUnit * (Position.x - Self.transform.position.x + TilemapSize.x / 2f / TilesPerUnit - TilesPerUnit / 2)),
+            Mathf.RoundToInt(TilesPerUnit * (Self.transform.position.y + TilemapSize.y / 2f / TilesPerUnit - Position.y - TilesPerUnit / 2))
+        );
+    }
+
+    public Tile GetFloorTileAtPosition(Vector2Int Position)
+    {
+        return FloorMap[Position.y * TilemapSize.x + Position.x];
+    }
+
+    public Tile GetWallTileAtPosition(Vector2Int Position)
+    {
+        return FloorMap[Position.y * TilemapSize.x + Position.x];
     }
 
     public static Tile[] TilesFromString(string TilesToParse)

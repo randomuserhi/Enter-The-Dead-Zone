@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using UnityEngine;
 using DeadZoneEngine.Entities;
 using DeadZoneEngine.Entities.Components;
+using DeadZoneEngine;
 
 public class EnemyCreature : AbstractCreature, IServerSendable
 {
@@ -29,6 +30,7 @@ public class EnemyCreature : AbstractCreature, IServerSendable
     public int CurrentWayPoint = 0;
     public Path Traversal;
 
+    public float DecayTimer = 5;
     public int CorpseHP = 5;
     public int Health = 5;
     public float Speed = 1;
@@ -50,12 +52,24 @@ public class EnemyCreature : AbstractCreature, IServerSendable
         Initialize();
     }
 
+    public override void Render()
+    {
+        BodyChunks[0].RenderObject.gameObject.transform.localScale = new Vector2(0.5f, 0.5f);
+        BodyChunks[1].RenderObject.gameObject.transform.localScale = new Vector2(0.5f, 0.5f);
+
+        if (State == BodyState.Limp) BodyColor = Color.grey;
+        BodyChunks[0].RenderColor = BodyColor;
+        BodyChunks[1].RenderColor = BodyColor;
+    }
+
     Color BodyColor;
     private void Initialize()
     {
         BodyChunks = new BodyChunk[2];
         BodyChunks[0] = new BodyChunk(this);
         BodyChunks[1] = new BodyChunk(this);
+        BodyChunks[0].Collider.radius = 0.25f;
+        BodyChunks[1].Collider.radius = 0.25f;
         BodyChunks[0].Context = this;
         BodyChunks[0].ContextType = DZSettings.EntityType.EnemyCreature;
         BodyChunks[1].Context = this;
@@ -107,22 +121,57 @@ public class EnemyCreature : AbstractCreature, IServerSendable
     {
     }
 
+    public Func<Tilemap, WayPoint, Vector2, Vector2> PathingAlgorithm = (Map, WP, Position) =>
+    {
+        Vector2 WPActualPosition = Main.Tilemap.TilemapToWorldPosition(WP.Position);
+        return (WPActualPosition - Position).normalized;
+    };
+
+    private bool Death = false;
     public override void Update()
     {
-        if (Health < -CorpseHP)
+        if (Health < 0)
         {
             State = BodyState.Limp;
+            if (DecayTimer > 0)
+                DecayTimer -= Time.fixedDeltaTime;
+            else
+            {
+                DecayTimer = 5;
+                Health--;
+            }
+            if (!Death)
+            {
+                Death = true;
+                int Count = UnityEngine.Random.Range(1, 4);
+                for (int i = 0; i < Count; i++)
+                {
+                    CoinEntity CE = new CoinEntity();
+                    CE.Money = 1;
+                    CE.Position = Position;
+                    CE.Health = UnityEngine.Random.Range(0f, 1f) < 0.25f ? 1 : 0;
+                }
+            }
+        }
+        if (Health < -CorpseHP)
+        {
+            Debug.Log("Bruh");
+            DZEngine.Destroy(this);
         }
 
         if (CurrentWayPoint < Traversal.Traversal.Count)
         {
             WayPoint WP = Traversal.Traversal[CurrentWayPoint];
-            Vector2 WPActualPosition = Main.MenuMap.TilemapToWorldPosition(WP.Position);
-            MovementDirection = (WPActualPosition - Position).normalized;
-            Debug.Log(WP.Direction);
+            Vector2 WPActualPosition = Main.Tilemap.TilemapToWorldPosition(WP.Position);
+            MovementDirection = PathingAlgorithm(Main.Tilemap, WP, Position);
             if ((Position.x < WPActualPosition.x + 0.5 && Position.x > WPActualPosition.x - 0.5) &&
                 (Position.y < WPActualPosition.y + 0.5 && Position.y > WPActualPosition.y - 0.5))
                 CurrentWayPoint++;
+        }
+        else
+        {
+            Main.TakeLifeForce();
+            DZEngine.Destroy(this);
         }
 
         UpdateBodyState();
@@ -141,8 +190,8 @@ public class EnemyCreature : AbstractCreature, IServerSendable
         {
             case BodyState.Limp:
                 {
-                    BodyChunks[0].Velocity *= 0.3f;
-                    BodyChunks[1].Velocity *= 0.3f;
+                    BodyChunks[0].Velocity *= 0.8f;
+                    BodyChunks[1].Velocity *= 0.8f;
                 }
                 break;
             case BodyState.Standing:
