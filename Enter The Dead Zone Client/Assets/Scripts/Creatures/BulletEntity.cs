@@ -61,7 +61,7 @@ public class BulletEntity : AbstractWorldEntity, IPhysicsUpdatable, IRenderer, I
     public void Render()
     {
         Bolt.RenderObject.transform.localScale = new Vector2(0.2f, 0.2f);
-        Bolt.RenderObject.color = Color.red;
+        Bolt.RenderColor = Color.red;
     }
 
     public void ServerUpdate()
