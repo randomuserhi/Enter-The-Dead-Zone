@@ -310,11 +310,12 @@ public static class Main
     // Update is called once per frame
     public static void FixedUpdate()
     {
-        foreach (IRenderer<SpriteRenderer> Renderer in SpriteRenderers)
-        {
-            if (Renderer.SortingLayer == (int)SortingLayers.Default)
-                Renderer.RenderObject.sortingOrder = Mathf.RoundToInt(-Renderer.RenderObject.transform.parent.position.y * 10);
-        }
+        if (DZSettings.ActiveRenderers == true)
+            foreach (IRenderer<SpriteRenderer> Renderer in SpriteRenderers)
+            {
+                if (Renderer.SortingLayer == (int)SortingLayers.Default)
+                    Renderer.RenderObject.sortingOrder = Mathf.RoundToInt(-Renderer.RenderObject.transform.parent.position.y * 10);
+            }
 
         if (GameStarted)
         {

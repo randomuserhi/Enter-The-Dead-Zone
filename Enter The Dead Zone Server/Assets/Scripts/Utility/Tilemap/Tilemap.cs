@@ -214,16 +214,17 @@ public class Tilemap : AbstractWorldEntity, IUpdatable, IRenderer, IServerSendab
             }
             return false;
         });
-        if (Rows.Length > TilemapSize.y)
-        {
-            for (int i = TilemapSize.y; i < Rows.Length; i++)
+        if (Rows != null)
+            if (Rows.Length > TilemapSize.y)
             {
-                GameObject.Destroy(Rows[i].gameObject);
+                for (int i = TilemapSize.y; i < Rows.Length; i++)
+                {
+                    GameObject.Destroy(Rows[i].gameObject);
+                }
+                RawImage[] Temp = Rows;
+                Rows = new RawImage[TilemapSize.y];
+                System.Buffer.BlockCopy(Temp, 0, Rows, 0, TilemapSize.y);
             }
-            RawImage[] Temp = Rows;
-            Rows = new RawImage[TilemapSize.y];
-            System.Buffer.BlockCopy(Temp, 0, Rows, 0, TilemapSize.y);
-        }
         Resources.UnloadUnusedAssets();
     }
 
@@ -255,7 +256,6 @@ public class Tilemap : AbstractWorldEntity, IUpdatable, IRenderer, IServerSendab
     {
         //Initialize colliders
         GenerateColliders();
-
         //Initialize renders
         GenerateRenders();
     }
@@ -378,6 +378,8 @@ public class Tilemap : AbstractWorldEntity, IUpdatable, IRenderer, IServerSendab
     /// <param name="Truncate">If true, disposes of unused renders</param>
     private void GenerateRenders(bool Truncate = false)
     {
+        if (DZSettings.ActiveRenderers == false) return;
+
         //Initialize Buffers
         if (WallBuffer != null) WallBuffer.Dispose();
         if (FloorBuffer != null) FloorBuffer.Dispose();

@@ -1,11 +1,11 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
-using System.Threading;
-using System.Threading.Tasks;
+using System.IO;
 
 using DZNetwork;
+using System;
+using System.Text.RegularExpressions;
 
 public class Loader
 {
@@ -24,7 +24,18 @@ public class Loader
         Socket.ConnectHandle += Game.AddConnection;
         Socket.DisconnectHandle += Game.RemoveConnection;
         Socket.PacketHandle += ServerHandle.ProcessPacket;
-        Socket.Connect(26950); //Startup server
+
+        int Port = 26950;
+        try
+        {
+            string Text = Regex.Replace(File.ReadAllText(@"Server.cfg"), @"[ \n\r\t]", "");
+            Port = int.Parse(Text.Split(':')[1]);
+        }
+        catch (Exception E)
+        {
+            Port = 26950;
+        }
+        Socket.Connect(Port); //Startup server
     }
 
     private static void Dispose()
