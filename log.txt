@@ -1,0 +1,607 @@
+commit 514d5c101ae128593c312ae592d6dc1964d45480
+Author: randomuserhi <ceteo@perse.co.uk>
+Date:   Sat Feb 6 09:49:23 2021 +0000
+
+    Final touches
+
+commit 8f8b30c337d26c0bb8e8b7d15a1468c4ae425acd
+Author: randomuserhi <ceteo@perse.co.uk>
+Date:   Sat Feb 6 03:45:16 2021 +0000
+
+    Fixed a small colour error
+
+commit 18b18c3ff73353fbfb72aa878797fb2766ac7669
+Author: randomuserhi <ceteo@perse.co.uk>
+Date:   Sat Feb 6 03:42:44 2021 +0000
+
+    Fixed bugs related to turning off renderer in server build
+
+commit 8234c1ef8ed3efc8a1323a2c2d3cde25270a5b6c
+Author: randomuserhi <ceteo@perse.co.uk>
+Date:   Sat Feb 6 02:50:03 2021 +0000
+
+    Finished gameplay
+
+commit 6f28be996746e32996ebe4404b7c30baf95090b3
+Author: randomuserhi <ceteo@perse.co.uk>
+Date:   Sat Feb 6 00:57:54 2021 +0000
+
+    Finished majority of gameplay
+
+commit 353f192bd678cf2556acfb556418e828207f2c9c
+Author: randomuserhi <ceteo@perse.co.uk>
+Date:   Fri Feb 5 21:14:42 2021 +0000
+
+    Added procedural path generation and an enemy to traverse it
+
+commit 2d25a74c23bf0edcbf3f79eb62be2e670f341161
+Author: randomuserhi <ceteo@perse.co.uk>
+Date:   Fri Feb 5 13:02:48 2021 +0000
+
+    Fixed a bug where phantom players where created
+
+commit 0861dfc6ffc24715ec1abab7b8417eb61e995cf8
+Author: randomuserhi <ceteo@perse.co.uk>
+Date:   Fri Feb 5 12:16:58 2021 +0000
+
+    Fixed interpolation not working properly
+
+commit f8c0f0bf85f3c4181d9fe5d76b5fccd238836553
+Author: randomuserhi <ceteo@perse.co.uk>
+Date:   Fri Feb 5 09:40:48 2021 +0000
+
+    Fixed client prediction not working properly
+
+commit 06121bfbbf14d3138f02e612c6db8487de500c27
+Author: randomuserhi <ceteo@perse.co.uk>
+Date:   Fri Feb 5 08:13:35 2021 +0000
+
+    Implemented client side prediction and interpolation
+
+commit e33fb1a2d31c2d328f7dd1562cae7dfdf0646379
+Author: randomuserhi <ceteo@perse.co.uk>
+Date:   Fri Feb 5 06:39:48 2021 +0000
+
+    Implemented KeySnapshots
+
+commit af6e2aea72c0f2b3f5b201e7353ae53491ac7aff
+Author: randomuserhi <ceteo@perse.co.uk>
+Date:   Wed Feb 3 20:20:11 2021 +0000
+
+    Fixed a bug where different EndPoints failed to received their acknowledgements
+
+commit 6c25841cb6dd57b2a07b1fad198a9ec7edbb9305
+Author: randomuserhi <ceteo@perse.co.uk>
+Date:   Tue Feb 2 02:45:19 2021 +0000
+
+    Implemented Basic Input Manager
+
+commit 45ddd161130ab8acbdf539b4bf678f7e1bb0a1b5
+Author: randomuserhi <ceteo@perse.co.uk>
+Date:   Mon Feb 1 01:18:25 2021 +0000
+
+    Implemented player syncing
+    
+    Clients now sync their players with the server before starting to accept world data
+
+commit 66a532d3088421f8299a66bf162abd8d6e64e153
+Author: randomuserhi <ceteo@perse.co.uk>
+Date:   Mon Jan 25 02:58:20 2021 +0000
+
+    Implemented client handling
+    
+    The server is now able to associate specific device connections with a given client and thus create player objects for each client
+
+commit 5159f24b072fa32c4fa8e3a579d3660ee3c8e3d8
+Author: randomuserhi <ceteo@perse.co.uk>
+Date:   Sun Jan 24 19:36:16 2021 +0000
+
+    Implemented Packet Loss handling
+
+commit caace1d6279be95be4c72e4f9fc938e3aaa39d5c
+Author: randomuserhi <ceteo@perse.co.uk>
+Date:   Wed Jan 20 16:36:12 2021 +0000
+
+    Removed unnecessary locks causing deadlock
+    
+    Converted the multithreaded packet receiving system to push packets into a single thread such that I would not need random locks around my other code
+
+commit 57037cd278ed0d4a4a613988eb7ba0cd8662172b
+Author: randomuserhi <ceteo@perse.co.uk>
+Date:   Wed Jan 20 16:21:02 2021 +0000
+
+    Fixed a problem with creating new EntityIDs causing deadlock
+
+commit b046f7c606cae20bc114c423e8968bdd0071d24c
+Author: randomuserhi <ceteo@perse.co.uk>
+Date:   Wed Jan 20 10:40:37 2021 +0000
+
+    Fixed a bug where packet failed to be read due to bytes not getting skipped
+
+commit a32b9da727a0150f3d58476945d65892de740122
+Author: randomuserhi <ceteo@perse.co.uk>
+Date:   Wed Jan 20 03:39:43 2021 +0000
+
+    Fixed an issue with render layers not working
+
+commit ead25c6567bbae3085949dd3273e1d9233132392
+Author: randomuserhi <ceteo@perse.co.uk>
+Date:   Wed Jan 20 01:36:45 2021 +0000
+
+    Added writeup for ease of access
+
+commit 640c59e56ca1a8cca8d282ccb0df0652bdb80cbe
+Author: randomuserhi <ceteo@perse.co.uk>
+Date:   Tue Jan 19 22:29:37 2021 +0000
+
+    Implemented protocol for splitting data into packets
+
+commit 8a960e8d59054240b680a5f7cd93c5b2d885da3e
+Author: randomuserhi <ceteo@perse.co.uk>
+Date:   Mon Jan 18 23:55:16 2021 +0000
+
+    Moved prototype to git hub
+
+commit 25266682291baa0371d6ff34f1e47cf7dffe9fbb
+Author: randomuserhi <ceteo@perse.co.uk>
+Date:   Mon Jan 18 23:53:43 2021 +0000
+
+    Refactored network system to use only UDP
+
+commit c6a2731492910550a68da8ae6a0a507c318499b6
+Author: randomuserhi <ceteo@perse.co.uk>
+Date:   Sun Jan 17 18:09:49 2021 +0000
+
+    Fixed Tick Rate timings
+
+commit 6fe3f9e96ac1cf9b2fc1054e9c94edc3c3a8a075
+Author: randomuserhi <ceteo@perse.co.uk>
+Date:   Mon Jan 11 03:10:47 2021 +0000
+
+    Setup Server Snapshots to send across to client
+
+commit a8366e527b882e46467c0f8b00e9b0c9c683235f
+Author: randomuserhi <ceteo@perse.co.uk>
+Date:   Sun Jan 10 19:46:30 2021 +0000
+
+    Refactored basic Snapshot sending to be more flexible and easier to implement
+
+commit 0c15b974185f06327cff943d6b483a6ad186e4f1
+Author: randomuserhi <ceteo@perse.co.uk>
+Date:   Fri Jan 8 13:50:28 2021 +0000
+
+    Implemented a proper delete handle to release resources
+
+commit 8844a0810998af7b43170bf3cc3ffeb00bc701d7
+Author: randomuserhi <ceteo@perse.co.uk>
+Date:   Thu Jan 7 19:48:48 2021 +0000
+
+    Implemented IServerHandle for sending items
+
+commit 3f6fd296d85ea52c34b1f0f576ab990f7fffd0a4
+Author: randomuserhi <ceteo@perse.co.uk>
+Date:   Thu Jan 7 18:25:54 2021 +0000
+
+    Implemented Sorting Layers to IRenderer
+    
+    The user can now implement sorting layers to their own renderers and implement their own render layers
+
+commit 1f0f5dc731a7bdd1c5ac80f381b0f66176473481
+Author: randomuserhi <ceteo@perse.co.uk>
+Date:   Thu Jan 7 17:24:27 2021 +0000
+
+    Implemented ManagedLists
+
+commit 14c4516f7d2ecd228171d760ee8d8731784a3e8e
+Author: randomuserhi <ceteo@perse.co.uk>
+Date:   Thu Jan 7 01:27:58 2021 +0000
+
+    Refactored Interfaces and made everything a lot more intuitive to code in
+
+commit 2c447f28468f2a9cf99db424abba3461a4a63761
+Author: randomuserhi <ceteo@perse.co.uk>
+Date:   Wed Jan 6 12:52:45 2021 +0000
+
+    Fixing Tilemaps
+
+commit 7f6ae7f63ab27e1ed58b2890fdd3e0396ab27b90
+Author: randomuserhi <ceteo@perse.co.uk>
+Date:   Mon Dec 7 13:16:43 2020 +0000
+
+    Fixed various tile height render
+
+commit b5782a68b3d1b88b7f69c247a17c8950d7c56def
+Author: randomuserhi <ceteo@perse.co.uk>
+Date:   Mon Dec 7 00:54:49 2020 +0000
+
+    Fixed collisions in tile rendering orders
+
+commit 60f359d5c371939cae30064d7aaa692528bce09a
+Author: randomuserhi <ceteo@perse.co.uk>
+Date:   Mon Dec 7 00:41:10 2020 +0000
+
+    Fixed a bug with player not rendering between wall tiles
+
+commit df520499ce5650d3fd7c0eab81f7f4bb6e1f1df3
+Author: randomuserhi <ceteo@perse.co.uk>
+Date:   Sun Nov 29 22:57:35 2020 +0000
+
+    Added Tilemap rendering support
+
+commit 463855a22591dea163b955837957dec059286514
+Author: randomuserhi <ceteo@perse.co.uk>
+Date:   Wed Nov 11 22:15:40 2020 +0000
+
+    Fixed a syntax error in compute shader preventing it from compiling at runtime
+
+commit 0acef5c964fa34991989ab2888b2ea9ed5243cd8
+Author: randomuserhi <ceteo@perse.co.uk>
+Date:   Wed Nov 11 18:52:32 2020 +0000
+
+    added Animated Tilemaps functionality
+
+commit 2d414de67af6abefadddc08573486d5781fa5a81
+Author: randomuserhi <ceteo@perse.co.uk>
+Date:   Wed Nov 11 08:10:43 2020 +0000
+
+    Fixed Shader rendering with full alpha
+
+commit a186acbe1026fdb336821eb6465c15e0485d6d2e
+Author: randomuserhi <ceteo@perse.co.uk>
+Date:   Wed Nov 11 00:47:41 2020 +0000
+
+    Removed GlobalObject from tilemap rendering
+    
+    Each tilemap has their own canvas now
+
+commit 1ece738de5d0f4108d8e81fe5d9ff750f4b9e563
+Author: randomuserhi <ceteo@perse.co.uk>
+Date:   Wed Nov 11 00:26:12 2020 +0000
+
+    Fixed tilemap rendering
+
+commit 71966114bb07f3b63642b16e6f2240fc92396328
+Author: randomuserhi <ceteo@perse.co.uk>
+Date:   Tue Nov 10 18:57:26 2020 +0000
+
+    TIlemaps can now render using compute shader
+
+commit 47a67b31b264995857737580fdfa089b3c37ed2e
+Author: randomuserhi <ceteo@perse.co.uk>
+Date:   Mon Nov 9 22:45:56 2020 +0000
+
+    Added compute shader to render tilemap
+
+commit 87f8da108ea82b9dd9114565438ce3ea76c62079
+Author: randomuserhi <ceteo@perse.co.uk>
+Date:   Mon Nov 9 12:53:58 2020 +0000
+
+    Optimized removal and deletion of updatable objects
+
+commit 87f4bb15f10221876912bea28060087a18403129
+Author: randomuserhi <ceteo@perse.co.uk>
+Date:   Sun Nov 8 23:09:03 2020 +0000
+
+    Added Tilemap template
+
+commit 45e4c524731007a565ac9b579e73e310bdea4e8b
+Author: randomuserhi <ceteo@perse.co.uk>
+Date:   Sat Nov 7 20:53:05 2020 +0000
+
+    Added the method Set to initialize entities with values after constructor
+
+commit 885e059f01b9af17d649e792602ae341e3392b8c
+Author: randomuserhi <ceteo@perse.co.uk>
+Date:   Sat Nov 7 16:05:49 2020 +0000
+
+    Fixed Velocities not restoring properly from isolated physics
+
+commit a02cddce71dc0d8886bf7e987d321ddc0d8e4a3b
+Author: randomuserhi <ceteo@perse.co.uk>
+Date:   Fri Nov 6 20:18:23 2020 +0000
+
+    Refactored IUpdatableAndDeletable interfaces to function with different types of physics updates
+
+commit b8ff05015d6443c33f8fee6e7d15b59c76ae9fef
+Author: randomuserhi <ceteo@perse.co.uk>
+Date:   Mon Nov 2 22:48:58 2020 +0000
+
+    Added Height component to BodyChunks
+
+commit 8c9e6121afc5a4f21a96b05d6634738432506675
+Author: randomuserhi <ceteo@perse.co.uk>
+Date:   Fri Oct 30 18:30:50 2020 +0000
+
+    Fixed DZEngine to solve for constraints correctly and implemented basic player
+
+commit 9a6d38271617603353a06611c79b679d641aa10e
+Author: randomuserhi <ceteo@perse.co.uk>
+Date:   Wed Oct 21 20:49:26 2020 +0100
+
+    Reconfigured Distance Joint to control ratios
+
+commit bac1cf8061e3c8b50ed859b195977e5e3a7498ca
+Author: randomuserhi <ceteo@perse.co.uk>
+Date:   Mon Oct 19 22:54:00 2020 +0100
+
+    Implemented simply movement and player physics
+
+commit 0ce8e742650263fb48f4be48760001fb7dc917c4
+Author: randomuserhi <ceteo@perse.co.uk>
+Date:   Mon Oct 19 18:57:20 2020 +0100
+
+    Updated Player Movement
+
+commit a4a610ed421e75fe4d3c64075af8a8d1bdf4f845
+Author: randomuserhi <ceteo@perse.co.uk>
+Date:   Wed Oct 14 13:04:40 2020 +0100
+
+    Updated and tested movement for physics bodies
+
+commit 5c61986f48e1bba8e5d14b1f1a0b467041dd803f
+Author: randomuserhi <ceteo@perse.co.uk>
+Date:   Mon Oct 12 23:42:50 2020 +0100
+
+    Added Player Physics and fixed up class definitions for InternalEngine
+
+commit cbdfa6321702415ca4d652cfad50f8dc41790e11
+Author: randomuserhi <ceteo@perse.co.uk>
+Date:   Sat Oct 10 17:59:18 2020 +0100
+
+    Started Implementing PlayerCreature and added AbstractCreature template
+
+commit b424c57902c1ea499b761ccc9474442655bcde25
+Author: randomuserhi <ceteo@perse.co.uk>
+Date:   Mon Sep 28 10:41:03 2020 +0100
+
+    Refactored UpdatableAndDeletable into an interface
+
+commit 8f511880a2aade8133edb177dde89f9cef4051af
+Author: randomuserhi <ceteo@perse.co.uk>
+Date:   Mon Sep 28 02:08:16 2020 +0100
+
+    Small optimization of distanceJoint logic
+
+commit ac01259ade0ff5c60d0369113e074cd012a22ecc
+Author: randomuserhi <ceteo@perse.co.uk>
+Date:   Mon Sep 28 00:35:50 2020 +0100
+
+    Minor constructor fixes
+
+commit 62f244fc5c63053a3460d0b92522bd7362f78ee3
+Author: randomuserhi <ceteo@perse.co.uk>
+Date:   Mon Sep 28 00:31:59 2020 +0100
+
+    Refactored InternalEngine
+    
+    Re-wrote InternalEngine implementation and changed it to DZEngine that was more convenient for a multiplayer setup
+    
+    TODO:: DZEngine AbstractWorldEntity has no way of getting to the PhysicalObject or PhysicalJoint Entity it is refering to. PhysicalObject and PhysicalJoint should inherit from AbstractWorldEntity and UpdatableAndDeletable should be changed to a interface
+
+commit 392caf7cb1399b75999f5ffa01f3157556bc189b
+Author: randomuserhi <ceteo@perse.co.uk>
+Date:   Mon Sep 14 20:15:46 2020 +0100
+
+    Removed old initialisation code from client
+
+commit 1ee16b01d01e54686f4a99109c4f427b721b15d9
+Author: randomuserhi <ceteo@perse.co.uk>
+Date:   Mon Sep 14 17:44:19 2020 +0100
+
+    Added Client-Side Interpolation
+    
+    Client can now interpolate movement between server snapshots to make gameplay smoother.
+
+commit 281592142d2a5919a207f861d87a67e183434326
+Author: randomuserhi <ceteo@perse.co.uk>
+Date:   Thu Sep 10 00:19:47 2020 +0100
+
+    Brief test code for sending a world snapshot to clients
+    
+    Wrote very brief code that parses entities into byte[] to be sent to clients to be unwrapped and instantiated, currently many problems occure, such as clients being unable to interpolate with their client-side physics with maths going to infinity for unknown reason.
+    
+    Code cleanup needs to be done in the byte parsing.
+
+commit c162ab18a36dc14cabb2006d52325f5c4fcfcd28
+Author: randomuserhi <ceteo@perse.co.uk>
+Date:   Wed Sep 9 21:34:38 2020 +0100
+
+    Refactored ID system
+    
+    Changed EntityIDs such that they are assigned using a simpler faster algorithm than what was previously implemented.
+
+commit a4c31cb6289e789c28ff1b3c17e05eeb5d5cd016
+Merge: 370431c 0f063ec
+Author: randomuserhi <ceteo@perse.co.uk>
+Date:   Wed Sep 9 11:13:25 2020 +0100
+
+    Merge branch 'master' of https://github.com/randomuserhi/Enter-The-Dead-Zone
+
+commit 370431caf8b395feef9283584ddd83e1d332f25b
+Author: randomuserhi <ceteo@perse.co.uk>
+Date:   Wed Sep 9 11:13:21 2020 +0100
+
+    Updated CheckEntityID to add new IDs and throw an error on already used IDs
+
+commit 0f063ec745dc4da47cc840d00bb2a8120a26e652
+Author: randomuserhi <ceteo@perse.co.uk>
+Date:   Tue Sep 8 20:42:19 2020 +0100
+
+    Made all EntityObjects and EntityInteractions inherit EntityBehaviour
+    
+    EntityBehaviour makes sure every entity type creates its own ID on creation and removes its ID and frees it on destruction. This allows for proper tracking of entities and their interactions (such as DistanceJoints) across server and client
+
+commit 8c4a5ac3bc9ced36d4de47df99f73da04f41d304
+Author: randomuserhi <ceteo@perse.co.uk>
+Date:   Mon Sep 7 21:19:23 2020 +0100
+
+    Imported portion of internal engine into server for testing snapshot generation and sending
+
+commit 8fcc0c0f91ead20803992e8afcf10bb5337eeb88
+Author: randomuserhi <ceteo@perse.co.uk>
+Date:   Sun Sep 6 23:08:53 2020 +0100
+
+    Updated to Unity version 2020.1.4
+
+commit 597c3ce052bc65f6c4d5b66c2a3b89c3034b1908
+Author: randomuserhi <ceteo@perse.co.uk>
+Date:   Sun Sep 6 22:43:14 2020 +0100
+
+    Implemented EntityID tracking
+    
+    Gives each entity a unique ID such that when implementing networking, entity data can be sent with reference to its ID
+
+commit 4fb1fe7ef478fa22400fa6eb05c6aa4610ed4b55
+Author: randomuserhi <ceteo@perse.co.uk>
+Date:   Wed Sep 2 18:43:00 2020 +0100
+
+    Refactored InternalEngine to work in conjunction with UnityEngine
+    
+    Re-wrote major parts of the engine such that it works using unity rigidbodies and colliders to allow for easier use in the editor.
+
+commit 79e48afa2c4594bd34c67b63d9ed0f6e13d5a2ed
+Author: randomuserhi <ceteo@perse.co.uk>
+Date:   Thu Aug 20 20:57:23 2020 +0100
+
+    Added Warm Starting
+    
+    Warm Starting implemented for CircleCircle collisions
+
+commit b8343839d35c45eb37f3995ca1a7eab5ab23c903
+Author: randomuserhi <ceteo@perse.co.uk>
+Date:   Thu Aug 20 19:45:45 2020 +0100
+
+    Circle Colliders + Distance Joint Implemented
+    
+    A brief implementation of Circle Colliders and Distance Joints has been implemented to the physics system. The physics is based off of Erin Catto sequential impulse ideology. Warm Starting needs to be implemented (accumulation of impulses over frames).
+
+commit 3b8314df8e5c73ca42d38b514832d6f7e5ceb930
+Author: randomuserhi <ceteo@perse.co.uk>
+Date:   Wed Aug 19 17:06:48 2020 +0100
+
+    InternalEngine Project Added
+
+commit 2fa2a8a023753c134d6c2b634074ca91b21e0310
+Author: randomuserhi <ceteo@perse.co.uk>
+Date:   Wed Aug 19 17:06:12 2020 +0100
+
+    Added InternalEngine
+    
+    InternalEngine is the physics engine I intend to use for my project, Currently no methods are implemented.
+    
+    In the future I intend the engine to work only with Circle and Box colliders using GPGPU programming for performance (This can be done using implementations such as ComputeShaders in Unity) => In this way unity will be used for rendering rather than as a physics engine
+    
+    Currently coding it seperately, will port to Server once written and tested
+
+commit 23fbed26ed4e9596c553580ed8c73b1c2e279bcc
+Author: randomuserhi <ceteo@perse.co.uk>
+Date:   Mon Aug 17 18:19:08 2020 +0100
+
+    Implemented ServerBackend Code into Unity Projects
+    
+    Added some organisation:
+    - Added events for server and client code for ease of use (OnClientConnection and OnStart)
+    
+    Implemented basic server communication and establishing UDP connection after successful TCP connection.
+    - Implemented ServerCodes used to determine the purpose of each packet
+
+commit d2cc7f81c5d2353576817c7bb1c9617cc37c1ac1
+Author: randomuserhi <ceteo@perse.co.uk>
+Date:   Sun Aug 16 22:34:46 2020 +0100
+
+    Updated to Unity Editor 2020.1.0
+
+commit 479ba00fb8d6884f12cb1220b807e141f4581c4c
+Author: randomuserhi <ceteo@perse.co.uk>
+Date:   Sat Aug 15 20:38:02 2020 +0100
+
+    Fixed UDP connection: SocketException
+    
+    Stopped the UDP socket closing upon sockets connections being forcibly closed by clients
+
+commit 698e3a4569cd8601871e44d06a3f3bda3dc92388
+Author: randomuserhi <ceteo@perse.co.uk>
+Date:   Tue Aug 11 19:58:21 2020 +0100
+
+    Added handle for disconnection on server side
+    
+    Server can now disconnect, not yet tested on client side.
+    
+    Disconnection is not very clean when performed due to Sockets.IO error or Sockets.SocketException tho it is currently functional
+
+commit 467cc0d4b231a6d7d0df1f4c7057252f611e0a0f
+Author: randomuserhi <ceteo@perse.co.uk>
+Date:   Sun Aug 9 19:39:04 2020 +0100
+
+    Implemented TCP and UDP connection to server
+    
+    UDP and TCP connections between server and client can be made.
+    
+    TODO:: a clean method of disconnecting and handling loss and regain of connection to clients and servers needs to be added for TCP, UDP and IPC
+
+commit 3322ccd18ad889f871120af047153e9ea521885d
+Author: randomuserhi <ceteo@perse.co.uk>
+Date:   Sat Aug 8 21:14:54 2020 +0100
+
+    Finished IPC connection libraries
+    
+    Added Packet class to handle parsing of data via byte arrays
+    
+    Implemented a server handle such that packets can be processed and managed on the main thread
+
+commit 162c77d2020720c7a556b78e2c1d1055f61f2307
+Author: randomuserhi <ceteo@perse.co.uk>
+Date:   Wed Aug 5 16:10:12 2020 +0100
+
+    Started work on server code
+    
+    Added 2 new console code projects to write the server and client libraries:
+      - ServerBackend houses the full library
+      - ServerBackendReceiver is used to test client code from the library
+    
+    Current code is now able to establish IPC connection and send / reciever data => this is planned to be used when the server and client connect locally on the same machine, TCP and UDP connections will be implemented later
+    
+    Sending data currently just sends a couple set bytes => a Packet class template is left to implement to handle variety of data types
+
+commit cf7b35c01e2f273df850f536b1ad95940a7ad778
+Merge: 5329e16 4d58ae9
+Author: randomuserhi <ceteo@perse.co.uk>
+Date:   Mon Jul 13 21:50:13 2020 +0100
+
+    Merge branch 'master' of https://github.com/randomuserhi/Enter-The-Dead-Zone
+
+commit 5329e16c7082f64a519a412f0da486ac5d55cfa6
+Author: randomuserhi <ceteo@perse.co.uk>
+Date:   Mon Jul 13 21:49:13 2020 +0100
+
+    Updated to latest version of Unity
+
+commit 4d58ae977febee81e9e0200175d1bf673ce1c72c
+Author: randomuserhi <ceteo@perse.co.uk>
+Date:   Sat Jul 4 11:46:28 2020 +0000
+
+    Updated unity version
+
+commit 6a924b17373db94466161f96c4aba0233eed422b
+Author: randomuserhi <ceteo@perse.co.uk>
+Date:   Sat Jul 4 11:41:46 2020 +0000
+
+    Updated version of unity
+
+commit 45a615e3d46aabcec492c290e27257ca73ac2860
+Author: randomuserhi <ceteo@perse.co.uk>
+Date:   Mon May 25 18:21:02 2020 +0100
+
+    Added Server and Client Projects
+
+commit b0722d4f5419663e7f15bef29e0f6343de897169
+Author: randomuserhi <ceteo@perse.co.uk>
+Date:   Mon May 25 17:18:39 2020 +0000
+
+    Update .gitignore
+
+commit aa13b11182fbc5037b58389f602d3579588e8736
+Author: randomuserhi <40913834+randomuserhi@users.noreply.github.com>
+Date:   Mon May 25 17:12:54 2020 +0000
+
+    Initial commit
