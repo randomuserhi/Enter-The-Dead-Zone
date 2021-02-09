@@ -18,7 +18,6 @@ uint MapWidth;
 uint MapHeight;
 int TileWidth;
 int TileHeight;
-//TODO:: maybe implement some type of transparency colour
 
 //Produces a tilemap texture using the provided tilemappallet
 [numthreads(4,4,1)]

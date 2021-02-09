@@ -6,6 +6,10 @@ using System.Threading.Tasks;
 
 namespace DZNetwork
 {
+    /// <summary>
+    /// Implementation of a linked list to act as a buffer for reducing Jitter among other things
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
     public class JitterBuffer<T> where T : class
     {
         public class Key
